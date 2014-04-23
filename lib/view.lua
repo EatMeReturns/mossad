@@ -3,8 +3,8 @@ View = class()
 function View:init()
   self.x = 0
   self.y = 0
-  self.w = 800
-  self.h = 600
+  self.w = 600
+  self.h = 400
   self.toDraw = {}
   self.target = nil
 

@@ -22,8 +22,6 @@ function Player:init()
   self.lastRoom = level.baseRoom
   self.speed = 0
   self.maxSpeed = 200
-  self.dx = 0
-  self.dy = 0
 
   self.weapon = Weapon(self)
 
@@ -61,7 +59,7 @@ end
 function Player:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   love.graphics.setColor(255, 255, 255, 255)
-  love.graphics.draw(self.image, x - 13, y - 85, 0, 0.67, 0.67)
+  love.graphics.draw(self.image, x, y, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())
 end
 
 function Player:setPosition(x, y)
@@ -74,27 +72,28 @@ function Player:move()
   local moving = w or a or s or d
   
   local up, down, left, right = 1.5 * math.pi, .5 * math.pi, math.pi, 2.0 * math.pi
-  self.dx, self.dy = nil, nil
+  local dx, dy = nil, nil
 
   if moving then self.speed = self.maxSpeed
   else self.speed = 0 end
     
   if not moving then return end
   
-  if a and not d then self.dx = left elseif d then self.dx = right end
-  if w and not s then self.dy = up elseif s then self.dy = down end
+  if a and not d then dx = left elseif d then dx = right end
+  if w and not s then dy = up elseif s then dy = down end
 
-  if self.dx or self.dy then
-    if not self.dx then self.dx = self.dy end
-    if not self.dy then self.dy = self.dx end
-    if self.dx == right and self.dy == down then self.dx = 0 end
+  if dy then
+    self.image = (dy == down) and self.frontImage or self.backImage
+  end
+
+  if dx or dy then
+    if not dx then dx = dy end
+    if not dy then dy = dx end
+    if dx == right and dy == down then dx = 0 end
     
-    local dir = (self.dx + self.dy) / 2
-    if dir == 1.5 * math.pi then self.image = self.backImage
-    elseif dir == 0.5 * math.pi then self.image = self.frontImage
-    end
+    local dir = (dx + dy) / 2
     self.x, self.y = self.x + math.cos(dir) * (self.speed * tickRate), self.y + math.sin(dir) * (self.speed * tickRate)
-    
+
     self:setPosition(self.x, self.y)
   end
 end
