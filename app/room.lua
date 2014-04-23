@@ -67,6 +67,7 @@ function Room:spawnRooms()
 				local side = math.floor(love.math.random() * 4) * 90
 				if not table.has(doorSides, side) then
 					local newDoor = Door(roomX + math.cos(math.rad(side)) * roomW / 2, roomY + math.sin(math.rad(side)) * roomH / 2, side)
+          
 					table.insert(doors, newDoor)
 					table.insert(doorSides, side)
 					doorCount = doorCount - 1

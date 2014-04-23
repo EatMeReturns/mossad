@@ -15,7 +15,7 @@ function Player:init()
   self.x = 400
   self.y = 300
   self.angle = 0
-  self.radius = 8
+  self.radius = 16
   self.node = {x = self.x, y = self.y}
   
   self.room = level.baseRoom
