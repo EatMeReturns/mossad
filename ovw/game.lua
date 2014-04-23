@@ -4,6 +4,7 @@ function Game:load()
   self:loadColors()
   
   self.view = View()
+  self.hud = Hud()
   self.collision = Collision()
   self.level = Level()
   self.player = Player()
@@ -31,16 +32,6 @@ end
 
 function Game:draw()
   self.view:draw()
-
-  --[[
-  love.graphics.push()
-  local x, y = math.lerp(self.player.prevX, self.player.x, delta / tickRate), math.lerp(self.player.prevY, self.player.y, delta / tickRate)
-  love.graphics.translate(400 - x, 300 - y)
-  self.level:draw()
-  self.player:draw()
-  love.graphics.pop()
-  love.graphics.setColor(255, 255, 255)
-  ]]
 end
 
 function Game:keyreleased(key)

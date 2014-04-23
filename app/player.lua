@@ -21,9 +21,7 @@ function Player:init()
   self.room = level.baseRoom
   self.lastRoom = level.baseRoom
   self.speed = 0
-  self.maxSpeed = 200
-
-  self.weapon = Weapon(self)
+  self.maxSpeed = 165
 
   self.frontImage = love.graphics.newImage('media/anImage.png')
   self.backImage = love.graphics.newImage('media/anImageBack.png')
@@ -33,6 +31,12 @@ function Player:init()
   self.prevY = self.y
 
   self.depth = 0
+
+  self.itemSelect = 1
+  self.items = {}
+  local pistol = Pistol() -- created from pickup
+  table.insert(self.items, pistol)
+  pistol:activate()
   
   ovw.collision:register(self)
   ovw.view:register(self)
@@ -42,18 +46,10 @@ end
 function Player:update()
   self.prevX = self.x
   self.prevY = self.y
-  if math.distance(self.x, self.y, self.node.x, self.node.y) > 20 then
-    self.node = {x = self.x, y = self.y}
-    level.rooms = table.filter(level.rooms, function(room) if math.distance(self.x, self.y, room.x, room.y) > 550 then room:destroy() return false else return true end end)
-    table.with(level.rooms, 'spawnRooms')
-    table.each(level.newRooms, function(room) table.insert(level.rooms, room) end)
-    level.newRooms = {}
-  end
-  self:move()
-  self.angle = math.direction(400, 300, love.mouse.getX(), love.mouse.getY())
-  self.weapon:update()
 
-  if love.mouse.isDown('l') then self.weapon:fire() end
+  self:move()
+  self:turn()
+  self:item()
 end
 
 function Player:draw()
@@ -95,5 +91,30 @@ function Player:move()
     self.x, self.y = self.x + math.cos(dir) * (self.speed * tickRate), self.y + math.sin(dir) * (self.speed * tickRate)
 
     self:setPosition(self.x, self.y)
+
+    if math.distance(self.x, self.y, self.node.x, self.node.y) > 20 then
+      self.node = {x = self.x, y = self.y}
+      level.rooms = table.filter(level.rooms, function(room)
+        if math.distance(self.x, self.y, room.x, room.y) > 550 then
+          room:destroy()
+          return false
+        else
+          return true
+        end
+      end)
+      table.with(level.rooms, 'spawnRooms')
+      table.each(level.newRooms, function(room) table.insert(level.rooms, room) end)
+      level.newRooms = {}
+    end
   end
+end
+
+function Player:turn()
+  self.angle = math.direction(400, 300, love.mouse.getX(), love.mouse.getY())
+end
+
+function Player:item()
+  local item = self.items[self.itemSelect]
+  item:update()
+  if love.mouse.isDown('l') then item:use() end
 end

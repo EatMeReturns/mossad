@@ -1,45 +1,41 @@
-Weapon = class()
+require 'app/item'
 
-function Weapon:init(owner)
-	self.owner = owner
-	self.x = self.owner.x
-	self.y = self.owner.y
-	self.damage = 10
-	self.projectile = 'Bullet'
-	self.speed = 5 --projectile per second
-	self.clip = 8
-	self.clipSize = 8
-	self.ammo = 4 --max clips
-	self.reloadTime = 2
-	self.timer = 0
+Weapon = extend(Item)
+
+function Weapon:activate()
+  self.timers = {}
+  self.timers.shoot = 0
+  self.timers.reload = 0
+
+  self.currentAmmo = self.ammo
+  self.currentClip = self.clip
 end
 
-function Weapon:fire()
-	if self.timer <= 0 then
-		if self.clip > 0 then
-			table.insert(level.projectiles, Projectile(self.damage, self.x, self.y, math.direction(400, 300, love.mouse.getX(), love.mouse.getY()), 15))
-			self.clip = self.clip - 1
-			self.timer = 1 / self.speed
-		else
-			if self.ammo > 0 then
-				self.ammo = self.ammo - 1
-				self.clip = self.clipSize
-				self.timer = self.reloadTime
-			end
-		end
-	end
+function Weapon:deactivate()
+  --
 end
 
 function Weapon:update()
-	self.x = self.owner.x
-	self.y = self.owner.y
-	if self.timer > tickRate then
-		self.timer = self.timer - tickRate
-	else
-		self.timer = 0
-	end
+  self.timers.shoot = timer.rot(self.timers.shoot)
+  self.timers.reload = timer.rot(self.timers.reload, function()
+    local amt = math.min(self.clip - self.currentClip, self.currentAmmo)
+    self.currentClip = self.currentClip + amt
+    self.currentAmmo = self.currentAmmo - amt
+  end)
 end
 
-function Weapon:draw()
-	--
+function Weapon:use()
+  if self.timers.shoot == 0 and self.timers.reload == 0 and self.currentClip > 0 then
+    table.insert(level.projectiles, Projectile(self.damage, ovw.player.x, ovw.player.y, ovw.player.angle, 15))
+
+    self.timers.shoot = self.fireSpeed
+    self.currentClip = self.currentClip - 1
+    if self.currentClip == 0 then self.timers.reload = self.reloadSpeed end
+  end
+end
+
+function Weapon:reload()
+  if self.currentClip < self.clip and self.timers.reload == 0 then
+    selef.timers.reload = self.reloadSpeed
+  end
 end

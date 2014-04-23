@@ -137,6 +137,9 @@ function love.graphics.printCenter(str, x, y, h, v)
   love.graphics.print(str, xx, yy)
 end
 
+timer = {}
+timer.rot = function(val, fn) if not val or val == 0 then return val end if val <= tickRate then f.exe(fn) return 0 end return val - tickRate end
+
 function love.graphics.width(x) x = x or 1 return love.window.getWidth() * x end
 function love.graphics.height(x) x = x or 1 return love.window.getHeight() * x end
 function love.graphics.minUnit(x) return math.min(love.graphics.width(x), love.graphics.height(x)) end
