@@ -58,6 +58,13 @@ function Player:draw()
   love.graphics.draw(self.image, x, y, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())
 end
 
+function Player:keypressed(key)
+  local x = tonumber(key)
+  if x and x >= 1 and x <= #self.items then
+    self.itemSelect = x
+  end
+end
+
 function Player:setPosition(x, y)
   self.x, self.y = x, y
   self.shape:moveTo(x, y)

@@ -34,6 +34,7 @@ function Game:draw()
   self.view:draw()
 end
 
-function Game:keyreleased(key)
+function Game:keypressed(key)
   if key == 'escape' then love.event.quit() end
+  self.player:keypressed(key)
 end
