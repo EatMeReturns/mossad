@@ -12,6 +12,8 @@ function Wall:init(x, y, w, h)
   self.y = y
   self.width = w
   self.height = h
+
+  self.alpha = 0
   
   ovw.collision:register(self)
   self.shape:moveTo(x + w / 2, y + h / 2)
@@ -28,8 +30,8 @@ function Wall:destroy()
 end
 
 function Wall:draw(color)
-  love.graphics.setColor(color[1], color[2], color[3], color[4])
+  love.graphics.setColor(color[1], color[2], color[3], color[4] * self.alpha)
   self.shape:draw('fill')
-  love.graphics.setColor(color[1], color[2], color[3], 255)
+  love.graphics.setColor(color[1], color[2], color[3], 255 * self.alpha)
   self.shape:draw('line')
 end

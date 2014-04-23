@@ -66,7 +66,7 @@ function Collision:lineTest(x1, y1, x2, y2, tag, all)
   for shape in pairs(self.hc:shapesInRange(_x1, _y1, _x2, _y2)) do
     if (not tag) or shape.owner.tag == tag then
       local intersects, d = shape:intersectsRay(x1, y1, x2 - x1, y2 - y1)
-      if intersects and d <= 1 then
+      if intersects and d >= 0 and d <= 1 then
         if all then table.insert(res, shape.owner)
         else res = shape.owner break end
       end

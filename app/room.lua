@@ -26,7 +26,7 @@ function Room:init(type, age, x, y, w, h, walls, doors, contents)
 	table.with(self.contents, 'setRoom', self)
 
 	self.color = table.copy(level.roomColors[self.type])
-	self.timer = 0.5
+  self.alpha = 0
 end
 
 function Room:destroy()
@@ -91,18 +91,20 @@ end
 
 function Room:update()
 	table.with(self.doors, 'update')
-	if self.timer > 0 then
-		self.timer = self.timer - tickRate
-		if self.timer < 0 then self.timer = 0 end
-		self.color[4] = 55 - self.timer / 0.5 * 55
-	end
+
+  -- Fade rooms in/out based on player LOS
+  if ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall') then
+    self.alpha = math.lerp(self.alpha, 0, math.min(1 * tickRate, 1))
+  else
+    self.alpha = math.lerp(self.alpha, .2, math.min(3 * tickRate, 1))
+  end
+
+  table.each(self.walls, function(w) w.alpha = self.alpha end)
 end
 
 function Room:draw()
-	love.graphics.setColor(self.color[1], self.color[2], self.color[3], self.color[4])
+	love.graphics.setColor(self.color[1], self.color[2], self.color[3], self.color[4] * self.alpha)
 	self.shape:draw('fill')
 	table.with(self.walls, 'draw', self.color)
 	table.with(self.doors, 'draw')
-	--love.graphics.print('' .. self.x .. ',' .. self.y, self.x, self.y)
-	--table.each(self.doors, function(door) love.graphics.print('' .. self.x .. ',' .. self.y, door.x, door.y) end)
 end
