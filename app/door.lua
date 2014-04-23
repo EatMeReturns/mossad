@@ -30,9 +30,9 @@ function Door:destroy()
 end
 
 function Door:cut()
-	local collideWalls = ovw.collision:pointTest2(self.x, self.y, 'wall')
+	local collideWalls = ovw.collision:pointTest(self.x, self.y, 'wall', true)
 	table.each(collideWalls, function(wall) wall:destroy()--[[self:separateWall(wall)]] end)
-	collideWalls = ovw.collision:pointTest2(self.x + self.width, self.y + self.height, 'wall')
+	collideWalls = ovw.collision:pointTest(self.x + self.width, self.y + self.height, 'wall', true)
 	table.each(collideWalls, function(wall) wall:destroy()--[[self:separateWall(wall)]] end)
 end
 
@@ -58,9 +58,9 @@ function Door:separateWall(wall)
 end
 
 function Door:update()
-	local collideWalls = ovw.collision:pointTest2(self.x, self.y, 'wall')
+	local collideWalls = ovw.collision:pointTest(self.x, self.y, 'wall', true)
 	table.each(collideWalls, function(wall) wall:destroy(self) end)
-	collideWalls = ovw.collision:pointTest2(self.x + self.width, self.y + self.height, 'wall')
+	collideWalls = ovw.collision:pointTest(self.x + self.width, self.y + self.height, 'wall', true)
 	table.each(collideWalls, function(wall) wall:destroy(self) end)
 end
 

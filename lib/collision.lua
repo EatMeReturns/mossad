@@ -39,23 +39,15 @@ function Collision:unregister(obj)
   self.hc:remove(obj.shape)
 end
 
-function Collision:pointTest(x, y, tag)
+function Collision:pointTest(x, y, tag, all)
+  local res = all and {} or nil
   for _, shape in pairs(self.hc:shapesAt(x, y)) do
     if (not tag) or shape.owner.tag == tag then
-      return shape.owner
+      if all then table.insert(res, shape.owner)
+      else res = shape.owner break end
     end
   end
-  return nil
-end
-
-function Collision:pointTest2(x, y, tag)
-  local objects = {}
-  for _, shape in pairs(self.hc:shapesAt(x, y)) do
-    if (not tag) or shape.owner.tag == tag then
-      table.insert(objects, shape.owner)
-    end
-  end
-  return objects
+  return res
 end
 
 function Collision:lineTest(x1, y1, x2, y2, tag, all)

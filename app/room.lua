@@ -55,7 +55,7 @@ function Room:spawnRooms()
 			local doorCount = math.ceil(love.math.random() * 2 - (0.5 * (#level.rooms / 120)))
 			local contents = {}
 			if roomType ~= 'Boss' then
-				--if doorCount == 0 and love.math.random() > 0.9 then table.insert(contents, Enemy(roomX, roomY, 10)) end
+				--if doorCount == 0 and love.math.random() > 0.95 then table.insert(contents, Stalker(roomX, roomY, 10)) end
 			else
 				--table.insert(contents, Enemy(roomX, roomY, 50))
 			end
