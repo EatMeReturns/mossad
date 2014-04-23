@@ -9,7 +9,7 @@ he say 'you make game'.
 
 he try assassin me with jelly knife.
 
-i run to maze.
+i run to labia maze.
 
 'i assassin you'
 
