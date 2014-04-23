@@ -101,8 +101,3 @@ function Player:move()
     self:setPosition(self.x, self.y)
   end
 end
-
-function Player:turn()
-  assert(self.input)
-  self.angle = math.anglerp(self.angle, math.direction(self.x, self.y, self.input.mx, self.input.my), .35)
-end

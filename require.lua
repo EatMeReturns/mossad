@@ -9,6 +9,7 @@ local function load(dir)
   if love.filesystem.exists(dir .. '.lua') then require(dir) end
 end
 
+load 'lib/util'
 load 'lib'
 load 'ovw'
 load 'app'
