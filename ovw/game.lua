@@ -34,7 +34,7 @@ end
 function Game:update()
   self.player:update()
   self.level:update()
-  self.collision:update()
+  self.collision:resolve()
 end
 
 function Game:draw()
@@ -47,4 +47,8 @@ function Game:draw()
   love.graphics.pop()
   love.graphics.setColor(255, 255, 255)
   --love.graphics.draw(self.canvas, 0, 0)
+end
+
+function Game:keyreleased(key)
+  if key == 'escape' then love.event.quit() end
 end

@@ -97,9 +97,9 @@ function Player:move()
     elseif dir == 0.5 * math.pi then self.image = self.frontImage
     end
     self.x, self.y = self.x + math.cos(dir) * (self.speed * tickRate), self.y + math.sin(dir) * (self.speed * tickRate)
+    
+    self:setPosition(self.x, self.y)
   end
-  
-  self:setPosition(self.x, self.y)
 end
 
 function Player:turn()
