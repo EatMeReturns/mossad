@@ -33,8 +33,12 @@ function Player:init()
 
   self.prevX = self.x
   self.prevY = self.y
+
+  self.depth = 0
   
   ovw.collision:register(self)
+  ovw.view:register(self)
+  ovw.view:setTarget(self)
 end
 
 function Player:update()
@@ -55,16 +59,9 @@ function Player:update()
 end
 
 function Player:draw()
-  local x, y = math.lerp(self.prevX, self.x, delta / tickRate), math.lerp(self.prevY, self.y, delta / tickRate)
-  self.shape:moveTo(x, y)
+  local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   love.graphics.setColor(255, 255, 255, 255)
   love.graphics.draw(self.image, x - 13, y - 85, 0, 0.67, 0.67)
-  love.graphics.setColor(64, 0, 128, 128)
-  --self.shape:draw('fill')
-  love.graphics.setColor(64, 0, 128, 255)
-  --self.shape:draw('line')
-  --love.graphics.line(x, y, x + math.dx(self.radius - .5, self.angle), y + math.dy(self.radius - .5, self.angle))
-  self.shape:moveTo(self.x, self.y)
 end
 
 function Player:setPosition(x, y)

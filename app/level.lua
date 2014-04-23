@@ -31,6 +31,9 @@ function Level:init()
   	--				}
 	--print('cleaning doors...')
 	--table.each(self.rooms, function(room) self.doors = {} end)
+
+  self.depth = 5
+  ovw.view:register(self)
 end
 
 function Level:update()

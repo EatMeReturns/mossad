@@ -1,0 +1,6 @@
+[submodule "lutil"]
+	path = lutil
+	url = https://github.com/tie372/lutil
+[submodule "lib/lutil"]
+	path = lib/lutil
+	url = https://github.com/tie372/lutil
