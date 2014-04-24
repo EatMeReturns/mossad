@@ -21,30 +21,25 @@ function Level:init()
 					},
 			  		self.baseDoors,
 			  		{})
-  	self.rooms = {self.baseRoom}
-  	self.newRooms = {}
+ 
+  self.rooms = Manager(room)
+  self.rooms:add(self.baseRoom)
 
-  	self.projectiles = {}
-  	self.enemies = {}
-  	--self.walkers = {Walker(self, 400, 300, 270, 1, 10, --position/vector
-	--						10, 10, 0) --rooms
-  	--				}
-	--print('cleaning doors...')
-	--table.each(self.rooms, function(room) self.doors = {} end)
+  self.projectiles = {}
+  self.enemies = {}
 
   self.depth = 5
   ovw.view:register(self)
 end
 
 function Level:update()
-  -- Logic for moving staircases maybe.
-  table.with(self.rooms, 'update')
+  self.rooms:update()
   table.with(self.projectiles, 'update')
   table.with(self.enemies, 'update')
 end
 
 function Level:draw()
-  table.with(self.rooms, 'draw')
+  self.rooms:draw()
   table.with(self.projectiles, 'draw')
   table.with(self.enemies, 'draw')
 end

@@ -85,7 +85,7 @@ function Room:spawnRooms()
 			table.with(doors, 'setRoom', room)
 			table.with(contents, 'setRoom', room)
 			table.with(doors, 'cut')
-			table.insert(level.newRooms, room)
+      level.rooms:add(room)
 		end
 	end)
 end

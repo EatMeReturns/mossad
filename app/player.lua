@@ -101,7 +101,7 @@ function Player:move()
 
     if math.distance(self.x, self.y, self.node.x, self.node.y) > 20 then
       self.node = {x = self.x, y = self.y}
-      level.rooms = table.filter(level.rooms, function(room)
+      level.rooms:filter(function(room)
         if math.distance(self.x, self.y, room.x, room.y) > 550 then
           room:destroy()
           return false
@@ -109,9 +109,7 @@ function Player:move()
           return true
         end
       end)
-      table.with(level.rooms, 'spawnRooms')
-      table.each(level.newRooms, function(room) table.insert(level.rooms, room) end)
-      level.newRooms = {}
+      level.rooms:each(function(room) room:spawnRooms() end)
     end
   end
 end
