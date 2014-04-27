@@ -55,7 +55,7 @@ function Room:spawnRooms()
       local doorCount = math.ceil(love.math.random() * 2 - (0.5 * (#level.rooms / 120)))
       local contents = {}
       if roomType ~= 'Boss' then
-        --if doorCount == 0 and love.math.random() > 0.95 then table.insert(contents, Stalker(roomX, roomY, 10)) end
+        if love.math.random() > 0.99 then table.insert(contents, Shade(roomX, roomY, 10)) end
       else
         --table.insert(contents, Enemy(roomX, roomY, 50))
       end
@@ -95,9 +95,9 @@ function Room:update()
 
   -- Fade rooms in/out based on player LOS
   if ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall') then
-    self.alpha = math.lerp(self.alpha, 0, math.min(1 * tickRate, 1))
-  else
-    self.alpha = math.lerp(self.alpha, .2, math.min(3 * tickRate, 1))
+    self.alpha = math.lerp(self.alpha, 0, math.min(3 * tickRate, 1))
+  elseif math.distance(self.x, self.y, ovw.player.x, ovw.player.y) < 200 then
+    self.alpha = math.lerp(self.alpha, .2, math.min(6 * tickRate, 1))
   end
 
   table.each(self.walls, function(w) w.alpha = self.alpha end)
