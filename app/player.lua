@@ -18,8 +18,8 @@ Player.collision = {
 
 function Player:init()
   self.name = 'player'
-  self.x = 400
-  self.y = 300
+  self.x = 0
+  self.y = 0
   self.angle = 0
   self.radius = 16
   self.node = {x = self.x, y = self.y}
@@ -113,7 +113,7 @@ function Player:move()
 
     self:setPosition(self.x, self.y)
 
-    if math.distance(self.x, self.y, self.node.x, self.node.y) > 20 then
+    --[[if math.distance(self.x, self.y, self.node.x, self.node.y) > 20 then
       self.node = {x = self.x, y = self.y}
       ovw.level.rooms:filter(function(room)
         if math.distance(self.x, self.y, room.x, room.y) > 550 then
@@ -124,7 +124,7 @@ function Player:move()
         end
       end)
       ovw.level.rooms:each(function(room) room:spawnRooms() end)
-    end
+    end]]
   end
 end
 

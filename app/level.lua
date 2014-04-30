@@ -1,15 +1,10 @@
+local hardon = require 'lib/hardon'
+
 Level = class()
+Level.gridSize = 32
 
 function Level:init()
-  self.roomColors = {Room = gray, Base = green, Shop = yellow, Boss = red, Event = purple}
-
-  self.doorCount = 0
-  self.wallCount = 0
-  self.enemyCount = 0
- 
   self.rooms = Manager()
-  self.projectiles = Manager()
-  self.enemies = Manager()
   
   self.depth = 5
   ovw.view:register(self)
@@ -17,30 +12,27 @@ end
 
 function Level:update()
   self.rooms:update()
-  table.with(self.projectiles, 'update')
-  table.with(self.enemies, 'update')
 end
 
 function Level:draw()
   self.rooms:draw()
-  table.with(self.projectiles, 'draw')
-  table.with(self.enemies, 'draw')
 end
 
 function Level:load()
-  self.baseDoors = {
-    Door(400, 300 - 100 / 2, 270),
-    Door(400, 300 + 100 / 2, 90),
-    Door(400 + 100 / 2, 300, 0),
-    Door(400 - 100 / 2, 300, 180)
-  }
+  self.rooms:add(Room({
+    x = -8,
+    y = -4,
+    w = 16,
+    h = 8
+  }))
+end
 
-  self.baseRoom = Room('Base', 0, 400, 300, 100, 100, {
-    Wall(400 - 100 / 2, 300 - 100 / 2, 100, 10),
-    Wall(400 + 100 / 2 - 10, 300 - 100 / 2, 10, 100),
-    Wall(400 - 100 / 2, 300 + 100 / 2 - 10, 100, 10),
-    Wall(400 - 100 / 2, 300 - 100 / 2, 10, 100)
-  }, self.baseDoors, {})
+function Level:snap(x, ...)
+  if not x then return end
+  return math.round(x / self.gridSize) * self.gridSize, self:snap(...)
+end
 
-  self.rooms:add(self.baseRoom)
+function Level:grid(x, ...)
+  if not x then return end
+  return x * self.gridSize, self:grid(...)
 end

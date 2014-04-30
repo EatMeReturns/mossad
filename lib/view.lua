@@ -3,8 +3,8 @@ View = class()
 function View:init()
   self.x = 0
   self.y = 0
-  self.w = 600
-  self.h = 450
+  self.w = 900
+  self.h = 675
   self.toDraw = {}
   self.target = nil
 
@@ -30,6 +30,15 @@ function View:draw()
   local x, y = math.lerp(self.prevx, self.x, tickDelta / tickRate), math.lerp(self.prevy, self.y, tickDelta / tickRate)
   love.graphics.scale(math.lerp(self.prevscale, self.scale, tickDelta / tickRate))
   love.graphics.translate(-x, -y)
+
+  local xx, yy = ovw.level:snap(x, y)
+  love.graphics.setColor(255, 255, 255, 30)
+  for i = xx - ovw.level.gridSize, xx + self.w + ovw.level.gridSize, ovw.level.gridSize do
+    love.graphics.line(i, y, i, y + self.h)
+  end
+  for i = yy - ovw.level.gridSize, yy + self.h + ovw.level.gridSize, ovw.level.gridSize do
+    love.graphics.line(x, i, x + self.w, i)
+  end
   
   table.sort(self.toDraw, function(a, b)
     return a.depth > b.depth
