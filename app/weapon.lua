@@ -26,7 +26,7 @@ end
 
 function Weapon:use()
   if self.timers.shoot == 0 and self.timers.reload == 0 and self.currentClip > 0 then
-    table.insert(level.projectiles, Projectile(self.damage, ovw.player.x, ovw.player.y, ovw.player.angle, 15))
+    table.insert(ovw.level.projectiles, Projectile(self.damage, ovw.player.x, ovw.player.y, ovw.player.angle, 15))
 
     self.timers.shoot = self.fireSpeed
     self.currentClip = self.currentClip - 1

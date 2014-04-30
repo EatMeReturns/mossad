@@ -29,7 +29,7 @@ function Projectile:init(damage, x, y, direction, speed)
 end
 
 function Projectile:destroy()
-  level.projectiles = table.filter(level.projectiles, function(projectile) if projectile == self then return false else return true end end)
+  ovw.level.projectiles = table.filter(ovw.level.projectiles, function(projectile) if projectile == self then return false else return true end end)
   ovw.collision.hc:remove(self.shape)
 end
 
