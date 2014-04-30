@@ -18,8 +18,8 @@ function Player:init()
   self.radius = 16
   self.node = {x = self.x, y = self.y}
   
-  self.room = level.baseRoom
-  self.lastRoom = level.baseRoom
+  self.room = ovw.level.baseRoom
+  self.lastRoom = ovw.level.baseRoom
   self.speed = 0
   self.maxSpeed = 165
 
@@ -101,7 +101,7 @@ function Player:move()
 
     if math.distance(self.x, self.y, self.node.x, self.node.y) > 20 then
       self.node = {x = self.x, y = self.y}
-      level.rooms:filter(function(room)
+      ovw.level.rooms:filter(function(room)
         if math.distance(self.x, self.y, room.x, room.y) > 550 then
           room:destroy()
           return false
@@ -109,7 +109,7 @@ function Player:move()
           return true
         end
       end)
-      level.rooms:each(function(room) room:spawnRooms() end)
+      ovw.level.rooms:each(function(room) room:spawnRooms() end)
     end
   end
 end

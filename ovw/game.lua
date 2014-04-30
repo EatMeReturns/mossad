@@ -8,6 +8,8 @@ function Game:load()
   self.collision = Collision()
   self.level = Level()
   self.player = Player()
+
+  self.level:load()
 end
 
 function Game:loadColors()

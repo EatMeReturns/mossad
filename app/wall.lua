@@ -7,7 +7,7 @@ Wall.collision = {
 }
 
 function Wall:init(x, y, w, h)
-  level.wallCount = level.wallCount + 1
+  ovw.level.wallCount = ovw.level.wallCount + 1
   self.x = x
   self.y = y
   self.width = w
@@ -24,7 +24,7 @@ function Wall:setRoom(room)
 end
 
 function Wall:destroy()
-  level.wallCount = level.wallCount - 1
+  ovw.level.wallCount = ovw.level.wallCount - 1
   self.room.walls = table.filter(self.room.walls, function(wall) if wall == self then return false else return true end end)
   ovw.collision.hc:remove(self.shape)
 end

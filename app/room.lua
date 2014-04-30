@@ -25,7 +25,7 @@ function Room:init(type, age, x, y, w, h, walls, doors, contents)
   table.with(self.doors, 'setRoom', self)
   table.with(self.contents, 'setRoom', self)
 
-  self.color = table.copy(level.roomColors[self.type])
+  self.color = table.copy(ovw.level.roomColors[self.type])
   self.alpha = 0
 end
 
@@ -33,8 +33,6 @@ function Room:destroy()
   ovw.collision.hc:remove(self.shape)
   table.with(self.walls, 'destroy')
   table.with(self.doors, 'destroy')
-  self.walls = {}
-  self.doors = {}
 end
 
 function Room:spawnRooms()
@@ -52,7 +50,7 @@ function Room:spawnRooms()
       end
 
       local wallW = 10
-      local doorCount = math.ceil(love.math.random() * 2 - (0.5 * (#level.rooms / 120)))
+      local doorCount = math.ceil(love.math.random() * 2 - (0.5 * (#ovw.level.rooms / 120)))
       local contents = {}
       if roomType ~= 'Boss' then
         --if doorCount == 0 and love.math.random() > 0.95 then table.insert(contents, Stalker(roomX, roomY, 10)) end
@@ -85,7 +83,7 @@ function Room:spawnRooms()
       table.with(doors, 'setRoom', room)
       table.with(contents, 'setRoom', room)
       table.with(doors, 'cut')
-      level.rooms:add(room)
+      ovw.level.rooms:add(room)
     end
   end)
 end

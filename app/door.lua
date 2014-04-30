@@ -7,7 +7,7 @@ Door.collision = {
 }
 
 function Door:init(x, y, direction)
-  level.doorCount = level.doorCount + 1
+  ovw.level.doorCount = ovw.level.doorCount + 1
   self.width = 10
   self.height = 10
   self.x = x - self.width / 2
@@ -25,7 +25,7 @@ end
 
 function Door:destroy()
   self.room = nil
-  level.doorCount = level.doorCount - 1
+  ovw.level.doorCount = ovw.level.doorCount - 1
   ovw.collision.hc:remove(self.shape)
 end
 
