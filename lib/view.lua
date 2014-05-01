@@ -3,8 +3,8 @@ View = class()
 function View:init()
   self.x = 0
   self.y = 0
-  self.w = 900
-  self.h = 675
+  self.w = 600
+  self.h = 450
   self.toDraw = {}
   self.target = nil
 
@@ -12,12 +12,24 @@ function View:init()
   self.prevx = 0
   self.prevy = 0
   self.prevscale = self.scale
+
+  self.targetScale = .1
+
+  self.drawGrid = true
 end
 
 function View:update()
   self.prevx = self.x
   self.prevy = self.y
   self.prevscale = self.scale
+  
+  local prevw, prevh = self.w, self.h
+  local xf, yf = love.mouse.getX() / love.graphics.getWidth(), love.mouse.getY() / love.graphics.getHeight()
+  self.scale = math.round(math.lerp(self.scale, self.targetScale, 10 * tickRate) / .01) * .01
+  self.w = love.graphics.getWidth() / self.scale
+  self.h = love.graphics.getHeight() / self.scale
+  self.x = self.x + (prevw - self.w) * xf
+  self.y = self.y + (prevh - self.h) * yf
   
   self:follow()
 end
@@ -31,13 +43,15 @@ function View:draw()
   love.graphics.scale(math.lerp(self.prevscale, self.scale, tickDelta / tickRate))
   love.graphics.translate(-x, -y)
 
-  local xx, yy = ovw.level:snap(x, y)
-  love.graphics.setColor(255, 255, 255, 30)
-  for i = xx - ovw.level.gridSize, xx + self.w + ovw.level.gridSize, ovw.level.gridSize do
-    love.graphics.line(i, y, i, y + self.h)
-  end
-  for i = yy - ovw.level.gridSize, yy + self.h + ovw.level.gridSize, ovw.level.gridSize do
-    love.graphics.line(x, i, x + self.w, i)
+  if self.drawGrid then
+    local xx, yy = ovw.house:snap(x, y)
+    love.graphics.setColor(255, 255, 255, 30)
+    for i = xx - ovw.house.cellSize, xx + self.w + ovw.house.cellSize, ovw.house.cellSize do
+      love.graphics.line(i, y, i, y + self.h)
+    end
+    for i = yy - ovw.house.cellSize, yy + self.h + ovw.house.cellSize, ovw.house.cellSize do
+      love.graphics.line(x, i, x + self.w, i)
+    end
   end
   
   table.sort(self.toDraw, function(a, b)
@@ -99,6 +113,14 @@ function View:follow()
 
   self.x = math.clamp(self.x, self.target.x - (self.w * margin), self.target.x + (self.w * margin) - self.w)
   self.y = math.clamp(self.y, self.target.y - (self.h * margin), self.target.y + (self.h * margin) - self.h)
+end
+
+function View:mousepressed(x, y, button)
+  if button == 'wu' then
+    self.targetScale = math.min(self.targetScale + .1, 2)
+  elseif button == 'wd' then
+    self.targetScale = math.max(self.targetScale - .1, .1)
+  end
 end
 
 function View:mouseX()

@@ -7,11 +7,6 @@ Player.collision = {
   with = {
     wall = function(self, other, dx, dy)
       self:setPosition(self.x + dx, self.y + dy)
-    end,
-    room = function(self, other, dx, dy)
-      if math.abs(dx) >= self.radius or math.abs(dy) >= self.radius then
-        self:setRoom(other)
-      end
     end
   }
 }
@@ -24,7 +19,6 @@ function Player:init()
   self.radius = 16
   self.node = {x = self.x, y = self.y}
   
-  self.room = ovw.level.baseRoom
   self.speed = 0
   self.maxSpeed = 165
 
@@ -60,7 +54,6 @@ end
 function Player:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   love.graphics.setColor(255, 255, 255, 255)
-  self.shape:draw()
   love.graphics.draw(self.image, x, y, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())
 end
 
@@ -74,14 +67,6 @@ end
 function Player:setPosition(x, y)
   self.x, self.y = x, y
   self.shape:moveTo(x, y)
-end
-
-function Player:setRoom(room)
-  if self.room ~= room then
-    if self.room then self.room.contents[self.name] = nil end
-    self.room = room
-    self.room.contents[self.name] = self
-  end
 end
 
 function Player:move()
@@ -112,19 +97,6 @@ function Player:move()
     self.x, self.y = self.x + math.cos(dir) * (self.speed * tickRate), self.y + math.sin(dir) * (self.speed * tickRate)
 
     self:setPosition(self.x, self.y)
-
-    --[[if math.distance(self.x, self.y, self.node.x, self.node.y) > 20 then
-      self.node = {x = self.x, y = self.y}
-      ovw.level.rooms:filter(function(room)
-        if math.distance(self.x, self.y, room.x, room.y) > 550 then
-          room:destroy()
-          return false
-        else
-          return true
-        end
-      end)
-      ovw.level.rooms:each(function(room) room:spawnRooms() end)
-    end]]
   end
 end
 
