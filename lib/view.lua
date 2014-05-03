@@ -18,6 +18,9 @@ function View:init()
   self.drawGrid = true
 end
 
+function W(ratio) return love.graphics.width() * ratio end
+function H(ratio) return love.graphics.height() * ratio end
+
 function View:update()
   self.prevx = self.x
   self.prevy = self.y

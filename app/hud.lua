@@ -5,11 +5,13 @@ local g = love.graphics
 function Hud:init()
   self.font = love.graphics.newFont('media/fonts/pixel.ttf', 8)
   ovw.view:register(self)
+  self.fader = Fader()
 end
 
 function Hud:gui()
   self:debug()
   self:items()
+  self.fader:gui()
 end
 
 function Hud:debug()

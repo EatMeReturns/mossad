@@ -13,6 +13,7 @@ function Game:update()
   self.house:update()
   self.collision:resolve()
   self.view:update()
+  self.hud.fader:update()
 end
 
 function Game:draw()

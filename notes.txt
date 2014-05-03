@@ -15,3 +15,31 @@ The Avian is a boss with an arena riddled with deep pits. The arena is surrounde
 An Ink Raven is a black, fast bird that swoops out from the shadows like some fucking bat or some shit.
 
 A Spiderling is a little spider that likes to swarm.
+
+The Behold of the Eye is a passive item that causes items and other loot to glow, both producing light and making them visible through walls.
+
+The Solar Flare is an active item that expands a ring of light out from the player, briefly illuminating the entire nearby area.
+
+Glowsticks are collectible single-use items that produce light for a brief-moderate amount of time. They can be held, dropped, or thrown.
+
+Fishing Line is a collectible single-use item that leaves a trail of line to save sections of the house for an extended period of time, preventing rooms from despawning when they are out of sight.
+
+The Blinkstone is an active item that instantly teleports the player a short distance. The player may only blink over walls if there is light at the target destination.
+
+The Scaled Shield is a weapon that can be used to block attacks and bash enemies, briefly stunning them. When not in use, it passively blocks attacks to the player's back.
+
+The Spinneret is a utility item that works like fishing line except that it lasts longer and it slows enemies.
+
+The Inktalons are a weapon that causes the player's melee attacks to rend enemies, resulting in high damage and increased chance to cripple.
+
+Ammo is a collectible single-use item that allows guns and other projectile weapons to be used. Special ammos may be found for specific weapons such as Silver Bolts for the crossbow.
+
+The Pistol, Shotgun, Crossbow, Flare Gun, and Assault Rifle are all weapons that can expend Ammo. Their special ammo types are Fragmenting Bullets, Solid Slugs, Silver Bolts, Napalm Flares, and FMJ Rounds.
+
+The Eversack is a passive item that allows the player to carry an unlimited amount of items and equipment. Furthermore, carry weight no longer incurs a movespeed penalty.
+
+Passive: Behold of the Eye, Scaled Shield, Eversack
+Utility: Glowsticks, Fishing Line, Spinneret, Special Ammo?, Traps?
+Active: Solar Flare, Blinkstone
+Weapon: Scaled Shield, Inktalons, Pistol, Shotgun, Crossbow, Flare Gun, Assault Rifle
+Other: Ammo, First Aid Supplies, Currency?, Upgrade Materials?
