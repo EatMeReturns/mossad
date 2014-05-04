@@ -44,7 +44,7 @@ end
 
 function House:snap(x, ...)
   if not x then return end
-  return math.round(x / self.cellSize) * self.cellSize, self:snap(...)
+  return math.floor(x / self.cellSize) * self.cellSize, self:snap(...)
 end
 
 function House:cell(x, ...)

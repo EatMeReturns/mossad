@@ -46,6 +46,12 @@ function View:draw()
   love.graphics.scale(math.lerp(self.prevscale, self.scale, tickDelta / tickRate))
   love.graphics.translate(-x, -y)
 
+  table.sort(self.toDraw, function(a, b)
+    return a.depth > b.depth
+  end)
+
+  for _, v in ipairs(self.toDraw) do f.exe(v.draw, v) end
+  
   if self.drawGrid then
     local xx, yy = ovw.house:snap(x, y)
     love.graphics.setColor(255, 255, 255, 30)
@@ -56,12 +62,6 @@ function View:draw()
       love.graphics.line(x, i, x + self.w, i)
     end
   end
-  
-  table.sort(self.toDraw, function(a, b)
-    return a.depth > b.depth
-  end)
-
-  for _, v in ipairs(self.toDraw) do f.exe(v.draw, v) end
 
   love.graphics.pop()
 
