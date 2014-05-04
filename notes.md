@@ -43,3 +43,29 @@ Utility: Glowsticks, Fishing Line, Spinneret, Special Ammo?, Traps?
 Active: Solar Flare, Blinkstone
 Weapon: Scaled Shield, Inktalons, Pistol, Shotgun, Crossbow, Flare Gun, Assault Rifle
 Other: Ammo, First Aid Supplies, Currency?, Upgrade Materials?
+
+Combat rules are as follows:
+-Taking damage occurs per-body section; the direction the player faces and the direction of the damage source determines whether it is a hit to the Head, L/R Arm, Torso, or L/R Leg.
+-If a body section is hit hard enough, often enough, or enough times in a short period of time, it will become crippled.
+-A crippled body part will debuff the player; one arm slows melee attacks and makes projectiles less accurate, two arms disables the player's ability to attack, one leg slows the player, two legs almost immobilizes the player, the head reduces the player's vision, and the torso reduces carry capacity and turn rate.
+-If a crippled body section is hit hard enough, often enough, or enough times in a short period of time, it will become mortally wounded.
+-A mortal wound will give the player a short amount of time to apply first aid before killing the player.
+
+Revised prototype/simpler/better combat rules:
+-Taking damage is no longer per-body.
+-Being hit hard enough, often enough, or enough times in a short period of time will cripple a random body part, applying a random debuff and desiring first aid.
+-Being hit hard enough, often enough, or enough times while the player has at least one crippled body part will result in a mortal wound, requiring first aid.
+
+Keyboard Commands:
+1-5: Quick-Use utility/active items.
+Spacebar: Roll.
+M1: Fire equipped weapon/melee attack.
+M2: Melee equipped weapon/heavy melee attack.
+Scroll: Cycle equipped weapon.
+WASD: Walk.
+Shift+WASD: Run.
+R: Reload.
+H: Apply First Aid to crippled body section.
+E: Open the backpack/interact.
+Mouse: Aim.
+U: Upgrade equipment?
