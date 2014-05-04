@@ -71,15 +71,15 @@ Other: Ammo, First Aid Supplies, Currency?, Upgrade Materials?
 - Being hit hard enough, often enough, or enough times while the player has at least one crippled body part will result in a mortal wound, requiring first aid.
 
 ### Keyboard Commands:
-`1-5`: Quick-Use utility/active items.
-`Spacebar`: Roll.
-`M1`: Fire equipped weapon/melee attack.
-`M2`: Melee equipped weapon/heavy melee attack.
-`Scroll`: Cycle equipped weapon.
-`WASD`: Walk.
-`Shift+WASD`: Run.
-`R`: Reload.
-`H`: Apply First Aid to crippled body section.
-`E`: Open the backpack/interact.
-`Mouse`: Aim.
-`U`: Upgrade equipment?
+- `1-5`: Quick-Use utility/active items.
+- `Spacebar`: Roll.
+- `M1`: Fire equipped weapon/melee attack.
+- `M2`: Melee equipped weapon/heavy melee attack.
+- `Scroll`: Cycle equipped weapon.
+- `WASD`: Walk.
+- `Shift+WASD`: Run.
+- `R`: Reload.
+- `H`: Apply First Aid to crippled body section.
+- `E`: Open the backpack/interact.
+- `Mouse`: Aim.
+- `U`: Upgrade equipment?
