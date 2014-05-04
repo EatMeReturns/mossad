@@ -1,3 +1,15 @@
+House = class()
+
+----------------
+-- Parameters
+----------------
+House.cellSize = 32
+House.roomCount = 100
+House.roomSpacing = 1
+House.doorSize = 2
+House.hallwayCount = 35
+House.hallwayLength = 20
+
 local hardon = require 'lib/hardon'
 
 require 'app/house/room'
@@ -8,13 +20,10 @@ local function randomFrom(t)
   return t[love.math.random(1, #t)]
 end
 
-House = class()
-House.cellSize = 32
 
 function House:init()
   self.roomTypes = {RoomRectangle}
   self.rooms = {}
-  self.roomSpacing = 1
 
   self.grid = {}
 
@@ -87,10 +96,12 @@ function House:generate()
     west = {-self.roomSpacing, 0}
   }
   
-  -- Create initial room
+  local function get(x, y)
+    return self.grid[x] and self.grid[x][y] == 1
+  end
+  
   self:addRoom(RoomRectangle())
 
-  -- Loop until 100 rooms are created
   repeat
 
     -- Pick a source room, create a destination room
@@ -111,7 +122,27 @@ function House:generate()
       self:addDoor(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y)
     end
 
-  until #self.rooms > 100
+  until #self.rooms > self.roomCount
+
+  local hallways = 0
+  repeat
+    local room = randomFrom(self.rooms)
+    local wall = room:randomWall()
+    local length = love.math.randomNormal(self.hallwayLength / 4, self.hallwayLength)
+    local x, y = room.x + wall.x, room.y + wall.y
+    local x1, y1 = x, y
+    local dx, dy = math.sign(offset[wall.direction][1]), math.sign(offset[wall.direction][2])
+    local tmp = {}
+    local turn = love.math.random() > .5
+    for i = 1, length do
+      x, y = x + dx, y + dy
+      if get(x, y) then
+        hallways = hallways + 1
+        self:addDoor(x1, y1, x, y)
+        break
+      end
+    end
+  until hallways > self.hallwayCount
 
   self:computeTiles()
 end
@@ -141,7 +172,7 @@ function House:addDoor(x1, y1, x2, y2)
 
   if dx == 0 then
     for y = y1, y2, dy do
-      for x = x1 - 2, x1 + 2 do
+      for x = x1 - self.doorSize, x1 + self.doorSize do
         self.grid[x] = self.grid[x] or {}
         self.grid[x][y] = 1
       end
@@ -150,7 +181,7 @@ function House:addDoor(x1, y1, x2, y2)
 
   if dy == 0 then
     for x = x1, x2, dx do
-      for y = y1 - 2, y1 + 2 do
+      for y = y1 - self.doorSize, y1 + self.doorSize do
         self.grid[x] = self.grid[x] or {}
         self.grid[x][y] = 1
       end
