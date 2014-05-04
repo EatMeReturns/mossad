@@ -10,8 +10,10 @@ Enemy.collision.with.wall = function(self, other, dx, dy)
 end
 
 Enemy.collision.with.enemy = function(self, other, dx, dy)
-  self:setPosition(self.x + dx / 2, self.y + dy / 2)
-  other:setPosition(other.x - dx / 2, other.y - dy / 2)
+  if self.x < other.x then
+    self:setPosition(self.x + dx, self.y + dy)
+    other:setPosition(other.x - dx, other.y - dy)
+  end
 end
 
 Enemy.collision.with.player = function(self, other, dx, dy)
