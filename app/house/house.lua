@@ -58,8 +58,9 @@ function House:update()
       if self.tiles[x] and self.tiles[x][y] then
         local px, py = ovw.player.x - self.cellSize / 2, ovw.player.y - self.cellSize / 2
         local dis = self:snap(math.distance(px, py, self:cell(x, y)))
-        local value = (1 - (math.clamp(dis, 50, 400) / 400)) * 255
-        self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], value, 1 * tickRate)
+        dis = math.clamp(dis ^ self.lightFalloff / self.lightIntensity, self.lightMinDis, self.lightMaxDis)
+        local value = (1 - (dis / self.lightMaxDis)) * 255
+        self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], value, self.lightFollowSpeed * tickRate)
       end
     end
   end
@@ -74,7 +75,7 @@ function House:draw()
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
-        local v = self.tileAlpha[x][y]
+        local v = math.round(self.tileAlpha[x][y] / self.lightPosterization) * self.lightPosterization
         if v > .01 then
           love.graphics.setColor(v, v, v)
           local quad = self.tilemap[self.tiles[x][y]]
