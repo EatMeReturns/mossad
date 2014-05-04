@@ -10,7 +10,6 @@ end
 
 function Game:update()
   self.player:update()
-  self.house:update()
   self.collision:resolve()
   self.view:update()
 end

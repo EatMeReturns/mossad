@@ -15,16 +15,13 @@ function House:init()
   self.roomTypes = {RoomRectangle}
   self.rooms = {}
 
-  self.scratch = hardon(self.cellSize)
+  self.grid = {}
 
   self:generate()
 
   self.depth = 5
+  self.clipRect = {}
   ovw.view:register(self)
-end
-
-function House:update()
-  --
 end
 
 function House:destroy()
@@ -32,13 +29,14 @@ function House:destroy()
 end
 
 function House:draw()
-  for shape in pairs(self.scratch:shapesInRange(ovw.view.x / self.cellSize, ovw.view.y / self.cellSize, (ovw.view.x + ovw.view.w) / self.cellSize, (ovw.view.y + ovw.view.h) / self.cellSize)) do
-    shape.room:draw()
+  love.graphics.setColor(50, 0, 0)
+  for x = -100, 100 do
+    for y = -100, 100 do
+      if self.grid[x] and self.grid[x][y] == 1 then
+        love.graphics.rectangle('fill', self:cell(x, y, 1, 1))
+      end
+    end
   end
-end
-
-function House:load()
-  --
 end
 
 function House:snap(x, ...)
@@ -46,9 +44,9 @@ function House:snap(x, ...)
   return math.round(x / self.cellSize) * self.cellSize, self:snap(...)
 end
 
-function House:grid(x, ...)
+function House:cell(x, ...)
   if not x then return end
-  return x * self.cellSize, self:grid(...)
+  return x * self.cellSize, self:cell(...)
 end
 
 function House:generate()
@@ -59,10 +57,15 @@ function House:generate()
     west = 'east'
   }
 
+  local offset = {
+    north = {0, -1},
+    south = {0, 1},
+    east = {1, 0},
+    west = {-1, 0}
+  }
+  
   -- Create initial room
-  self.rooms[#self.rooms + 1] = RoomRectangle()
-  local shape = self.scratch:addRectangle(self.rooms[1].x, self.rooms[1].y, self.rooms[1].width, self.rooms[1].height)
-  shape.room = self.rooms[1]
+  self:addRoom(RoomRectangle())
 
   -- Loop until 100 rooms are created
   repeat
@@ -71,22 +74,63 @@ function House:generate()
     local oldRoom = randomFrom(self.rooms)
     local newRoom = randomFrom(self.roomTypes)()
 
-    -- Pick a wall from each
+    -- Pick a wall from the old room to add the newRoom to
     local oldWall = oldRoom:randomWall()
     local newWall = newRoom:randomWall(opposite[oldWall.direction])
 
     -- Position the new room
     newRoom:move(oldRoom.x + oldWall.x - newWall.x, oldRoom.y + oldWall.y - newWall.y)
+    newRoom:move(unpack(offset[oldWall.direction]))
 
-    local shape = self.scratch:addRectangle(newRoom.x, newRoom.y, newRoom.width, newRoom.height)
-    shape.room = newRoom
-    
     -- If it doesn't overlap with another room, add it.
-    if table.count(table.filter(shape:neighbors(), f.cur(shape.collidesWith, shape))) == 0 then
-      self.rooms[#self.rooms + 1] = newRoom
-    else
-      self.scratch:remove(shape)
+    if self:collisionTest(newRoom) then
+      self:addRoom(newRoom)
+      self:addDoor(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y)
     end
 
   until #self.rooms > 100
+end
+
+function House:addRoom(room)
+  for x = room.x, room.x + room.width do
+    for y = room.y, room.y + room.height do
+      self.grid[x] = self.grid[x] or {}
+      self.grid[x][y] = 1
+    end
+  end
+
+  table.insert(self.rooms, room)
+end
+
+function House:addDoor(x1, y1, x2, y2)
+  local dx = x2 - x1
+  local dy = y2 - y1
+
+  if dx == 0 then
+    for y = y1, y2, dy do
+      for x = x1 - 1, x1 + 1 do
+        self.grid[x] = self.grid[x] or {}
+        self.grid[x][y] = 1
+      end
+    end
+  end
+
+  if dy == 0 then
+    for x = x1, x2, dx do
+      for y = y1 - 1, y1 + 1 do
+        self.grid[x] = self.grid[x] or {}
+        self.grid[x][y] = 1
+      end
+    end
+  end
+end
+
+function House:collisionTest(room)
+  for x = room.x - 1, room.x + room.width + 1 do
+    for y = room.y - 1, room.y + room.height + 1 do
+      if self.grid[x] and self.grid[x][y] == 1 then return false end
+    end
+  end
+
+  return true
 end
