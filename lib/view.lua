@@ -14,12 +14,7 @@ function View:init()
   self.prevscale = self.scale
 
   self.targetScale = self.scale
-
-  self.drawGrid = true
 end
-
-function W(ratio) return love.graphics.width() * ratio end
-function H(ratio) return love.graphics.height() * ratio end
 
 function View:update()
   self.prevx = self.x
@@ -52,7 +47,7 @@ function View:draw()
 
   for _, v in ipairs(self.toDraw) do f.exe(v.draw, v) end
   
-  if self.drawGrid then
+  if love.keyboard.isDown(' ') then
     local xx, yy = ovw.house:snap(x, y)
     love.graphics.setColor(255, 255, 255, 30)
     for i = xx - ovw.house.cellSize, xx + self.w + ovw.house.cellSize, ovw.house.cellSize do

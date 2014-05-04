@@ -11,6 +11,25 @@ function Collision:init()
   end
   
   self.hc = hardon(self.cellSize, onCollide)
+  self.depth = -100
+  ovw.view:register(self)
+end
+
+function Collision:draw()
+  if love.keyboard.isDown(' ') then
+    local rect = {
+      ovw.view.x,
+      ovw.view.y,
+      ovw.view.x + ovw.view.w,
+      ovw.view.y + ovw.view.h
+    }
+    for shape in pairs(self.hc:shapesInRange(unpack(rect))) do
+      love.graphics.setColor(255, 255, 255, 50)
+      shape:draw('fill')
+      love.graphics.setColor(255, 255, 255)
+      shape:draw('line')
+    end
+  end
 end
 
 function Collision:resolve()

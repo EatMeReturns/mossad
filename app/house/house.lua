@@ -1,14 +1,6 @@
 House = class()
 
-----------------
--- Parameters
-----------------
-House.cellSize = 32
-House.roomCount = 100
-House.roomSpacing = 1
-House.carveSize = 2
-House.hallwayCount = 35
-House.hallwayLength = 20
+require 'app/house/config'
 
 House.tag = 'wall'
 House.collision = {with = {}}
@@ -65,13 +57,10 @@ function House:draw()
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
-        love.graphics.draw(self.tileImage, self.tilemap[self.tiles[x][y]], x * self.cellSize, y * self.cellSize)
+        local quad = self.tilemap[self.tiles[x][y]]
+        love.graphics.draw(self.tileImage, quad, x * self.cellSize, y * self.cellSize, 0, self.cellSize / 32, self.cellSize / 32)
       end
     end
-  end
-
-  for i = 1, #self.shapes do
-    self.shapes[i]:draw('line')
   end
 end
 
@@ -253,9 +242,7 @@ function House:computeTiles()
 end
 
 function House:computeShapes()
-  self.shapes = {}
-
-  function coords(x, y, w, d)
+  local function coords(x, y, w, d)
     if d == 'n' then
       return ovw.collision.hc:addRectangle(self:cell(x, y, w, .5))
     elseif d == 's' then
@@ -372,7 +359,6 @@ function House:computeShapes()
         
         ovw.collision.hc:setPassive(shape)
         shape.owner = self
-        table.insert(self.shapes, shape)
       end
     end
   end

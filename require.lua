@@ -12,5 +12,6 @@ end
 load 'lib/lutil'
 load 'lib'
 load 'ovw'
+load 'app/house/house'
 load 'app/house'
 load 'app'

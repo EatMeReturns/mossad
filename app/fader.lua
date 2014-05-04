@@ -1,5 +1,8 @@
 Fader = class()
 
+local g = love.graphics
+local w, h = g.width, g.height
+
 function Fader:init()
 	self.currentText = 1
 	self.textCount = 1
@@ -32,7 +35,7 @@ end
 
 function Fader:gui()
 	if self.texts[self.currentText] then
-		love.graphics.setColor(255, 255, 255, 255 - math.abs(self.opacity))
-		love.graphics.printf(self.texts[self.currentText], W(0.5) - 150, H(0.5), 300, "center")
+		g.setColor(255, 255, 255, 255 - math.abs(self.opacity))
+		g.printf(self.texts[self.currentText], w(0.5) - 150, h(0.5), 300, "center")
 	end
 end
