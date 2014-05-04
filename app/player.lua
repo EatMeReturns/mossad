@@ -29,7 +29,7 @@ function Player:init()
   self.prevX = self.x
   self.prevY = self.y
 
-  self.depth = 0
+  self.depth = -1
 
   self.itemSelect = 1
   self.items = {}

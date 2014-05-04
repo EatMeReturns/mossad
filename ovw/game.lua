@@ -7,11 +7,19 @@ function Game:load()
   self.house = House()
   self.player = Player()
   self.spells = Manager()
+  self.enemies = Manager()
+
+  for i = 1, 20 do
+    local room = self.house.rooms[love.math.random(1, #self.house.rooms)]
+    local x, y = self.house:cell(room.x + room.width / 2, room.y + room.height / 2)
+    self.enemies:add(Shade(x, y, 10))
+  end
 end
 
 function Game:update()
   self.player:update()
   self.spells:update()
+  self.enemies:update()
   self.collision:resolve()
   self.view:update()
   self.hud.fader:update()
