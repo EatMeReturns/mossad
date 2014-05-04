@@ -58,17 +58,17 @@ Other: Ammo, First Aid Supplies, Currency?, Upgrade Materials?
 
 ###Combat rules are as follows:
 
--Taking damage occurs per-body section; the direction the player faces and the direction of the damage source determines whether it is a hit to the Head, L/R Arm, Torso, or L/R Leg.
+- Taking damage occurs per-body section; the direction the player faces and the direction of the damage source determines whether it is a hit to the Head, L/R Arm, Torso, or L/R Leg.
 -If a body section is hit hard enough, often enough, or enough times in a short period of time, it will become crippled.
--A crippled body part will debuff the player; one arm slows melee attacks and makes projectiles less accurate, two arms disables the player's ability to attack, one leg slows the player, two legs almost immobilizes the player, the head reduces the player's vision, and the torso reduces carry capacity and turn rate.
--If a crippled body section is hit hard enough, often enough, or enough times in a short period of time, it will become mortally wounded.
--A mortal wound will give the player a short amount of time to apply first aid before killing the player.
+- A crippled body part will debuff the player; one arm slows melee attacks and makes projectiles less accurate, two arms disables the player's ability to attack, one leg slows the player, two legs almost immobilizes the player, the head reduces the player's vision, and the torso reduces carry capacity and turn rate.
+- If a crippled body section is hit hard enough, often enough, or enough times in a short period of time, it will become mortally wounded.
+- A mortal wound will give the player a short amount of time to apply first aid before killing the player.
 
 ### Revised prototype/simpler/better combat rules:
 
--Taking damage is no longer per-body.
--Being hit hard enough, often enough, or enough times in a short period of time will cripple a random body part, applying a random debuff and desiring first aid.
--Being hit hard enough, often enough, or enough times while the player has at least one crippled body part will result in a mortal wound, requiring first aid.
+- Taking damage is no longer per-body.
+- Being hit hard enough, often enough, or enough times in a short period of time will cripple a random body part, applying a random debuff and desiring first aid.
+- Being hit hard enough, often enough, or enough times while the player has at least one crippled body part will result in a mortal wound, requiring first aid.
 
 ### Keyboard Commands:
 `1-5`: Quick-Use utility/active items.
