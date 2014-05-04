@@ -12,6 +12,7 @@ function Game:update()
   self.player:update()
   self.collision:resolve()
   self.view:update()
+  self.hud.fader:update()
 end
 
 function Game:draw()
