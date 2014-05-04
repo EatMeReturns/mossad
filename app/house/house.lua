@@ -25,16 +25,21 @@ function House:init()
 
   self.tileImage = love.graphics.newImage('media/graphics/newTiles.png')
   local w, h = self.tileImage:getDimensions()
+  local function t(x, y) return love.graphics.newQuad(1 + (x * 35), 1 + (y * 35), 32, 32, w, h) end
   self.tilemap = {}
-  self.tilemap.main = love.graphics.newQuad(36, 141, 32, 32, w, h)
-  self.tilemap.n = love.graphics.newQuad(36, 106, 32, 32, w, h)
-  self.tilemap.s = love.graphics.newQuad(36, 176, 32, 32, w, h)
-  self.tilemap.e = love.graphics.newQuad(71, 141, 32, 32, w, h)
-  self.tilemap.w = love.graphics.newQuad(1, 141, 32, 32, w, h)
-  self.tilemap.nw = love.graphics.newQuad(1, 106, 32, 32, w, h)
-  self.tilemap.ne = love.graphics.newQuad(71, 106, 32, 32, w, h)
-  self.tilemap.sw = love.graphics.newQuad(1, 176, 32, 32, w, h)
-  self.tilemap.se = love.graphics.newQuad(71, 176, 32, 32, w, h)
+  self.tilemap.main = t(1, 4)
+  self.tilemap.n = t(1, 3)
+  self.tilemap.s = t(1, 5)
+  self.tilemap.e = t(2, 4)
+  self.tilemap.w = t(0, 4)
+  self.tilemap.nw = t(0, 3)
+  self.tilemap.ne = t(2, 3)
+  self.tilemap.sw = t(0, 5)
+  self.tilemap.se = t(2, 5)
+  self.tilemap.inw = t(3, 3)
+  self.tilemap.ine = t(4, 3)
+  self.tilemap.isw = t(3, 4)
+  self.tilemap.ise = t(4, 4)
 end
 
 function House:destroy()
@@ -178,22 +183,33 @@ function House:computeTiles()
     for y in pairs(self.grid[x]) do
       if self.grid[x][y] and self.grid[x][y] == 1 then
         self.tiles[x] = self.tiles[x] or {}
-        if get(x - 1, y) and get(x + 1, y) and not get(x, y - 1) then
+        local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
+        local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
+        local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
+        if w and e and not n then
           self.tiles[x][y] = 'n'
-        elseif get(x - 1, y) and get(x + 1, y) and not get(x, y + 1) then
+        elseif w and e and not s then
           self.tiles[x][y] = 's'
-        elseif get(x, y - 1) and get(x, y + 1) and not get(x + 1, y) then
+        elseif n and s and not e then
           self.tiles[x][y] = 'e'
-        elseif get(x, y - 1) and get(x, y + 1) and not get(x - 1, y) then
+        elseif n and s and not w then
           self.tiles[x][y] = 'w'
-        elseif get(x + 1, y) and get(x, y + 1) and not get(x - 1, y) and not get(x, y - 1) then
+        elseif e and s and not w and not n then
           self.tiles[x][y] = 'nw'
-        elseif get(x - 1, y) and get(x, y + 1) and not get(x + 1, y) and not get(x, y - 1) then
+        elseif w and s and not e and not n then
           self.tiles[x][y] = 'ne'
-        elseif get(x + 1, y) and get(x, y - 1) and not get(x - 1, y) and not get(x, y + 1) then
+        elseif e and n and not w and not s then
           self.tiles[x][y] = 'sw'
-        elseif get(x - 1, y) and get(x, y - 1) and not get(x + 1, y) and not get(x, y + 1) then
+        elseif w and n and not e and not s then
           self.tiles[x][y] = 'se'
+        elseif w and n and not nw then
+          self.tiles[x][y] = 'inw'
+        elseif n and e and not ne then
+          self.tiles[x][y] = 'ine'
+        elseif s and w and not sw then
+          self.tiles[x][y] = 'isw'
+        elseif s and e and not se then
+          self.tiles[x][y] = 'ise'
         elseif get(x, y) then
           self.tiles[x][y] = 'main'
         end
