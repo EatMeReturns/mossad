@@ -1,4 +1,13 @@
+Labyrinth
+===
+
+Overview
+---
+
 Labyrinth is an experiment on making a game that learns and procedurally generates a meaningful story. A general sense of exploration should be coupled and contrasted with a pervading sense of fear. Do not mistake this fear as an element of the game: it should be generated within the player explicitly through game mechanics. The game itself is expressionless, faceless: a creature of darkness. Thus, no character has a face or voice. The only sounds are those of the physical realm. The smack of metal on flesh, the click of a flashlight, the grating of a sliding wall. The environment is alive. It moves, it wills. There is a clear conflict between the player and the environment. It is not player versus enemies in a house. It is player versus enemies versus house. The gameplay is that of survival: how long can you last in the house before succumbing to mortality? The player must maintain body and mind. Body is not a numeric measurement of health but is closer to reality in that limbs and organs become injured and crippled. The mind is a measure of sanity that impresses an emotion of fear on to the emotionless environment, turning the unbiased judge of darkness in to a more sinister shadow as the player approaches defeat. The spirit is driven purely by the player's constructed fear and makes no formal appearance in-game other than to punish stagnancy. Generally speaking, the player rarely observes the formation of the house. Where he looks, it already is there; he must discover for himself the generative and changing properties of his environment. This does not mean he will not witness change: these glimpses provide moments of tension to build on the fear of the player. This is descriptive of most fear-building exercises practiced in this game: slow, deliberate exploration broken by moments of rapid tension and high stress for the player. Most encounters carry the risk of death and defeat for the player. The player will understand and respect his own fragility in the house. The fear is thus two-fold: The sudden jump-scare terror of the high tension moments coupled with the slow building and realization of the player's morality demanding an observational caution. The house will employ traps. Walls that snap together, crushing limbs; floors that give way in to darkness; cramped dead ends.
+
+Enemies
+---
 
 The Basilisk is a boss with a grid for an arena. He surrounds the grid with his body, directing his head inward from the top-center. His attacks involve lunging strikes that always cripple and a stare that paralyzes the player over time. The player may do minor damage to his armored body all the way around the arena, but hitting the head will do the most damage. The player may also cripple the basilisk's eyes, negating his ability to paralyze. His movements produce a heavy hissing sound. (See: Harry Potter)
 
@@ -15,6 +24,9 @@ The Avian is a boss with an arena riddled with deep pits. The arena is surrounde
 An Ink Raven is a black, fast bird that swoops out from the shadows like some fucking bat or some shit.
 
 A Spiderling is a little spider that likes to swarm.
+
+Items
+---
 
 The Behold of the Eye is a passive item that causes items and other loot to glow, both producing light and making them visible through walls.
 
@@ -44,28 +56,30 @@ Active: Solar Flare, Blinkstone
 Weapon: Scaled Shield, Inktalons, Pistol, Shotgun, Crossbow, Flare Gun, Assault Rifle
 Other: Ammo, First Aid Supplies, Currency?, Upgrade Materials?
 
-Combat rules are as follows:
+###Combat rules are as follows:
+
 -Taking damage occurs per-body section; the direction the player faces and the direction of the damage source determines whether it is a hit to the Head, L/R Arm, Torso, or L/R Leg.
 -If a body section is hit hard enough, often enough, or enough times in a short period of time, it will become crippled.
 -A crippled body part will debuff the player; one arm slows melee attacks and makes projectiles less accurate, two arms disables the player's ability to attack, one leg slows the player, two legs almost immobilizes the player, the head reduces the player's vision, and the torso reduces carry capacity and turn rate.
 -If a crippled body section is hit hard enough, often enough, or enough times in a short period of time, it will become mortally wounded.
 -A mortal wound will give the player a short amount of time to apply first aid before killing the player.
 
-Revised prototype/simpler/better combat rules:
+### Revised prototype/simpler/better combat rules:
+
 -Taking damage is no longer per-body.
 -Being hit hard enough, often enough, or enough times in a short period of time will cripple a random body part, applying a random debuff and desiring first aid.
 -Being hit hard enough, often enough, or enough times while the player has at least one crippled body part will result in a mortal wound, requiring first aid.
 
-Keyboard Commands:
-1-5: Quick-Use utility/active items.
-Spacebar: Roll.
-M1: Fire equipped weapon/melee attack.
-M2: Melee equipped weapon/heavy melee attack.
-Scroll: Cycle equipped weapon.
-WASD: Walk.
-Shift+WASD: Run.
-R: Reload.
-H: Apply First Aid to crippled body section.
-E: Open the backpack/interact.
-Mouse: Aim.
-U: Upgrade equipment?
+### Keyboard Commands:
+`1-5`: Quick-Use utility/active items.
+`Spacebar`: Roll.
+`M1`: Fire equipped weapon/melee attack.
+`M2`: Melee equipped weapon/heavy melee attack.
+`Scroll`: Cycle equipped weapon.
+`WASD`: Walk.
+`Shift+WASD`: Run.
+`R`: Reload.
+`H`: Apply First Aid to crippled body section.
+`E`: Open the backpack/interact.
+`Mouse`: Aim.
+`U`: Upgrade equipment?
