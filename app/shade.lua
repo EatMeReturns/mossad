@@ -1,9 +1,17 @@
 Shade = extend(Enemy)
 
+Shade.collision.shape = 'circle'
+Shade.radius = 8
+
 function Shade:init(...)
   Enemy.init(self, ...)
 
-  self.targetAngle = self.angle
+  self.sight = 300
+  self.target = nil
+  self.scanTimer = 0
+  
+  self.runSpeed = 110
+  self.walkSpeed = 50
 end
 
 function Shade:scan()
