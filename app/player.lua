@@ -13,8 +13,8 @@ Player.collision = {
 
 function Player:init()
   self.name = 'player'
-  self.x = 0
-  self.y = 0
+  self.x = ovw.house:cell(ovw.house.rooms[1].x + ovw.house.rooms[1].width / 2)
+  self.y = ovw.house:cell(ovw.house.rooms[1].y + ovw.house.rooms[1].height / 2)
   self.angle = 0
   self.radius = 16
   self.node = {x = self.x, y = self.y}

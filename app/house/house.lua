@@ -103,8 +103,10 @@ function House:generate()
   local function get(x, y)
     return self.grid[x] and self.grid[x][y] == 1
   end
-  
-  self:addRoom(RoomRectangle())
+
+  local room = RoomRectangle()
+  room.x, room.y = 100, 100
+  self:addRoom(room)
 
   repeat
 
@@ -318,7 +320,7 @@ function House:computeShapes()
   local tiles = table.copy(self.tiles)
 
   for x in pairs(tiles) do
-    for y in pairs(tiles) do
+    for y in pairs(tiles[x]) do
       if tiles[x][y] and tiles[x][y] ~= 'main' then
         local z = 1
         local d = tiles[x][y]
