@@ -20,7 +20,6 @@ function House:init()
   self:generate()
 
   self.depth = 5
-  self.clipRect = {}
   ovw.view:register(self)
 end
 
@@ -30,8 +29,12 @@ end
 
 function House:draw()
   love.graphics.setColor(50, 0, 0)
-  for x = -100, 100 do
-    for y = -100, 100 do
+  local x1, x2 = self:snap(ovw.view.x, ovw.view.x + ovw.view.w)
+  x1, x2 = x1 / self.cellSize - 1, x2 / self.cellSize + 1
+  local y1, y2 = self:snap(ovw.view.y, ovw.view.y + ovw.view.h)
+  y1, y2 = y1 / self.cellSize - 1, y2 / self.cellSize + 1
+  for x = x1, x2 do
+    for y = y1, y2 do
       if self.grid[x] and self.grid[x][y] == 1 then
         love.graphics.rectangle('fill', self:cell(x, y, 1, 1))
       end
@@ -126,8 +129,9 @@ function House:addDoor(x1, y1, x2, y2)
 end
 
 function House:collisionTest(room)
-  for x = room.x - 1, room.x + room.width + 1 do
-    for y = room.y - 1, room.y + room.height + 1 do
+  local padding = 1
+  for x = room.x - padding, room.x + room.width + padding do
+    for y = room.y - padding, room.y + room.height + padding do
       if self.grid[x] and self.grid[x][y] == 1 then return false end
     end
   end

@@ -13,7 +13,7 @@ function View:init()
   self.prevy = 0
   self.prevscale = self.scale
 
-  self.targetScale = .1
+  self.targetScale = self.scale
 
   self.drawGrid = true
 end
