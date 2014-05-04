@@ -1,7 +1,7 @@
 local hardon = require 'lib/hardon'
 
 Collision = class()
-Collision.cellSize = 128
+Collision.cellSize = 32
 
 function Collision:init()
   local function onCollide(dt, a, b, dx, dy)

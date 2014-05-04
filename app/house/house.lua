@@ -6,11 +6,12 @@ House = class()
 House.cellSize = 32
 House.roomCount = 100
 House.roomSpacing = 1
-House.doorSize = 2
+House.carveSize = 2
 House.hallwayCount = 35
 House.hallwayLength = 20
 
-local hardon = require 'lib/hardon'
+House.tag = 'wall'
+House.collision = {with = {}}
 
 require 'app/house/room'
 require 'app/house/roomRectangle'
@@ -20,19 +21,12 @@ local function randomFrom(t)
   return t[love.math.random(1, #t)]
 end
 
-
 function House:init()
   self.roomTypes = {RoomRectangle}
   self.rooms = {}
 
   self.grid = {}
-
-  self:generate()
-
-  self.depth = 5
-  self.drawTiles = true
-  ovw.view:register(self)
-
+  
   self.tileImage = love.graphics.newImage('media/graphics/newTiles.png')
   local w, h = self.tileImage:getDimensions()
   local function t(x, y) return love.graphics.newQuad(1 + (x * 35), 1 + (y * 35), 32, 32, w, h) end
@@ -50,6 +44,11 @@ function House:init()
   self.tilemap.ine = t(4, 3)
   self.tilemap.isw = t(3, 4)
   self.tilemap.ise = t(4, 4)
+
+  self:generate()
+
+  self.depth = 5
+  ovw.view:register(self)
 end
 
 function House:destroy()
@@ -61,13 +60,18 @@ function House:draw()
   x1, x2 = x1 / self.cellSize - 1, x2 / self.cellSize + 1
   local y1, y2 = self:snap(ovw.view.y, ovw.view.y + ovw.view.h)
   y1, y2 = y1 / self.cellSize - 1, y2 / self.cellSize + 1
+  
+  love.graphics.setColor(255, 255, 255)
   for x = x1, x2 do
     for y = y1, y2 do
-      if self.drawTiles and self.tiles[x] and self.tiles[x][y] then
-        love.graphics.setColor(255, 255, 255)
+      if self.tiles[x] and self.tiles[x][y] then
         love.graphics.draw(self.tileImage, self.tilemap[self.tiles[x][y]], x * self.cellSize, y * self.cellSize)
       end
     end
+  end
+
+  for i = 1, #self.shapes do
+    self.shapes[i]:draw('line')
   end
 end
 
@@ -119,7 +123,7 @@ function House:generate()
     -- If it doesn't overlap with another room, add it.
     if self:collisionTest(newRoom) then
       self:addRoom(newRoom)
-      self:addDoor(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y)
+      self:carve(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y)
     end
 
   until #self.rooms > self.roomCount
@@ -138,13 +142,14 @@ function House:generate()
       x, y = x + dx, y + dy
       if get(x, y) then
         hallways = hallways + 1
-        self:addDoor(x1, y1, x, y)
+        self:carve(x1, y1, x, y)
         break
       end
     end
   until hallways > self.hallwayCount
 
   self:computeTiles()
+  self:computeShapes()
 end
 
 function House:addRoom(room)
@@ -166,13 +171,13 @@ function House:addRoom(room)
   table.insert(self.rooms, room)
 end
 
-function House:addDoor(x1, y1, x2, y2)
+function House:carve(x1, y1, x2, y2)
   local dx = math.sign(x2 - x1)
   local dy = math.sign(y2 - y1)
 
   if dx == 0 then
     for y = y1, y2, dy do
-      for x = x1 - self.doorSize, x1 + self.doorSize do
+      for x = x1 - self.carveSize, x1 + self.carveSize do
         self.grid[x] = self.grid[x] or {}
         self.grid[x][y] = 1
       end
@@ -181,7 +186,7 @@ function House:addDoor(x1, y1, x2, y2)
 
   if dy == 0 then
     for x = x1, x2, dx do
-      for y = y1 - self.doorSize, y1 + self.doorSize do
+      for y = y1 - self.carveSize, y1 + self.carveSize do
         self.grid[x] = self.grid[x] or {}
         self.grid[x][y] = 1
       end
@@ -240,6 +245,132 @@ function House:computeTiles()
         elseif get(x, y) then
           self.tiles[x][y] = 'main'
         end
+      end
+    end
+  end
+end
+
+function House:computeShapes()
+  self.shapes = {}
+
+  function coords(x, y, w, d)
+    if d == 'n' then
+      return ovw.collision.hc:addRectangle(self:cell(x, y, w, .5))
+    elseif d == 's' then
+      return ovw.collision.hc:addRectangle(self:cell(x, y + .5, w, .5))
+    elseif d == 'w' then
+      return ovw.collision.hc:addRectangle(self:cell(x, y, .5, w))
+    elseif d == 'e' then
+      return ovw.collision.hc:addRectangle(self:cell(x + .5, y, .5, w))
+    elseif d == 'inw' then
+      return ovw.collision.hc:addRectangle(self:cell(x, y, .5, .5))
+    elseif d == 'ine' then
+      return ovw.collision.hc:addRectangle(self:cell(x + .5, y, .5, .5))
+    elseif d == 'isw' then
+      return ovw.collision.hc:addRectangle(self:cell(x, y + .5, .5, .5))
+    elseif d == 'ise' then
+      return ovw.collision.hc:addRectangle(self:cell(x + .5, y + .5, .5, .5))
+    elseif d == 'nw' then
+      local pts = {
+        x, y,
+        x + 1, y,
+        x + 1, y + .5,
+        x + .5, y + .5,
+        x + .5, y + 1,
+        x, y + 1
+      }
+      return ovw.collision.hc:addPolygon(self:cell(unpack(pts)))
+    elseif d == 'ne' then
+      local pts = {
+        x, y,
+        x + 1, y,
+        x + 1, y + 1,
+        x + .5, y + 1,
+        x + .5, y + .5,
+        x, y + .5
+      }
+      return ovw.collision.hc:addPolygon(self:cell(unpack(pts)))
+    elseif d == 'sw' then
+      local pts = {
+        x, y,
+        x + .5, y,
+        x + .5, y + .5,
+        x + 1, y + .5,
+        x + 1, y + 1,
+        x, y + 1
+      }
+      return ovw.collision.hc:addPolygon(self:cell(unpack(pts)))
+    elseif d == 'se' then
+      local pts = {
+        x + .5, y,
+        x + 1, y,
+        x + 1, y + 1,
+        x, y + 1,
+        x, y + .5,
+        x + .5, y + .5
+      }
+      return ovw.collision.hc:addPolygon(self:cell(unpack(pts)))
+    else
+      return ovw.collision.hc:addRectangle(self:cell(x, y, 1, 1))
+    end
+  end
+
+  local tiles = table.copy(self.tiles)
+
+  for x in pairs(tiles) do
+    for y in pairs(tiles) do
+      if tiles[x][y] and tiles[x][y] ~= 'main' then
+        local z = 1
+        local d = tiles[x][y]
+        local xx, yy = x, y
+        
+        if d == 'n' or d == 's' then
+          tiles[xx][yy] = nil
+          while true do
+            if tiles[xx - 1][yy] == 'n' or tiles[xx - 1][yy] == 's' then
+              tiles[xx - 1][yy] = nil
+              xx = xx - 1
+              z = z + 1
+            else
+              break
+            end
+          end
+
+          while true do
+            if tiles[xx + z][yy] == 'n' or tiles[xx + z][yy] == 's' then
+              tiles[xx + z][yy] = nil
+              z = z + 1
+            else
+              break
+            end
+          end
+        elseif d == 'w' or d == 'e' then
+          tiles[xx][yy] = nil
+          while true do
+            if tiles[xx][yy - 1] == 'w' or tiles[xx][yy - 1] == 'e' then
+              tiles[xx][yy - 1] = nil
+              yy = yy - 1
+              z = z + 1
+            else
+              break
+            end
+          end
+
+          while true do
+            if tiles[xx][yy + z] == 'w' or tiles[xx][yy + z] == 'e' then
+              tiles[xx][yy + z] = nil
+              z = z + 1
+            else
+              break
+            end
+          end
+        end
+        
+        local shape = coords(xx, yy, z, d)
+        
+        ovw.collision.hc:setPassive(shape)
+        shape.owner = self
+        table.insert(self.shapes, shape)
       end
     end
   end
