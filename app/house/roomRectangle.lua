@@ -11,12 +11,12 @@ function RoomRectangle:init()
   self.height = math.round(math.clamp(self.height, 4, 50))
 
   for i = 0, self.width - 1 do
-    self.walls.north[#self.walls.north + 1] = {x = i, y = -1}
-    self.walls.south[#self.walls.south + 1] = {x = i, y = self.height}
+    self.walls.north[#self.walls.north + 1] = {x = i, y = -1, direction = 'north'}
+    self.walls.south[#self.walls.south + 1] = {x = i, y = self.height, direction = 'south'}
   end
 
   for i = 0, self.height - 1 do
-    self.walls.west[#self.walls.west + 1] = {x = -1, y = i}
-    self.walls.east[#self.walls.east + 1] = {x = self.width, y = i}
+    self.walls.west[#self.walls.west + 1] = {x = -1, y = i, direction = 'west'}
+    self.walls.east[#self.walls.east + 1] = {x = self.width, y = i, direction = 'east'}
   end
 end

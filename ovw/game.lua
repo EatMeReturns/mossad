@@ -6,11 +6,12 @@ function Game:load()
   self.collision = Collision()
   self.house = House()
   self.player = Player()
+  self.spells = Manager()
 end
 
 function Game:update()
   self.player:update()
-  self.house:update()
+  self.spells:update()
   self.collision:resolve()
   self.view:update()
   self.hud.fader:update()

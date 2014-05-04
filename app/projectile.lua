@@ -24,12 +24,14 @@ function Projectile:init(damage, x, y, direction, speed)
   self.direction = direction
   self.speed = speed
 
+  ovw.view:register(self)
   ovw.collision:register(self)
   self.shape:moveTo(self.x - self.width / 2, self.y - self.height / 2)
 end
 
 function Projectile:destroy()
-  ovw.level.projectiles = table.filter(ovw.level.projectiles, function(projectile) if projectile == self then return false else return true end end)
+  ovw.spells:remove(self)
+  ovw.view:unregister(self)
   ovw.collision.hc:remove(self.shape)
 end
 
@@ -40,6 +42,6 @@ function Projectile:update()
 end
 
 function Projectile:draw()
-  love.graphics.setColor(white[1], white[2], white[3], 255)
+  love.graphics.setColor(255, 255, 255)
   self.shape:draw('fill')
 end
