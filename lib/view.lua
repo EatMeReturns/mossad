@@ -3,8 +3,8 @@ View = class()
 function View:init()
   self.x = 0
   self.y = 0
-  self.w = 600
-  self.h = 450
+  self.w = 800
+  self.h = 600
   self.toDraw = {}
   self.target = nil
 
@@ -33,7 +33,7 @@ function View:update()
   self.h = love.graphics.getHeight() / self.scale
   self.x = self.x + (prevw - self.w) * xf
   self.y = self.y + (prevh - self.h) * yf
-  
+
   self:follow()
 end
 

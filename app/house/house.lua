@@ -20,7 +20,21 @@ function House:init()
   self:generate()
 
   self.depth = 5
+  self.drawTiles = true
   ovw.view:register(self)
+
+  self.tileImage = love.graphics.newImage('media/graphics/newTiles.png')
+  local w, h = self.tileImage:getDimensions()
+  self.tilemap = {}
+  self.tilemap.main = love.graphics.newQuad(36, 36, 32, 32, w, h)
+  self.tilemap.n = love.graphics.newQuad(36, 1, 32, 32, w, h)
+  self.tilemap.s = love.graphics.newQuad(36, 71, 32, 32, w, h)
+  self.tilemap.e = love.graphics.newQuad(71, 36, 32, 32, w, h)
+  self.tilemap.w = love.graphics.newQuad(1, 36, 32, 32, w, h)
+  self.tilemap.nw = love.graphics.newQuad(1, 1, 32, 32, w, h)
+  self.tilemap.ne = love.graphics.newQuad(71, 1, 32, 32, w, h)
+  self.tilemap.sw = love.graphics.newQuad(1, 71, 32, 32, w, h)
+  self.tilemap.se = love.graphics.newQuad(71, 71, 32, 32, w, h)
 end
 
 function House:destroy()
@@ -28,7 +42,6 @@ function House:destroy()
 end
 
 function House:draw()
-  love.graphics.setColor(50, 0, 0)
   local x1, x2 = self:snap(ovw.view.x, ovw.view.x + ovw.view.w)
   x1, x2 = x1 / self.cellSize - 1, x2 / self.cellSize + 1
   local y1, y2 = self:snap(ovw.view.y, ovw.view.y + ovw.view.h)
@@ -36,7 +49,13 @@ function House:draw()
   for x = x1, x2 do
     for y = y1, y2 do
       if self.grid[x] and self.grid[x][y] == 1 then
+        love.graphics.setColor(50, 0, 0)
         love.graphics.rectangle('fill', self:cell(x, y, 1, 1))
+      end
+
+      if self.drawTiles and self.tiles[x] and self.tiles[x][y] then
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.draw(self.tileImage, self.tilemap[self.tiles[x][y]], x * self.cellSize, y * self.cellSize)
       end
     end
   end
@@ -61,10 +80,10 @@ function House:generate()
   }
 
   local offset = {
-    north = {0, -1},
-    south = {0, 1},
-    east = {1, 0},
-    west = {-1, 0}
+    north = {0, -3},
+    south = {0, 3},
+    east = {3, 0},
+    west = {-3, 0}
   }
   
   -- Create initial room
@@ -92,6 +111,8 @@ function House:generate()
     end
 
   until #self.rooms > 100
+
+  self:computeTiles()
 end
 
 function House:addRoom(room)
@@ -102,12 +123,20 @@ function House:addRoom(room)
     end
   end
 
+  for _, dir in pairs({'north', 'south', 'east', 'west'}) do
+    for _, wall in pairs(room.walls[dir]) do
+      local x, y = room.x + wall.x, room.y + wall.y
+      self.grid[x] = self.grid[x] or {}
+      self.grid[x][y] = 1
+    end
+  end
+
   table.insert(self.rooms, room)
 end
 
 function House:addDoor(x1, y1, x2, y2)
-  local dx = x2 - x1
-  local dy = y2 - y1
+  local dx = math.sign(x2 - x1)
+  local dy = math.sign(y2 - y1)
 
   if dx == 0 then
     for y = y1, y2, dy do
@@ -129,7 +158,7 @@ function House:addDoor(x1, y1, x2, y2)
 end
 
 function House:collisionTest(room)
-  local padding = 1
+  local padding = 2
   for x = room.x - padding, room.x + room.width + padding do
     for y = room.y - padding, room.y + room.height + padding do
       if self.grid[x] and self.grid[x][y] == 1 then return false end
@@ -137,4 +166,30 @@ function House:collisionTest(room)
   end
 
   return true
+end
+
+function House:computeTiles()
+  local function get(x, y)
+    return self.grid[x] and self.grid[x][y] == 1
+  end
+
+  self.tiles = {}
+  for x in pairs(self.grid) do
+    for y in pairs(self.grid[x]) do
+      if self.grid[x][y] and self.grid[x][y] == 1 then
+        self.tiles[x] = self.tiles[x] or {}
+        if get(x, y) and get(x - 1, y) and get(x + 1, y) and not get(x, y - 1) then
+          self.tiles[x][y] = 'n'
+        elseif get(x, y) and get(x - 1, y) and get(x + 1, y) and not get(x, y + 1) then
+          self.tiles[x][y] = 's'
+        elseif get(x, y) and get(x, y - 1) and get(x, y + 1) and not get(x + 1, y) then
+          self.tiles[x][y] = 'e'
+        elseif get(x, y) and get(x, y - 1) and get(x, y + 1) and not get(x - 1, y) then
+          self.tiles[x][y] = 'w'
+        elseif get(x, y) then
+          self.tiles[x][y] = 'main'
+        end
+      end
+    end
+  end
 end

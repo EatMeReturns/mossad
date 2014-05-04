@@ -31,19 +31,3 @@ end
 function Room:moveTo(x, y)
   self.x, self.y = x, y
 end
-
--- Compile all individual wall tiles into maximal-sized rectangles
-function Room:compile()
-  local startx, starty, prev
-  startx, starty, prev = 0, 0
-  local n, s, e, w = {}, {}, {}, {}
-  for i = 1, #self.walls.north do
-    local wall = self.walls.north[i]
-    if math.abs(wall.x - prev) > 1 or wall.y ~= starty then
-      n[#n + 1] = {x = startx, y = starty, width = prev - startx, height = 1}
-      startx = wall.x
-    end
-    prev = wall.x
-  end
-  self.walls.north = n
-end

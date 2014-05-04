@@ -27,7 +27,7 @@ function Game:keypressed(key)
   elseif key == 'r' then
     self.house:destroy()
     self.house = new(House)
-  end
+  elseif key == 't' then self.house.drawTiles = not self.house.drawTiles end
   self.player:keypressed(key)
 end
 

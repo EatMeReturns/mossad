@@ -22,8 +22,8 @@ function Player:init()
   self.speed = 0
   self.maxSpeed = 165
 
-  self.frontImage = love.graphics.newImage('media/anImage.png')
-  self.backImage = love.graphics.newImage('media/anImageBack.png')
+  self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
+  self.backImage = love.graphics.newImage('media/graphics/anImageBack.png')
   self.image = self.frontImage
 
   self.prevX = self.x
