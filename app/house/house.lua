@@ -53,11 +53,6 @@ function House:draw()
   y1, y2 = y1 / self.cellSize - 1, y2 / self.cellSize + 1
   for x = x1, x2 do
     for y = y1, y2 do
-      if self.grid[x] and self.grid[x][y] == 1 then
-        love.graphics.setColor(50, 0, 0)
-        love.graphics.rectangle('fill', self:cell(x, y, 1, 1))
-      end
-
       if self.drawTiles and self.tiles[x] and self.tiles[x][y] then
         love.graphics.setColor(255, 255, 255)
         love.graphics.draw(self.tileImage, self.tilemap[self.tiles[x][y]], x * self.cellSize, y * self.cellSize)
