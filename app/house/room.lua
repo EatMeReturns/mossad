@@ -21,7 +21,7 @@ end
 
 function Room:randomWall(dir)
   dir = dir or randomFrom(dirs)
-  return self.walls[dir][love.math.random(2, #self.walls[dir] - 1)]
+  return self.walls[dir][love.math.random(3, #self.walls[dir] - 2)]
 end
 
 function Room:move(dx, dy)

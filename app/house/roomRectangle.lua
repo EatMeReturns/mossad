@@ -7,8 +7,8 @@ function RoomRectangle:init()
 
   self.width = love.math.randomNormal(4, 10)
   self.height = love.math.randomNormal(4, 10)
-  self.width = math.round(math.clamp(self.width, 4, 50))
-  self.height = math.round(math.clamp(self.height, 4, 50))
+  self.width = math.round(math.clamp(self.width, 5, 50))
+  self.height = math.round(math.clamp(self.height, 5, 50))
 
   for i = -1, self.width do
     self.walls.north[#self.walls.north + 1] = {x = i, y = -1, direction = 'north'}

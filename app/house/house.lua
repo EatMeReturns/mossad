@@ -14,6 +14,7 @@ House.cellSize = 32
 function House:init()
   self.roomTypes = {RoomRectangle}
   self.rooms = {}
+  self.roomSpacing = 1
 
   self.grid = {}
 
@@ -80,10 +81,10 @@ function House:generate()
   }
 
   local offset = {
-    north = {0, -3},
-    south = {0, 3},
-    east = {3, 0},
-    west = {-3, 0}
+    north = {0, -self.roomSpacing},
+    south = {0, self.roomSpacing},
+    east = {self.roomSpacing, 0},
+    west = {-self.roomSpacing, 0}
   }
   
   -- Create initial room
@@ -140,7 +141,7 @@ function House:addDoor(x1, y1, x2, y2)
 
   if dx == 0 then
     for y = y1, y2, dy do
-      for x = x1 - 1, x1 + 1 do
+      for x = x1 - 2, x1 + 2 do
         self.grid[x] = self.grid[x] or {}
         self.grid[x][y] = 1
       end
@@ -149,7 +150,7 @@ function House:addDoor(x1, y1, x2, y2)
 
   if dy == 0 then
     for x = x1, x2, dx do
-      for y = y1 - 1, y1 + 1 do
+      for y = y1 - 2, y1 + 2 do
         self.grid[x] = self.grid[x] or {}
         self.grid[x][y] = 1
       end
@@ -158,7 +159,7 @@ function House:addDoor(x1, y1, x2, y2)
 end
 
 function House:collisionTest(room)
-  local padding = 2
+  local padding = self.roomSpacing - 1
   for x = room.x - padding, room.x + room.width + padding do
     for y = room.y - padding, room.y + room.height + padding do
       if self.grid[x] and self.grid[x][y] == 1 then return false end
