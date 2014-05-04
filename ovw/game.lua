@@ -17,6 +17,7 @@ function Game:load()
 end
 
 function Game:update()
+  self.house:update()
   self.player:update()
   self.spells:update()
   self.enemies:update()

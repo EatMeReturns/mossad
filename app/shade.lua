@@ -58,8 +58,10 @@ end
 
 function Shade:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
-  love.graphics.setColor(255, 255, 255, 255)
-  if self.target ~= nil then love.graphics.setColor(255, 0, 0, 255) end
+  local tx, ty = math.round(self.x / ovw.house.cellSize), math.round(self.y / ovw.house.cellSize)
+  local v = ovw.house.tileAlpha[tx][ty]
+  love.graphics.setColor(v, v, v)
+  if self.target ~= nil then love.graphics.setColor(v, 0, 0) end
   self.shape:draw()
   love.graphics.line(self.x, self.y, self.x + math.cos(self.angle) * self.radius, self.y + math.sin(self.angle) * self.radius)
 end

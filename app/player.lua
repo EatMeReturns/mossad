@@ -20,7 +20,7 @@ function Player:init()
   self.node = {x = self.x, y = self.y}
   
   self.speed = 0
-  self.maxSpeed = 165
+  self.maxSpeed = 150
 
   self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
   self.backImage = love.graphics.newImage('media/graphics/anImageBack.png')

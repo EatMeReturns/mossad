@@ -17,7 +17,7 @@ end
 function Hud:debug()
   g.setFont(self.font)
   g.setColor(255, 255, 255)
-  g.print(love.timer.getFPS() .. 'fps', 1, g.height() - g.getFont():getHeight())
+  g.print(love.timer.getFPS() .. 'fps ' .. (ovw.view.scale * 100) .. '%', 1, g.height() - g.getFont():getHeight())
 end
 
 function Hud:items()

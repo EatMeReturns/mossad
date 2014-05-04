@@ -47,18 +47,39 @@ function House:destroy()
   ovw.view:unregister(self)
 end
 
+function House:update()
+  local x1, x2 = self:snap(ovw.view.x, ovw.view.x + ovw.view.w)
+  x1, x2 = x1 / self.cellSize - 1, x2 / self.cellSize + 1
+  local y1, y2 = self:snap(ovw.view.y, ovw.view.y + ovw.view.h)
+  y1, y2 = y1 / self.cellSize - 1, y2 / self.cellSize + 1
+  
+  for x = x1, x2 do
+    for y = y1, y2 do
+      if self.tiles[x] and self.tiles[x][y] then
+        local px, py = ovw.player.x - self.cellSize / 2, ovw.player.y - self.cellSize / 2
+        local dis = self:snap(math.distance(px, py, self:cell(x, y)))
+        local value = (1 - (math.clamp(dis, 50, 400) / 400)) * 255
+        self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], value, 1 * tickRate)
+      end
+    end
+  end
+end
+
 function House:draw()
   local x1, x2 = self:snap(ovw.view.x, ovw.view.x + ovw.view.w)
   x1, x2 = x1 / self.cellSize - 1, x2 / self.cellSize + 1
   local y1, y2 = self:snap(ovw.view.y, ovw.view.y + ovw.view.h)
   y1, y2 = y1 / self.cellSize - 1, y2 / self.cellSize + 1
   
-  love.graphics.setColor(255, 255, 255)
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
-        local quad = self.tilemap[self.tiles[x][y]]
-        love.graphics.draw(self.tileImage, quad, x * self.cellSize, y * self.cellSize, 0, self.cellSize / 32, self.cellSize / 32)
+        local v = self.tileAlpha[x][y]
+        if v > .01 then
+          love.graphics.setColor(v, v, v)
+          local quad = self.tilemap[self.tiles[x][y]]
+          love.graphics.draw(self.tileImage, quad, x * self.cellSize, y * self.cellSize, 0, self.cellSize / 32, self.cellSize / 32)
+        end
       end
     end
   end
@@ -66,7 +87,7 @@ end
 
 function House:snap(x, ...)
   if not x then return end
-  return math.floor(x / self.cellSize) * self.cellSize, self:snap(...)
+  return math.round(x / self.cellSize) * self.cellSize, self:snap(...)
 end
 
 function House:cell(x, ...)
@@ -202,10 +223,13 @@ function House:computeTiles()
   end
 
   self.tiles = {}
+  self.tileAlpha = {}
   for x in pairs(self.grid) do
     for y in pairs(self.grid[x]) do
       if self.grid[x][y] and self.grid[x][y] == 1 then
         self.tiles[x] = self.tiles[x] or {}
+        self.tileAlpha[x] = self.tileAlpha[x] or {}
+        self.tileAlpha[x][y] = 0
         local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
         local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
         local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
