@@ -47,8 +47,17 @@ function Shade:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = math.round((self.x - 16) / ovw.house.cellSize), math.round((self.y - 16) / ovw.house.cellSize)
   local v = ovw.house.tileAlpha[tx][ty]
+  if self.attackTimer > 0 then
+    local a = .4
+    local d = self.angle
+    for i = 10, 40, 10 do
+      love.graphics.setColor(255, 255, 255, v * a * (self.attackTimer / self.attackTime))
+      love.graphics.draw(self.image, x + math.dx(i, d), y + math.dy(i, d), self.angle, 1, 1, 29, 14)
+      a = a - .1
+    end
+  end
   love.graphics.setColor(255, 255, 255, v)
-  love.graphics.draw(self.image, self.x, self.y, self.angle, 1, 1, 29, 14)
+  love.graphics.draw(self.image, x, y, self.angle, 1, 1, 29, 14)
 end
 
 function Shade:scan()
@@ -118,7 +127,7 @@ end
 function Shade:attack()
   local dis, dir = math.vector(self.x, self.y, self.target.x, self.target.y)
   local speed = self.windupRange / self.attackTime * tickRate
-  speed = math.min(speed, dis - (self.radius + self.target.radius))
+  speed = math.min(speed, math.max(dis - (self.radius + self.target.radius), 0))
   self.x = self.x + math.dx(speed, self.angle)
   self.y = self.y + math.dy(speed, self.angle)
   

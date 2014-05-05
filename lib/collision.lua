@@ -33,6 +33,7 @@ function Collision:draw()
 end
 
 function Collision:resolve()
+  print(tick)
   self.hc:update(tickRate)
 end
 
