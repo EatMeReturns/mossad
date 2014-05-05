@@ -16,7 +16,7 @@ Enemy.collision.with.enemy = function(self, other, dx, dy)
   end
 end
 
-function Enemy:init(x, y, health)
+function Enemy:init(x, y)
   self.x = x
   self.y = y
   self.prevX = self.x
@@ -28,9 +28,6 @@ function Enemy:init(x, y, health)
   self.speed = 0
   self.targetSpeed = 0
 
-  self.health = health
-  self.maxHealth = self.health
-  
   self.depth = 0
   ovw.view:register(self)
   ovw.collision:register(self)
@@ -45,7 +42,7 @@ end
 Enemy.update = f.empty --perform movement, etc. calculations
 Enemy.draw = f.empty --hurr durr
 
-function Enemy:damage(amount)
+function Enemy:hurt(amount)
   self.health = self.health - amount
   if self.health <= 0 then
     self:destroy()

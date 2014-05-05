@@ -9,7 +9,7 @@ Projectile.collision = {
       self:destroy()
     end,
     enemy = function(self, other, dx, dy)
-      other:damage(self.damage)
+      other:hurt(self.damage)
       self:destroy()
     end
   }

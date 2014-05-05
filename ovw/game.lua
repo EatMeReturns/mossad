@@ -12,7 +12,7 @@ function Game:load()
   for i = 1, 20 do
     local room = self.house.rooms[love.math.random(1, #self.house.rooms)]
     local x, y = self.house:cell(room.x + room.width / 2, room.y + room.height / 2)
-    self.enemies:add(Shade(x, y, 10))
+    self.enemies:add(Shade(x, y))
   end
 end
 
