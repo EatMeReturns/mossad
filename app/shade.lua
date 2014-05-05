@@ -6,51 +6,34 @@ Shade.radius = 8
 function Shade:init(...)
   Enemy.init(self, ...)
 
+  self.state = 'roam'
+
   self.sight = 300
   self.target = nil
   self.scanTimer = 0
   
   self.runSpeed = 110
   self.walkSpeed = 50
-end
 
-function Shade:scan()
-  self.target = nil
-  local dis, dir = math.vector(self.x, self.y, ovw.player.x, ovw.player.y)
-  if dis < self.sight and math.anglediff(dir, self.angle) < 90 then
-    local blocked = ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall')
-    if not blocked then
+  self.damage = 5
 
-      -- Go ham sammy on the player
-      self.target = ovw.player
-    end
-  end
+  self.windupTime = .3 -- Time it takes to deal damage
+  self.windupTimer = 0
+  self.windupRange = 145
 
-  if not self.target then
+  self.attackTime = .21 -- Time it takes to lunge
+  self.attackTimer = 0
+  self.attackRange = 35 -- Damage is dealt if player is this close after lunging
 
-    -- Look around some more
-    self.targetAngle = self.targetAngle + (love.math.random() * 60 - 30)
-  end
-
-  self.scanTimer = 1
+  self.fatigueTime = .65 -- Time it stands still after attacking
+  self.fatigueTimer = 0
 end
 
 function Shade:update()
-  self.scanTimer = self.scanTimer - tickRate
-  if self.scanTimer <= 0 then self:scan() end
-  
   self.prevX = self.x
   self.prevY = self.y
-  if self.target ~= nil then
-    local dis, dir = math.vector(self.x, self.y, self.target.x, self.target.y)
-    local minDis = dis - (self.radius + self.target.radius)
-    self.targetAngle = dir
-    self.x = self.x + math.dx(math.min(self.runSpeed * tickRate, minDis), self.angle)
-    self.y = self.y + math.dy(math.min(self.runSpeed * tickRate, minDis), self.angle)
-  else
-    self.x = self.x + math.dx(self.walkSpeed * tickRate, self.angle)
-    self.y = self.y + math.dy(self.walkSpeed * tickRate, self.angle)
-  end
+
+  self[self.state](self)
 
   self:setPosition(self.x, self.y)
   self.angle = math.anglerp(self.angle, self.targetAngle, math.clamp(6 * tickRate, 0, 1))
@@ -64,4 +47,83 @@ function Shade:draw()
   if self.target ~= nil then love.graphics.setColor(v, 0, 0) end
   self.shape:draw()
   love.graphics.line(self.x, self.y, self.x + math.cos(self.angle) * self.radius, self.y + math.sin(self.angle) * self.radius)
+end
+
+----------------
+-- States
+----------------
+function Shade:roam()
+  self.scanTimer = self.scanTimer - tickRate
+  
+  if self.scanTimer <= 0 then
+    self.target = nil
+    local dis, dir = math.vector(self.x, self.y, ovw.player.x, ovw.player.y)
+    if dis < self.sight and math.anglediff(dir, self.angle) < 90 then
+      local blocked = ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall')
+      if not blocked then
+        self.target = ovw.player
+        self.state = 'chase'
+      end
+    end
+
+    if not self.target then
+      self.targetAngle = self.targetAngle + (love.math.random() * 60 - 30)
+    end
+
+    self.scanTimer = 1
+  end
+  
+  self.x = self.x + math.dx(self.walkSpeed * tickRate, self.angle)
+  self.y = self.y + math.dy(self.walkSpeed * tickRate, self.angle)
+end
+
+function Shade:chase()
+  if self.target ~= nil then
+    local dis, dir = math.vector(self.x, self.y, self.target.x, self.target.y)
+    local minDis = dis - (self.radius + self.target.radius)
+    self.targetAngle = dir
+    self.x = self.x + math.dx(math.min(self.runSpeed * tickRate, minDis), self.angle)
+    self.y = self.y + math.dy(math.min(self.runSpeed * tickRate, minDis), self.angle)
+
+    if dis < self.windupRange and self.attackTimer == 0 and self.windupTimer == 0 and self.fatigueTimer == 0 then
+      self.state = 'windup'
+      self.windupTimer = self.windupTime
+    end
+  else
+    self.state = 'roam'
+  end
+end
+
+function Shade:windup()
+  self.targetAngle = math.direction(self.x, self.y, self.target.x, self.target.y)
+  self.windupTimer = timer.rot(self.windupTimer, function()
+    self.state = 'attack'
+    self.attackTimer = self.attackTime
+  end)
+end
+
+function Shade:attack()
+  local dis, dir = math.vector(self.x, self.y, self.target.x, self.target.y)
+  local speed = self.windupRange / self.attackTime * tickRate
+  speed = math.min(speed, dis - (self.radius + self.target.radius))
+  self.x = self.x + math.dx(speed, self.angle)
+  self.y = self.y + math.dy(speed, self.angle)
+  
+  self.attackTimer = timer.rot(self.attackTimer, function()
+    if math.distance(self.x, self.y, ovw.player.x, ovw.player.y) < self.attackRange then
+      ovw.player:hurt(self.damage)
+    end
+    self.state = 'fatigue'
+    self.fatigueTimer = self.fatigueTime
+    self.target = nil
+  end)
+
+  -- Let it change its direction slightly while lunging
+  self.targetAngle = math.anglerp(self.targetAngle, dir, 4 * tickRate)
+end
+
+function Shade:fatigue()
+  self.fatigueTimer = timer.rot(self.fatigueTimer, function()
+    self.state = 'roam'
+  end)
 end

@@ -7,6 +7,9 @@ Player.collision = {
   with = {
     wall = function(self, other, dx, dy)
       self:setPosition(self.x + dx, self.y + dy)
+    end,
+    enemy = function(self, other, dx, dy)
+      other:setPosition(other.x - dx, other.y - dy)
     end
   }
 }
@@ -17,10 +20,14 @@ function Player:init()
   self.y = ovw.house:cell(ovw.house.rooms[1].y + ovw.house.rooms[1].height / 2)
   self.angle = 0
   self.radius = 16
-  self.node = {x = self.x, y = self.y}
   
   self.speed = 0
   self.maxSpeed = 150
+
+  self.iNeedHealing = 0
+  self.iNeedTooMuchHealing = 50
+  self.healRate = 2
+  self.lastHit = tick
 
   self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
   self.backImage = love.graphics.newImage('media/graphics/anImageBack.png')
@@ -49,6 +56,7 @@ function Player:update()
   self:move()
   self:turn()
   self:item()
+  self:heal()
 end
 
 function Player:draw()
@@ -108,4 +116,16 @@ function Player:item()
   local item = self.items[self.itemSelect]
   item:update()
   if love.mouse.isDown('l') then item:use() end
+end
+
+function Player:heal()
+  if tick - self.lastHit > 5 / tickRate then
+    self.iNeedHealing = math.max(self.iNeedHealing - 2 * tickRate, 0)
+  end
+end
+
+function Player:hurt(amount)
+  self.iNeedHealing = self.iNeedHealing + amount
+  if self.iNeedHealing > self.iNeedTooMuchHealing then love.event.quit() end
+  self.lastHit = tick
 end

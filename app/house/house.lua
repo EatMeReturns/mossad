@@ -79,7 +79,8 @@ function House:draw()
         if v > .01 then
           love.graphics.setColor(v, v, v)
           local quad = self.tilemap[self.tiles[x][y]]
-          love.graphics.draw(self.tileImage, quad, x * self.cellSize, y * self.cellSize, 0, self.cellSize / 32, self.cellSize / 32)
+          local sc = self.cellSize / 32
+          love.graphics.draw(self.tileImage, quad, x * self.cellSize, y * self.cellSize, 0, sc, sc)
         end
       end
     end

@@ -1,6 +1,7 @@
 Hud = class()
 
 local g = love.graphics
+local w, h = g.width, g.height
 
 function Hud:init()
   self.font = love.graphics.newFont('media/fonts/pixel.ttf', 8)
@@ -9,15 +10,18 @@ function Hud:init()
 end
 
 function Hud:gui()
-  self:debug()
+  self:blood()
   self:items()
   self.fader:gui()
+  self:debug()
 end
 
-function Hud:debug()
-  g.setFont(self.font)
-  g.setColor(255, 255, 255)
-  g.print(love.timer.getFPS() .. 'fps ' .. (ovw.view.scale * 100) .. '%', 1, g.height() - g.getFont():getHeight())
+function Hud:blood() -- Yo sach a hudblood, haarry
+  local p = ovw.player
+  local amt = 1 - (p.iNeedHealing / p.iNeedTooMuchHealing)
+  local alpha = math.min(((1 - (math.min(amt, .5) / .5)) + math.max(1 - (tick - p.lastHit) * tickRate, 0) / 6) * 200, 200)
+  g.setColor(160, 0, 0, alpha)
+  g.rectangle('fill', 0, 0, w(), h())
 end
 
 function Hud:items()
@@ -31,3 +35,10 @@ function Hud:items()
     end
   end
 end
+
+function Hud:debug()
+  g.setFont(self.font)
+  g.setColor(255, 255, 255)
+  g.print(love.timer.getFPS() .. 'fps ' .. (ovw.view.scale * 100) .. '%', 1, h() - g.getFont():getHeight())
+end
+

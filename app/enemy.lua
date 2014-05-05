@@ -16,10 +16,6 @@ Enemy.collision.with.enemy = function(self, other, dx, dy)
   end
 end
 
-Enemy.collision.with.player = function(self, other, dx, dy)
-  self:setPosition(self.x + dx, self.y + dy)
-end
-
 function Enemy:init(x, y, health)
   self.x = x
   self.y = y
