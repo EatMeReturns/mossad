@@ -61,7 +61,10 @@ end
 
 function Player:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
-  love.graphics.setColor(255, 255, 255, 255)
+  local tx, ty = self.x - ovw.house.cellSize / 2, self.y - ovw.house.cellSize / 2
+  tx, ty = math.round(tx / ovw.house.cellSize), math.round(ty / ovw.house.cellSize)
+  local v = math.clamp(ovw.house.tileAlpha[tx][ty] + 50, 0, 255)
+  love.graphics.setColor(v, v, v)
   love.graphics.draw(self.image, x, y, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())
 end
 
