@@ -67,6 +67,23 @@ end
 
 function Player:keypressed(key)
   local x = tonumber(key)
+  if x == 7 then
+    House.lightMinDis = 80
+    House.lightMaxDis = 110
+    House.lightIntensity = 0.5
+    House.lightFalloff = 0.7
+    House.lightFollowSpeed = 1
+    House.lightPosterization = 1
+  end
+  if x == 8 then
+    House.lightMinDis = 50
+    House.lightMaxDis = 400
+    House.lightIntensity = 1
+    House.lightFalloff = 1
+    House.lightFollowSpeed = 1
+    House.lightPosterization = 1
+  end
+
   if x and x >= 1 and x <= #self.items then
     self.itemSelect = x
   end
