@@ -88,7 +88,8 @@ Keyboard Commands
 - `Mouse`: Aim.
 - `U`: Upgrade equipment?
 
-#### Some paragraphs regarding combat:
+Some Paragraphs Regarding combat
+---
 
 - The combat mechanics must define a system for creative player interaction. It is easy to fall in to a trap of discrete successful and unsuccessful play. Either the limitations of engagement are too involved or the methods for engagement are too few. Thus, attacks must at least provide the illusion of player direction. Fighting games have mastered this sense of control; in Super Smash Bros., there are multiple types of attacks all easily directioned and timed to produce differing results. The player may employ the ttack strategically. The simplest of physics engines can serve as the playground for player direction to develop.
 - It is not difficult to make a roguelike feel like a grind. The combat in labyrinth will produce high-tension moments for the player that are regularly matters of life and death-that is, of the threat of defeat and loss. Combat is an investiture for the player of emotion, effort, and in-game resources. It should be a challenge resulting in a pervading sense of success rather than the dull acknowledgement of accrued resources that produces the grinding mechanic. This does not mean the player is not grinding. the player simply does not feel like he is grinding.
