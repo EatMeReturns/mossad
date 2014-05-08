@@ -88,7 +88,7 @@ Keyboard Commands
 - `Mouse`: Aim.
 - `U`: Upgrade equipment?
 
-Some Paragraphs Regarding combat
+Some Paragraphs Regarding Combat
 ---
 
 - The combat mechanics must define a system for creative player interaction. It is easy to fall in to a trap of discrete successful and unsuccessful play. Either the limitations of engagement are too involved or the methods for engagement are too few. Thus, attacks must at least provide the illusion of player direction. Fighting games have mastered this sense of control; in Super Smash Bros., there are multiple types of attacks all easily directioned and timed to produce differing results. The player may employ the ttack strategically. The simplest of physics engines can serve as the playground for player direction to develop.
