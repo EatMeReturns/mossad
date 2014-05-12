@@ -1,10 +1,10 @@
 Item = class()
 
-function Item:activate()
+function Item:init()
 
 end
 
-function Item:deactivate()
+function Item:destroy()
 
 end
 

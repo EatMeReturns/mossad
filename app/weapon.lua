@@ -2,7 +2,7 @@ require 'app/item'
 
 Weapon = extend(Item)
 
-function Weapon:activate()
+function Weapon:init()
   self.timers = {}
   self.timers.shoot = 0
   self.timers.reload = 0
@@ -11,7 +11,7 @@ function Weapon:activate()
   self.currentClip = self.clip
 end
 
-function Weapon:deactivate()
+function Weapon:destroy()
   --
 end
 

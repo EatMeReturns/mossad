@@ -39,10 +39,15 @@ function Player:init()
   self.depth = -1
 
   self.itemSelect = 1
-  self.items = {}
-  local pistol = Pistol() -- created from pickup
-  table.insert(self.items, pistol)
-  pistol:activate()
+  self.items = {Pistol(), Glowstick()}
+
+  self.light = {
+    minDis = 50,
+    maxDis = 250,
+    intensity = .75,
+    falloff = 1,
+    posterization = 1
+  }
   
   ovw.collision:register(self)
   ovw.view:register(self)
@@ -57,6 +62,7 @@ function Player:update()
   self:turn()
   self:item()
   self:heal()
+  ovw.house:applyLight(self.light)
 end
 
 function Player:draw()
@@ -71,24 +77,27 @@ end
 function Player:keypressed(key)
   local x = tonumber(key)
   if x == 7 then
-    House.lightMinDis = 80
-    House.lightMaxDis = 110
-    House.lightIntensity = 0.5
-    House.lightFalloff = 0.7
-    House.lightFollowSpeed = 1
-    House.lightPosterization = 1
+    self.light.minDis = 80
+    self.light.maxDis = 110
+    self.light.intensity = 0.5
+    self.light.falloff = 0.7
+    self.light.followSpeed = 1
+    self.light.posterization = 1
   end
   if x == 8 then
-    House.lightMinDis = 50
-    House.lightMaxDis = 400
-    House.lightIntensity = 1
-    House.lightFalloff = 1
-    House.lightFollowSpeed = 1
-    House.lightPosterization = 1
+    self.light.minDis = 50
+    self.light.maxDis = 400
+    self.light.intensity = 1
+    self.light.falloff = 1
+    self.light.followSpeed = 1
+    self.light.posterization = 1
   end
 
   if x and x >= 1 and x <= #self.items then
+    local old, new = self.items[self.itemSelect], self.items[x]
+    f.exe(old.deselect, old)
     self.itemSelect = x
+    f.exe(new.select, new)
   end
 end
 
