@@ -4,38 +4,33 @@ local g = love.graphics
 local w, h = g.width, g.height
 
 function Fader:init()
-	self.currentText = 1
-	self.textCount = 1
-	self.texts = {}
-	self.texts[1] = 'mossad is coming'
-	self.opacity = -255
-	ovw.view:register(self)
+  self.texts = {}
+  self.texts[1] = 'mossad is coming'
+  self.opacity = -255
 end
 
 function Fader:add(text) --USE ME TO ADD A NEW MESSAGE TO THE FADER
-	self.textCount = self.textCount + 1
-	self.texts[self.textCount] = text
+  table.insert(self.texts, text)
 end
 
 function Fader:fade()
-	self.opacity = self.opacity + tickRate * 100
+  self.opacity = math.min(self.opacity + tickRate * 100, 255)
 end
 
 function Fader:update()
-	if self.texts[self.currentText] then
-		if self.opacity < 255 then
-			self:fade()
-		else
-			self.texts[self.currentText] = nil
-			self.currentText = self.currentText + 1
-			self.opacity = -255
-		end
-	end
+  if self.texts[1] then
+    if self.opacity < 255 then
+      self:fade()
+    else
+      table.remove(self.texts, 1)
+      self.opacity = -255
+    end
+  end
 end
 
 function Fader:gui()
-	if self.texts[self.currentText] then
-		g.setColor(255, 255, 255, 255 - math.abs(self.opacity))
-		g.printf(self.texts[self.currentText], w(0.5) - 150, h(0.5), 300, "center")
-	end
+  if self.texts[1] then
+    g.setColor(255, 255, 255, 255 - math.abs(self.opacity))
+    g.printf(self.texts[1], w(0.5) - 150, h(0.5), 300, 'center')
+  end
 end

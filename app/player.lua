@@ -16,8 +16,8 @@ Player.collision = {
 
 function Player:init()
   self.name = 'player'
-  self.x = ovw.house:cell(ovw.house.rooms[1].x + ovw.house.rooms[1].width / 2)
-  self.y = ovw.house:cell(ovw.house.rooms[1].y + ovw.house.rooms[1].height / 2)
+  self.x = ovw.house:pos(ovw.house.rooms[1].x + ovw.house.rooms[1].width / 2)
+  self.y = ovw.house:pos(ovw.house.rooms[1].y + ovw.house.rooms[1].height / 2)
   self.angle = 0
   self.radius = 16
   
@@ -44,7 +44,7 @@ function Player:init()
   self.light = {
     minDis = 50,
     maxDis = 250,
-    intensity = .75,
+    intensity = .5,
     falloff = 1,
     posterization = 1
   }
@@ -63,13 +63,32 @@ function Player:update()
   self:heal()
   self.inventory:update()
 
+  self.light.x, self.light.y = self.x, self.y
   ovw.house:applyLight(self.light)
+
+  if not ovw.boss then
+    local tx, ty = ovw.house:cell(self.x, self.y)
+    local inside = true
+
+    for x = tx - 1, tx + 1 do
+      for y = ty - 1, ty + 1 do
+        local b = ovw.house.grid[x] and ovw.house.grid[x][y] == 'boss'
+        local t = ovw.house.tiles[x] and ovw.house.tiles[x][y] == 'c'
+        if not t or not b then inside = false break end
+      end
+    end
+
+    if inside then
+      ovw.hud.fader:add('I hear a rumbling...')
+      ovw.house:sealBossRoom()
+      ovw.boss = 19 -- make a boss
+    end
+  end
 end
 
 function Player:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
-  local tx, ty = self.x - ovw.house.cellSize / 2, self.y - ovw.house.cellSize / 2
-  tx, ty = math.round(tx / ovw.house.cellSize), math.round(ty / ovw.house.cellSize)
+  local tx, ty = ovw.house:cell(self.x, self.y)
   local v = math.clamp(ovw.house.tileAlpha[tx][ty] + 50, 0, 255)
   love.graphics.setColor(v, v, v)
   love.graphics.draw(self.image, x, y + 12, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())

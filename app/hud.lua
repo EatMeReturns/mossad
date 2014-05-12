@@ -5,11 +5,12 @@ local w, h = g.width, g.height
 
 function Hud:init()
   self.font = love.graphics.newFont('media/fonts/pixel.ttf', 8)
-  ovw.view:register(self)
   self.fader = Fader()
+  ovw.view:register(self)
 end
 
 function Hud:gui()
+  g.setFont(self.font)
   self:blood()
   self:items()
   self.fader:gui()
@@ -38,7 +39,6 @@ function Hud:items()
 end
 
 function Hud:debug()
-  g.setFont(self.font)
   g.setColor(255, 255, 255)
   g.print(love.timer.getFPS() .. 'fps ' .. (ovw.view.scale * 100) .. '%', 1, h() - g.getFont():getHeight())
 end

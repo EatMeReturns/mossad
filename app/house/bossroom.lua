@@ -1,14 +1,12 @@
 require 'app/house/room'
 
-RoomRectangle = extend(Room)
+BossRoom = extend(Room)
 
-function RoomRectangle:init()
+function BossRoom:init()
   Room.init(self)
 
-  self.width = love.math.randomNormal(4, 10)
-  self.height = love.math.randomNormal(4, 10)
-  self.width = math.round(math.clamp(self.width, 5, 50))
-  self.height = math.round(math.clamp(self.height, 5, 50))
+  self.width = 12
+  self.height = 12
 
   for i = -1, self.width do
     self.walls.north[#self.walls.north + 1] = {x = i, y = -1, direction = 'north'}
@@ -20,4 +18,3 @@ function RoomRectangle:init()
     self.walls.east[#self.walls.east + 1] = {x = self.width, y = i, direction = 'east'}
   end
 end
-

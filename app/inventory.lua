@@ -27,7 +27,7 @@ function Inventory:remove(index)
     while not self.items[self.selected] do
       self.selected = self.selected - 1
     end
-    self:select(self.itemSelect)
+    self:select(self.selected)
   end
 end
 

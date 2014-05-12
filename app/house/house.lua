@@ -23,19 +23,35 @@ function House:init()
   local w, h = self.tileImage:getDimensions()
   local function t(x, y) return love.graphics.newQuad(1 + (x * 35), 1 + (y * 35), 32, 32, w, h) end
   self.tilemap = {}
-  self.tilemap.main = t(1, 4)
-  self.tilemap.n = t(1, 3)
-  self.tilemap.s = t(1, 5)
-  self.tilemap.e = t(2, 4)
-  self.tilemap.w = t(0, 4)
-  self.tilemap.nw = t(0, 3)
-  self.tilemap.ne = t(2, 3)
-  self.tilemap.sw = t(0, 5)
-  self.tilemap.se = t(2, 5)
-  self.tilemap.inw = t(3, 3)
-  self.tilemap.ine = t(4, 3)
-  self.tilemap.isw = t(3, 4)
-  self.tilemap.ise = t(4, 4)
+  self.tilemap.main = {}
+  self.tilemap.main.c = t(1, 4)
+  self.tilemap.main.n = t(1, 3)
+  self.tilemap.main.s = t(1, 5)
+  self.tilemap.main.e = t(2, 4)
+  self.tilemap.main.w = t(0, 4)
+  self.tilemap.main.nw = t(0, 3)
+  self.tilemap.main.ne = t(2, 3)
+  self.tilemap.main.sw = t(0, 5)
+  self.tilemap.main.se = t(2, 5)
+  self.tilemap.main.inw = t(3, 3)
+  self.tilemap.main.ine = t(4, 3)
+  self.tilemap.main.isw = t(3, 4)
+  self.tilemap.main.ise = t(4, 4)
+  
+  self.tilemap.boss = {}
+  self.tilemap.boss.c = t(1, 1)
+  self.tilemap.boss.n = t(1, 0)
+  self.tilemap.boss.s = t(1, 2)
+  self.tilemap.boss.e = t(2, 1)
+  self.tilemap.boss.w = t(0, 1)
+  self.tilemap.boss.nw = t(0, 0)
+  self.tilemap.boss.ne = t(2, 0)
+  self.tilemap.boss.sw = t(0, 2)
+  self.tilemap.boss.se = t(2, 2)
+  self.tilemap.boss.inw = t(3, 0)
+  self.tilemap.boss.ine = t(4, 0)
+  self.tilemap.boss.isw = t(3, 1)
+  self.tilemap.boss.ise = t(4, 1)
 
   self:generate()
 
@@ -48,53 +64,31 @@ function House:destroy()
 end
 
 function House:update()
-  local x1, x2 = self:snap(ovw.view.x, ovw.view.x + ovw.view.w)
-  x1, x2 = x1 / self.cellSize - 1, x2 / self.cellSize + 1
-  local y1, y2 = self:snap(ovw.view.y, ovw.view.y + ovw.view.h)
-  y1, y2 = y1 / self.cellSize - 1, y2 / self.cellSize + 1
+  local x1, x2, y1, y2 = self:cell(ovw.view.x, ovw.view.x + ovw.view.w, ovw.view.y, ovw.view.y + ovw.view.h)
   
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
-        self.tileAlpha[x][y] = 0
-      end
-    end
-  end
-end
-
-function House:applyLight(light)
-  local x1, x2 = self:snap(ovw.view.x, ovw.view.x + ovw.view.w)
-  x1, x2 = x1 / self.cellSize - 1, x2 / self.cellSize + 1
-  local y1, y2 = self:snap(ovw.view.y, ovw.view.y + ovw.view.h)
-  y1, y2 = y1 / self.cellSize - 1, y2 / self.cellSize + 1
-  
-  for x = x1, x2 do
-    for y = y1, y2 do
-      if self.tiles[x] and self.tiles[x][y] then
-        local px, py = ovw.player.x - self.cellSize / 2, ovw.player.y - self.cellSize / 2
-        local dis = self:snap(math.distance(px, py, self:cell(x, y)))
-        dis = math.clamp(dis ^ light.falloff, light.minDis, light.maxDis)
-        dis = math.clamp((1 - (dis / light.maxDis)) * light.intensity, 0, 1)
-        local value = math.round(dis * 255 / light.posterization) * light.posterization
-        self.tileAlpha[x][y] = math.max(value, self.tileAlpha[x][y])--math.lerp(self.tileAlpha[x][y], value, self.lightFollowSpeed * tickRate)
+        self:calculateTileLight(x, y)
       end
     end
   end
 end
 
 function House:draw()
-  local x1, x2 = self:snap(ovw.view.x, ovw.view.x + ovw.view.w)
-  x1, x2 = x1 / self.cellSize - 1, x2 / self.cellSize + 1
-  local y1, y2 = self:snap(ovw.view.y, ovw.view.y + ovw.view.h)
-  y1, y2 = y1 / self.cellSize - 1, y2 / self.cellSize + 1
+  local x1, x2, y1, y2 = self:cell(ovw.view.x, ovw.view.x + ovw.view.w, ovw.view.y, ovw.view.y + ovw.view.h)
   
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
         local v = self.tileAlpha[x][y]
-        if v > .01 then
-          love.graphics.setColor(v, v, v)
-          local quad = self.tilemap[self.tiles[x][y]]
+        if v > .01 or self.grid[x][y] == 2 then
+          if self.grid[x][y] == 2 then
+            love.graphics.setColor(255, 0, 0)
+          else
+            love.graphics.setColor(v, v, v)
+          end
+          local quad = self.tilemap[self.grid[x][y]][self.tiles[x][y]]
           local sc = self.cellSize / 32
           love.graphics.draw(self.tileImage, quad, x * self.cellSize, y * self.cellSize, 0, sc, sc)
         end
@@ -110,7 +104,66 @@ end
 
 function House:cell(x, ...)
   if not x then return end
-  return x * self.cellSize, self:cell(...)
+  return math.round((x - self.cellSize / 2) / self.cellSize), self:cell(...)
+end
+
+function House:pos(x, ...)
+  if not x then return end
+  return x * self.cellSize, self:pos(...)
+end
+
+function House:calculateTileLight(x, y)
+  local factor = (tick - self.tileTouched[x][y]) * tickRate
+  if ovw.boss then
+    local target = self.grid[x][y] == 'boss' and 150 or 0
+    self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], target, math.min(5 * factor, 1))
+  else
+    self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], 0, math.min(.065 * factor, 1))
+  end
+  self.tileTouched[x][y] = tick
+end
+
+function House:applyLight(light)
+  local x1, x2 = self:cell(light.x - light.maxDis, light.x + light.maxDis)
+  local y1, y2 = self:cell(light.y - light.maxDis, light.y + light.maxDis)
+  
+  local xx, yy = light.x - self.cellSize / 2, light.y - self.cellSize / 2
+  
+  for x = x1, x2 do
+    for y = y1, y2 do
+      if self.tiles[x] and self.tiles[x][y] then
+        self:calculateTileLight(x, y)
+        local dis = self:snap(math.distance(xx, yy, self:pos(x, y)))
+        dis = math.clamp(dis ^ light.falloff, light.minDis, light.maxDis)
+        dis = math.clamp((1 - (dis / light.maxDis)) * light.intensity, 0, 1)
+        local value = math.round(dis * 255 / light.posterization) * light.posterization
+        self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], math.max(self.tileAlpha[x][y], value), 5 * tickRate)
+      end
+    end
+  end
+end
+
+function House:sealBossRoom()
+  local x, y, w, h, shape
+  local border = .5 * self.cellSize
+
+  x, y, w, h = self:pos(self.bossRoom.x - 1, self.bossRoom.y - 1, self.bossRoom.width + 1, self.bossRoom.height + 1)
+
+  shape = ovw.collision.hc:addRectangle(x, y, w, border)
+  ovw.collision.hc:setPassive(shape)
+  shape.owner = self
+  
+  shape = ovw.collision.hc:addRectangle(x, y, border, h)
+  ovw.collision.hc:setPassive(shape)
+  shape.owner = self
+
+  shape = ovw.collision.hc:addRectangle(x + w + border, y, border, h)
+  ovw.collision.hc:setPassive(shape)
+  shape.owner = self
+
+  shape = ovw.collision.hc:addRectangle(x, y + h + border, w, border)
+  ovw.collision.hc:setPassive(shape)
+  shape.owner = self
 end
 
 function House:generate()
@@ -129,12 +182,15 @@ function House:generate()
   }
   
   local function get(x, y)
-    return self.grid[x] and self.grid[x][y] == 1
+    return self.grid[x] and self.grid[x][y]
   end
 
   local room = RoomRectangle()
   room.x, room.y = 100, 100
   self:addRoom(room)
+
+   furthestRoom = room
+  local furthestDis = 0
 
   repeat
 
@@ -154,6 +210,12 @@ function House:generate()
     if self:collisionTest(newRoom) then
       self:addRoom(newRoom)
       self:carve(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y)
+      
+      local dis = math.distance(100, 100, newRoom.x, newRoom.y)
+      if dis > furthestDis then
+        furthestDis = dis
+        furthestRoom = newRoom
+      end
     end
 
   until #self.rooms > self.roomCount
@@ -166,8 +228,6 @@ function House:generate()
     local x, y = room.x + wall.x, room.y + wall.y
     local x1, y1 = x, y
     local dx, dy = math.sign(offset[wall.direction][1]), math.sign(offset[wall.direction][2])
-    local tmp = {}
-    local turn = love.math.random() > .5
     for i = 1, length do
       x, y = x + dx, y + dy
       if get(x, y) then
@@ -177,16 +237,38 @@ function House:generate()
       end
     end
   until hallways > self.hallwayCount
+  
+  -- Place boss room
+  local newRoom = BossRoom()
+  local oldRoom = furthestRoom
+  self.bossRoom = newRoom
+  while true do
+    local oldWall = oldRoom:randomWall()
+    local newWall = newRoom:randomWall(opposite[oldWall.direction])
+
+    newRoom:moveTo(0, 0)
+    newRoom:move(oldRoom.x + oldWall.x - newWall.x, oldRoom.y + oldWall.y - newWall.y)
+    local dx, dy = unpack(offset[oldWall.direction])
+    newRoom:move(dx * 1, dy * 1)
+
+    -- If it doesn't overlap with another room, add it.
+    if self:collisionTest(newRoom) then
+      self:addRoom(newRoom)
+      self:carve(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y)
+      break
+    end
+  end
 
   self:computeTiles()
   self:computeShapes()
 end
 
 function House:addRoom(room)
+  local val = getmetatable(room).__index == BossRoom and 'boss' or 'main'
   for x = room.x, room.x + room.width do
     for y = room.y, room.y + room.height do
       self.grid[x] = self.grid[x] or {}
-      self.grid[x][y] = 1
+      self.grid[x][y] = val
     end
   end
 
@@ -194,7 +276,7 @@ function House:addRoom(room)
     for _, wall in pairs(room.walls[dir]) do
       local x, y = room.x + wall.x, room.y + wall.y
       self.grid[x] = self.grid[x] or {}
-      self.grid[x][y] = 1
+      self.grid[x][y] = val
     end
   end
 
@@ -209,7 +291,7 @@ function House:carve(x1, y1, x2, y2)
     for y = y1, y2, dy do
       for x = x1 - self.carveSize, x1 + self.carveSize do
         self.grid[x] = self.grid[x] or {}
-        self.grid[x][y] = 1
+        self.grid[x][y] = self.grid[x][y] or 'main'
       end
     end
   end
@@ -218,7 +300,7 @@ function House:carve(x1, y1, x2, y2)
     for x = x1, x2, dx do
       for y = y1 - self.carveSize, y1 + self.carveSize do
         self.grid[x] = self.grid[x] or {}
-        self.grid[x][y] = 1
+        self.grid[x][y] = self.grid[x][y] or 'main'
       end
     end
   end
@@ -226,9 +308,10 @@ end
 
 function House:collisionTest(room)
   local padding = self.roomSpacing - 1
+  --if getmetatable(room).__index == BossRoom then padding = padding + 3 end
   for x = room.x - padding, room.x + room.width + padding do
     for y = room.y - padding, room.y + room.height + padding do
-      if self.grid[x] and self.grid[x][y] == 1 then return false end
+      if self.grid[x] and self.grid[x][y] then return false end
     end
   end
 
@@ -237,17 +320,20 @@ end
 
 function House:computeTiles()
   local function get(x, y)
-    return self.grid[x] and self.grid[x][y] == 1
+    return self.grid[x] and self.grid[x][y]
   end
 
   self.tiles = {}
   self.tileAlpha = {}
+  self.tileTouched = {}
   for x in pairs(self.grid) do
     for y in pairs(self.grid[x]) do
-      if self.grid[x][y] and self.grid[x][y] == 1 then
+      if get(x, y) then
         self.tiles[x] = self.tiles[x] or {}
         self.tileAlpha[x] = self.tileAlpha[x] or {}
+        self.tileTouched[x] = self.tileTouched[x] or {}
         self.tileAlpha[x][y] = 0
+        self.tileTouched[x][y] = tick
         local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
         local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
         local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
@@ -276,7 +362,7 @@ function House:computeTiles()
         elseif s and e and not se then
           self.tiles[x][y] = 'ise'
         elseif get(x, y) then
-          self.tiles[x][y] = 'main'
+          self.tiles[x][y] = 'c'
         end
       end
     end
@@ -286,21 +372,21 @@ end
 function House:computeShapes()
   local function coords(x, y, w, d)
     if d == 'n' then
-      return ovw.collision.hc:addRectangle(self:cell(x, y, w, .5))
+      return ovw.collision.hc:addRectangle(self:pos(x, y, w, .5))
     elseif d == 's' then
-      return ovw.collision.hc:addRectangle(self:cell(x, y + .5, w, .5))
+      return ovw.collision.hc:addRectangle(self:pos(x, y + .5, w, .5))
     elseif d == 'w' then
-      return ovw.collision.hc:addRectangle(self:cell(x, y, .5, w))
+      return ovw.collision.hc:addRectangle(self:pos(x, y, .5, w))
     elseif d == 'e' then
-      return ovw.collision.hc:addRectangle(self:cell(x + .5, y, .5, w))
+      return ovw.collision.hc:addRectangle(self:pos(x + .5, y, .5, w))
     elseif d == 'inw' then
-      return ovw.collision.hc:addRectangle(self:cell(x, y, .5, .5))
+      return ovw.collision.hc:addRectangle(self:pos(x, y, .5, .5))
     elseif d == 'ine' then
-      return ovw.collision.hc:addRectangle(self:cell(x + .5, y, .5, .5))
+      return ovw.collision.hc:addRectangle(self:pos(x + .5, y, .5, .5))
     elseif d == 'isw' then
-      return ovw.collision.hc:addRectangle(self:cell(x, y + .5, .5, .5))
+      return ovw.collision.hc:addRectangle(self:pos(x, y + .5, .5, .5))
     elseif d == 'ise' then
-      return ovw.collision.hc:addRectangle(self:cell(x + .5, y + .5, .5, .5))
+      return ovw.collision.hc:addRectangle(self:pos(x + .5, y + .5, .5, .5))
     elseif d == 'nw' then
       local pts = {
         x, y,
@@ -310,7 +396,7 @@ function House:computeShapes()
         x + .5, y + 1,
         x, y + 1
       }
-      return ovw.collision.hc:addPolygon(self:cell(unpack(pts)))
+      return ovw.collision.hc:addPolygon(self:pos(unpack(pts)))
     elseif d == 'ne' then
       local pts = {
         x, y,
@@ -320,7 +406,7 @@ function House:computeShapes()
         x + .5, y + .5,
         x, y + .5
       }
-      return ovw.collision.hc:addPolygon(self:cell(unpack(pts)))
+      return ovw.collision.hc:addPolygon(self:pos(unpack(pts)))
     elseif d == 'sw' then
       local pts = {
         x, y,
@@ -330,7 +416,7 @@ function House:computeShapes()
         x + 1, y + 1,
         x, y + 1
       }
-      return ovw.collision.hc:addPolygon(self:cell(unpack(pts)))
+      return ovw.collision.hc:addPolygon(self:pos(unpack(pts)))
     elseif d == 'se' then
       local pts = {
         x + .5, y,
@@ -340,9 +426,9 @@ function House:computeShapes()
         x, y + .5,
         x + .5, y + .5
       }
-      return ovw.collision.hc:addPolygon(self:cell(unpack(pts)))
+      return ovw.collision.hc:addPolygon(self:pos(unpack(pts)))
     else
-      return ovw.collision.hc:addRectangle(self:cell(x, y, 1, 1))
+      return ovw.collision.hc:addRectangle(self:pos(x, y, 1, 1))
     end
   end
 
@@ -350,7 +436,7 @@ function House:computeShapes()
 
   for x in pairs(tiles) do
     for y in pairs(tiles[x]) do
-      if tiles[x][y] and tiles[x][y] ~= 'main' then
+      if tiles[x][y] and tiles[x][y] ~= 'c' then
         local z = 1
         local d = tiles[x][y]
         local xx, yy = x, y

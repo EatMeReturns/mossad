@@ -45,7 +45,7 @@ end
 
 function Shade:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
-  local tx, ty = math.round((self.x - 16) / ovw.house.cellSize), math.round((self.y - 16) / ovw.house.cellSize)
+  local tx, ty = ovw.house:cell(self.x, self.y)
   local v = ovw.house.tileAlpha[tx][ty]
   if self.attackTimer > 0 then
     local a = .4

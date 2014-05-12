@@ -8,14 +8,14 @@ function Glowstick:init()
   Item.init(self)
 
   self.light = {
-    minDis = 35,
+    minDis = 50,
     maxDis = 400,
-    intensity = 1,
+    intensity = .75,
     falloff = 1,
     posterization = 1
   }
 
-  self.health = 10
+  self.health = 15
   self.on = false
 end
 
@@ -29,6 +29,7 @@ end
 
 function Glowstick:update()
   if self.on then
+    self.light.x, self.light.y = ovw.player.x, ovw.player.y
     ovw.house:applyLight(self.light)
     self.health = timer.rot(self.health, function()
       ovw.player.inventory:remove(self.index)
