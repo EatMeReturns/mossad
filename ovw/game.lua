@@ -47,4 +47,5 @@ end
 
 function Game:mousepressed(...)
   self.view:mousepressed(...)
+  self.player:mousepressed(...)
 end

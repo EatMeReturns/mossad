@@ -40,6 +40,8 @@ function Player:init()
 
   self.itemSelect = 1
   self.items = {Pistol()}
+  self.items[1].index = 1
+  self:selectItem(1)
 
   self.light = {
     minDis = 50,
@@ -77,11 +79,12 @@ end
 function Player:keypressed(key)
   local x = tonumber(key)
   if x and x >= 1 and x <= #self.items then
-    local old, new = self.items[self.itemSelect], self.items[x]
-    f.exe(old.deselect, old)
-    self.itemSelect = x
-    f.exe(new.select, new)
+    self:selectItem(x)
   end
+end
+
+function Player:mousepressed(...)
+  table.with(self.items, 'mousepressed', ...)
 end
 
 function Player:setPosition(x, y)
@@ -126,8 +129,33 @@ end
 
 function Player:item()
   local item = self.items[self.itemSelect]
-  item:update()
-  if love.mouse.isDown('l') then item:use() end
+  table.with(self.items, 'update')
+end
+
+function Player:selectItem(index)
+  local old, new = self.items[self.itemSelect], self.items[index]
+  self.itemSelect = index
+  if old then
+    old.selected = false
+    f.exe(old.deselect, old)
+  end
+
+  if new then
+    new.selected = true
+    f.exe(new.select, new)
+  end
+end
+
+function Player:removeItem(index)
+  local item = self.items[index]
+  if item then
+    item:destroy()
+    table.remove(self.items, index)
+    while not self.items[self.itemSelect] do
+      self.itemSelect = self.itemSelect - 1
+    end
+    self:selectItem(self.itemSelect)
+  end
 end
 
 function Player:heal()

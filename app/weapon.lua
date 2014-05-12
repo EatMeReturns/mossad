@@ -22,16 +22,16 @@ function Weapon:update()
     self.currentClip = self.currentClip + amt
     self.currentAmmo = self.currentAmmo - amt
   end)
-end
+ 
+  if self.selected and love.mouse.isDown('l') then
+    if self.timers.shoot == 0 and self.timers.reload == 0 and self.currentClip > 0 then
+      local projectile = Projectile(self.damage, ovw.player.x, ovw.player.y, ovw.player.angle, 15)
+      ovw.spells:add(projectile)
 
-function Weapon:use()
-  if self.timers.shoot == 0 and self.timers.reload == 0 and self.currentClip > 0 then
-    local projectile = Projectile(self.damage, ovw.player.x, ovw.player.y, ovw.player.angle, 15)
-    ovw.spells:add(projectile)
-
-    self.timers.shoot = self.fireSpeed
-    self.currentClip = self.currentClip - 1
-    if self.currentClip == 0 then self.timers.reload = self.reloadSpeed end
+      self.timers.shoot = self.fireSpeed
+      self.currentClip = self.currentClip - 1
+      if self.currentClip == 0 then self.timers.reload = self.reloadSpeed end
+    end
   end
 end
 

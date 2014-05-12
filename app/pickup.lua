@@ -26,6 +26,7 @@ function Pickup.collision.with.player(self, player, dx, dy)
   if #player.items < 4 then
     local item = self.item or new(self.itemType)
     table.insert(player.items, item)
+    item.index = #player.items
     ovw.collision:unregister(self)
     ovw.view:unregister(self)
   end
