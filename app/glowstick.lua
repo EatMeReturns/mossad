@@ -31,7 +31,7 @@ function Glowstick:update()
   if self.on then
     ovw.house:applyLight(self.light)
     self.health = timer.rot(self.health, function()
-      ovw.player:removeItem(self.index)
+      ovw.player.inventory:remove(self.index)
     end)
   end
 end
