@@ -3,9 +3,7 @@ Pickup = class()
 Pickup.tag = 'pickup'
 Pickup.collision = {
   shape = 'circle',
-  with = {
-    player = Pickup.pickup
-  }
+  with = {}
 }
 
 function Pickup:init(data)
@@ -13,8 +11,10 @@ function Pickup:init(data)
   self.item = nil
   self.itemType = nil
   table.merge(data, self)
-  self.radius = 4
+  assert(self.item or self.itemType)
+  self.radius = 8
   ovw.collision:register(self)
+  ovw.view:register(self)
 end
 
 function Pickup:draw()
@@ -22,9 +22,11 @@ function Pickup:draw()
   self.shape:draw('line')
 end
 
-function Pickup:pickup(player, dx, dy)
+function Pickup.collision.with.player(self, player, dx, dy)
   if #player.items < 4 then
     local item = self.item or new(self.itemType)
     table.insert(player.items, item)
+    ovw.collision:unregister(self)
+    ovw.view:unregister(self)
   end
 end

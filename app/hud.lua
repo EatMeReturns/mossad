@@ -25,13 +25,14 @@ function Hud:blood() -- Yo sach a hudblood, haarry
 end
 
 function Hud:items()
+  local size = 40
   for i = 1, 4 do
     local item = ovw.player.items[i]
     local alpha = not item and 80 or (ovw.player.itemSelect == i and 255 or 160)
     g.setColor(255, 255, 255, alpha)
-    g.rectangle('line', 2 + 66 * (i - 1) + .5, 2 + .5, 64, 64)
+    g.rectangle('line', 2 + (size + 2) * (i - 1) + .5, 2 + .5, size, size)
     if item then
-      g.print(item.name, 2 + 66 * (i - 1) + .5 + 4, 2 + .5 + 1)
+      g.print(item.name, 2 + (size + 2) * (i - 1) + .5 + 4, 2 + .5 + 1)
     end
   end
 end

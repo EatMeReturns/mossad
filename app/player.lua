@@ -27,7 +27,7 @@ function Player:init()
   self.iNeedHealing = 0
   self.iNeedTooMuchHealing = 50
   self.healRate = 2
-  self.lastHit = tick
+  self.lastHit = tick - (1 / tickRate)
 
   self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
   self.backImage = love.graphics.newImage('media/graphics/anImageBack.png')
@@ -39,7 +39,7 @@ function Player:init()
   self.depth = -1
 
   self.itemSelect = 1
-  self.items = {Pistol(), Glowstick()}
+  self.items = {Pistol()}
 
   self.light = {
     minDis = 50,
@@ -71,28 +71,11 @@ function Player:draw()
   tx, ty = math.round(tx / ovw.house.cellSize), math.round(ty / ovw.house.cellSize)
   local v = math.clamp(ovw.house.tileAlpha[tx][ty] + 50, 0, 255)
   love.graphics.setColor(v, v, v)
-  love.graphics.draw(self.image, x, y, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())
+  love.graphics.draw(self.image, x, y + 12, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())
 end
 
 function Player:keypressed(key)
   local x = tonumber(key)
-  if x == 7 then
-    self.light.minDis = 80
-    self.light.maxDis = 110
-    self.light.intensity = 0.5
-    self.light.falloff = 0.7
-    self.light.followSpeed = 1
-    self.light.posterization = 1
-  end
-  if x == 8 then
-    self.light.minDis = 50
-    self.light.maxDis = 400
-    self.light.intensity = 1
-    self.light.falloff = 1
-    self.light.followSpeed = 1
-    self.light.posterization = 1
-  end
-
   if x and x >= 1 and x <= #self.items then
     local old, new = self.items[self.itemSelect], self.items[x]
     f.exe(old.deselect, old)
