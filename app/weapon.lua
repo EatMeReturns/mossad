@@ -25,12 +25,13 @@ function Weapon:update()
  
   if self.selected and love.mouse.isDown('l') then
     if self.timers.shoot == 0 and self.timers.reload == 0 and self.currentClip > 0 then
-      local x2, y2 = ovw.player.x + math.dx(1200, ovw.player.angle), ovw.player.y + math.dy(1200, ovw.player.angle)
-      local wall, d = ovw.collision:lineTest(ovw.player.x, ovw.player.y, x2, y2, 'wall', false, true)
+      local x, y = ovw.player.x, ovw.player.y - 15
+      local x2, y2 = x + math.dx(1200, ovw.player.angle), y + math.dy(1200, ovw.player.angle)
+      local wall, d = ovw.collision:lineTest(x, y, x2, y2, 'wall', false, true)
       d = d == math.huge and 1200 or d
 
-      x2, y2 = ovw.player.x + math.dx(d, ovw.player.angle), ovw.player.y + math.dy(d, ovw.player.angle)
-      local enemy, d2 = ovw.collision:lineTest(ovw.player.x, ovw.player.y, x2, y2, 'enemy', false, true)
+      x2, y2 = x + math.dx(d, ovw.player.angle), y + math.dy(d, ovw.player.angle)
+      local enemy, d2 = ovw.collision:lineTest(x, y, x2, y2, 'enemy', false, true)
       d = d2 == math.huge and d or d2
       
       if enemy then enemy:hurt(self.damage) end

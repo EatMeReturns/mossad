@@ -9,7 +9,7 @@ function MuzzleFlash:init(dis, dir)
     posterization = 1
   }
 
-  self.x, self.y = ovw.player.x, ovw.player.y
+  self.x, self.y = ovw.player.x, ovw.player.y - 15
   self.endX, self.endY = self.x + math.dx(dis, dir), self.y + math.dy(dis, dir)
 
   for d = 0, dis, 15 do
@@ -19,6 +19,7 @@ function MuzzleFlash:init(dis, dir)
   end
 
   self.health = .2
+  self.depth = -5
   ovw.view:register(self)
 end
 
