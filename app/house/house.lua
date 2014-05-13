@@ -1,10 +1,9 @@
 House = class()
-
-require 'app/house/config'
-
 House.tag = 'wall'
 House.collision = {with = {}}
 
+require 'app/house/config'
+require 'app/house/tiles'
 require 'app/house/room'
 require 'app/house/roomRectangle'
 
@@ -17,42 +16,8 @@ function House:init()
   self.roomTypes = {RoomRectangle}
   self.rooms = {}
 
-  self.grid = {}
+  self.tiles = {}
   
-  self.tileImage = love.graphics.newImage('media/graphics/newTiles.png')
-  local w, h = self.tileImage:getDimensions()
-  local function t(x, y) return love.graphics.newQuad(1 + (x * 35), 1 + (y * 35), 32, 32, w, h) end
-  self.tilemap = {}
-  self.tilemap.main = {}
-  self.tilemap.main.c = t(1, 4)
-  self.tilemap.main.n = t(1, 3)
-  self.tilemap.main.s = t(1, 5)
-  self.tilemap.main.e = t(2, 4)
-  self.tilemap.main.w = t(0, 4)
-  self.tilemap.main.nw = t(0, 3)
-  self.tilemap.main.ne = t(2, 3)
-  self.tilemap.main.sw = t(0, 5)
-  self.tilemap.main.se = t(2, 5)
-  self.tilemap.main.inw = t(3, 3)
-  self.tilemap.main.ine = t(4, 3)
-  self.tilemap.main.isw = t(3, 4)
-  self.tilemap.main.ise = t(4, 4)
-  
-  self.tilemap.boss = {}
-  self.tilemap.boss.c = t(1, 1)
-  self.tilemap.boss.n = t(1, 0)
-  self.tilemap.boss.s = t(1, 2)
-  self.tilemap.boss.e = t(2, 1)
-  self.tilemap.boss.w = t(0, 1)
-  self.tilemap.boss.nw = t(0, 0)
-  self.tilemap.boss.ne = t(2, 0)
-  self.tilemap.boss.sw = t(0, 2)
-  self.tilemap.boss.se = t(2, 2)
-  self.tilemap.boss.inw = t(3, 0)
-  self.tilemap.boss.ine = t(4, 0)
-  self.tilemap.boss.isw = t(3, 1)
-  self.tilemap.boss.ise = t(4, 1)
-
   self:generate()
 
   self.depth = 5
@@ -70,7 +35,7 @@ function House:update()
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
-        self:calculateTileLight(x, y)
+        self.tiles[x][y]:updateLight(x, y)
       end
     end
   end
@@ -82,17 +47,7 @@ function House:draw()
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
-        local v = self.tileAlpha[x][y]
-        if v > .01 or self.grid[x][y] == 2 then
-          if self.grid[x][y] == 2 then
-            love.graphics.setColor(255, 0, 0)
-          else
-            love.graphics.setColor(v, v, v)
-          end
-          local quad = self.tilemap[self.grid[x][y]][self.tiles[x][y]]
-          local sc = self.cellSize / 32
-          love.graphics.draw(self.tileImage, quad, x * self.cellSize, y * self.cellSize, 0, sc, sc)
-        end
+        self.tiles[x][y]:draw()
       end
     end
   end
@@ -113,32 +68,14 @@ function House:pos(x, ...)
   return x * self.cellSize, self:pos(...)
 end
 
-function House:calculateTileLight(x, y)
-  local factor = (tick - self.tileTouched[x][y]) * tickRate
-  if ovw.boss then
-    local target = self.grid[x][y] == 'boss' and 150 or 0
-    self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], target, math.min(2 * factor, 1))
-  else
-    self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], 0, math.min(.08 * factor, 1))
-  end
-  self.tileTouched[x][y] = tick
-end
-
-function House:applyLight(light)
+function House:applyLight(light, type)
   local x1, x2 = self:cell(light.x - light.maxDis, light.x + light.maxDis)
   local y1, y2 = self:cell(light.y - light.maxDis, light.y + light.maxDis)
-  
-  local xx, yy = light.x - self.cellSize / 2, light.y - self.cellSize / 2
   
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
-        self:calculateTileLight(x, y)
-        local dis = self:snap(math.distance(xx, yy, self:pos(x, y)))
-        dis = math.clamp(dis ^ light.falloff, light.minDis, light.maxDis)
-        dis = math.clamp((1 - (dis / light.maxDis)) * light.intensity, 0, 1)
-        local value = math.round(dis * 255 / light.posterization) * light.posterization
-        self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], math.max(self.tileAlpha[x][y], value), 5 * tickRate)
+        self.tiles[x][y]:applyLight(light, type)
       end
     end
   end
@@ -187,7 +124,7 @@ function House:generate()
   }
   
   local function get(x, y)
-    return self.grid[x] and self.grid[x][y]
+    return self.tiles[x] and self.tiles[x][y]
   end
 
   local room = RoomRectangle()
@@ -272,16 +209,16 @@ function House:addRoom(room)
   local val = getmetatable(room).__index == BossRoom and 'boss' or 'main'
   for x = room.x, room.x + room.width do
     for y = room.y, room.y + room.height do
-      self.grid[x] = self.grid[x] or {}
-      self.grid[x][y] = val
+      self.tiles[x] = self.tiles[x] or {}
+      self.tiles[x][y] = Tile(val, x, y)
     end
   end
 
   for _, dir in pairs({'north', 'south', 'east', 'west'}) do
     for _, wall in pairs(room.walls[dir]) do
       local x, y = room.x + wall.x, room.y + wall.y
-      self.grid[x] = self.grid[x] or {}
-      self.grid[x][y] = val
+      self.tiles[x] = self.tiles[x] or {}
+      self.tiles[x][y] = Tile(val, x, y)
     end
   end
 
@@ -295,8 +232,8 @@ function House:carve(x1, y1, x2, y2)
   if dx == 0 then
     for y = y1, y2, dy do
       for x = x1 - self.carveSize, x1 + self.carveSize do
-        self.grid[x] = self.grid[x] or {}
-        self.grid[x][y] = self.grid[x][y] or 'main'
+        self.tiles[x] = self.tiles[x] or {}
+        self.tiles[x][y] = self.tiles[x][y] or Tile('main', x, y)
       end
     end
   end
@@ -304,8 +241,8 @@ function House:carve(x1, y1, x2, y2)
   if dy == 0 then
     for x = x1, x2, dx do
       for y = y1 - self.carveSize, y1 + self.carveSize do
-        self.grid[x] = self.grid[x] or {}
-        self.grid[x][y] = self.grid[x][y] or 'main'
+        self.tiles[x] = self.tiles[x] or {}
+        self.tiles[x][y] = self.tiles[x][y] or Tile('main', x, y)
       end
     end
   end
@@ -316,7 +253,7 @@ function House:collisionTest(room)
   --if getmetatable(room).__index == BossRoom then padding = padding + 3 end
   for x = room.x - padding, room.x + room.width + padding do
     for y = room.y - padding, room.y + room.height + padding do
-      if self.grid[x] and self.grid[x][y] then return false end
+      if self.tiles[x] and self.tiles[x][y] then return false end
     end
   end
 
@@ -325,49 +262,41 @@ end
 
 function House:computeTiles()
   local function get(x, y)
-    return self.grid[x] and self.grid[x][y]
+    return self.tiles[x] and self.tiles[x][y]
   end
 
-  self.tiles = {}
-  self.tileAlpha = {}
-  self.tileTouched = {}
-  for x in pairs(self.grid) do
-    for y in pairs(self.grid[x]) do
+  for x in pairs(self.tiles) do
+    for y in pairs(self.tiles[x]) do
       if get(x, y) then
-        self.tiles[x] = self.tiles[x] or {}
-        self.tileAlpha[x] = self.tileAlpha[x] or {}
-        self.tileTouched[x] = self.tileTouched[x] or {}
-        self.tileAlpha[x][y] = 0
-        self.tileTouched[x][y] = tick
         local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
         local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
         local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
         if w and e and not n then
-          self.tiles[x][y] = 'n'
+          self.tiles[x][y].tile = 'n'
         elseif w and e and not s then
-          self.tiles[x][y] = 's'
+          self.tiles[x][y].tile = 's'
         elseif n and s and not e then
-          self.tiles[x][y] = 'e'
+          self.tiles[x][y].tile = 'e'
         elseif n and s and not w then
-          self.tiles[x][y] = 'w'
+          self.tiles[x][y].tile = 'w'
         elseif e and s and not w and not n then
-          self.tiles[x][y] = 'nw'
+          self.tiles[x][y].tile = 'nw'
         elseif w and s and not e and not n then
-          self.tiles[x][y] = 'ne'
+          self.tiles[x][y].tile = 'ne'
         elseif e and n and not w and not s then
-          self.tiles[x][y] = 'sw'
+          self.tiles[x][y].tile = 'sw'
         elseif w and n and not e and not s then
-          self.tiles[x][y] = 'se'
+          self.tiles[x][y].tile = 'se'
         elseif w and n and not nw then
-          self.tiles[x][y] = 'inw'
+          self.tiles[x][y].tile = 'inw'
         elseif n and e and not ne then
-          self.tiles[x][y] = 'ine'
+          self.tiles[x][y].tile = 'ine'
         elseif s and w and not sw then
-          self.tiles[x][y] = 'isw'
+          self.tiles[x][y].tile = 'isw'
         elseif s and e and not se then
-          self.tiles[x][y] = 'ise'
+          self.tiles[x][y].tile = 'ise'
         elseif get(x, y) then
-          self.tiles[x][y] = 'c'
+          self.tiles[x][y].tile = 'c'
         end
       end
     end
@@ -443,9 +372,9 @@ function House:computeShapes()
 
   for x in pairs(tiles) do
     for y in pairs(tiles[x]) do
-      if tiles[x][y] and tiles[x][y] ~= 'c' then
+      if tiles[x][y] and tiles[x][y].tile ~= 'c' then
         local z = 1
-        local d = tiles[x][y]
+        local d = tiles[x][y].tile
         local xx, yy = x, y
         
         if d == 'n' or d == 's' then

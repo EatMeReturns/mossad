@@ -30,7 +30,7 @@ function Shade:init(...)
   self.fatigueTime = 1 -- Time it stands still after attacking
   self.fatigueTimer = 0
 
-  self.health = love.math.random(9, 15)
+  self.health = love.math.random(18, 30)
 end
 
 function Shade:update()
@@ -46,7 +46,7 @@ end
 function Shade:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
-  local v = ovw.house.tileAlpha[tx][ty]
+  local v = ovw.house.tiles[tx][ty]:brightness()
   if self.attackTimer > 0 then
     local a = .4
     local d = self.angle

@@ -13,6 +13,8 @@ function View:init()
   self.prevy = 0
   self.prevscale = self.scale
 
+  self.shake = 0
+
   self.targetScale = self.scale
 end
 
@@ -30,6 +32,10 @@ function View:update()
   self.y = self.y + (prevh - self.h) * yf
 
   self:follow()
+
+  self.x = self.x - self.shake + love.math.random() * 2 * self.shake
+  self.y = self.y - self.shake + love.math.random() * 2 * self.shake
+  self.shake = math.lerp(self.shake, 0, 5 * tickRate)
 end
 
 function View:draw()

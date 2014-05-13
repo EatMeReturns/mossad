@@ -61,7 +61,7 @@ function Player:update()
   self.inventory:update()
 
   self.light.x, self.light.y = self.x, self.y
-  ovw.house:applyLight(self.light)
+  ovw.house:applyLight(self.light, 'ambient')
 
   if not ovw.boss then
     local tx, ty = ovw.house:cell(self.x, self.y)
@@ -69,9 +69,8 @@ function Player:update()
 
     for x = tx - 1, tx + 1 do
       for y = ty - 1, ty + 1 do
-        local b = ovw.house.grid[x] and ovw.house.grid[x][y] == 'boss'
-        local t = ovw.house.tiles[x] and ovw.house.tiles[x][y] == 'c'
-        if not t or not b then inside = false break end
+        local t = ovw.house.tiles[x] and ovw.house.tiles[x][y]
+        if not t or t.type ~= 'boss' or t.tile ~= 'c' then inside = false break end
       end
     end
 
@@ -86,7 +85,7 @@ end
 function Player:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
-  local v = math.clamp(ovw.house.tileAlpha[tx][ty] + 50, 0, 255)
+  local v = math.clamp(ovw.house.tiles[tx][ty]:brightness() + 50, 0, 255)
   love.graphics.setColor(v, v, v)
   love.graphics.draw(self.image, x, y + 12, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())
 end
@@ -152,4 +151,5 @@ function Player:hurt(amount)
   self.iNeedHealing = self.iNeedHealing + amount
   if self.iNeedHealing > self.iNeedTooMuchHealing then love.event.quit() end
   self.lastHit = tick
+  ovw.view.shake = 2
 end

@@ -7,6 +7,7 @@ function Game:load()
   self.house = House()
   self.player = Player()
   self.spells = Manager()
+  self.particles = Manager()
   self.enemies = Manager()
   self.boss = nil
 
@@ -23,6 +24,7 @@ function Game:update()
   self.house:update()
   self.player:update()
   self.spells:update()
+  self.particles:update()
   self.enemies:update()
   if self.boss then self.boss:update() end
   self.collision:resolve()
@@ -35,11 +37,7 @@ function Game:draw()
 end
 
 function Game:keypressed(key)
-  if key == 'escape' then love.event.quit()
-  elseif key == 'r' then
-    self.house:destroy()
-    self.house = new(House)
-  end
+  if key == 'escape' then love.event.quit() end
   self.player:keypressed(key)
 end
 

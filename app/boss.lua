@@ -1,6 +1,6 @@
 Boss = class()
 
-Boss.tag = 'boss'
+Boss.tag = 'enemy'
 Boss.collision = {}
 Boss.collision.with = {}
 
