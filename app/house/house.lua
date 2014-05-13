@@ -39,6 +39,10 @@ function House:update()
       end
     end
   end
+
+  self.ambientColor[1] = math.lerp(self.ambientColor[1], self.targetAmbient[1], .2 * tickRate)
+  self.ambientColor[2] = math.lerp(self.ambientColor[2], self.targetAmbient[2], .2 * tickRate)
+  self.ambientColor[3] = math.lerp(self.ambientColor[3], self.targetAmbient[3], .2 * tickRate)
 end
 
 function House:draw()

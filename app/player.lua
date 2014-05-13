@@ -21,9 +21,10 @@ function Player:init()
   self.speed = 0
   self.maxSpeed = 150
 
+  self.crippled = false
   self.iNeedHealing = 0
-  self.iNeedTooMuchHealing = 50
-  self.healRate = 2
+  self.iNeedTooMuchHealing = 30
+  self.healRate = 5
   self.lastHit = tick - (1 / tickRate)
 
   self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
@@ -86,7 +87,8 @@ function Player:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
   local v = math.clamp(ovw.house.tiles[tx][ty]:brightness() + 50, 0, 255)
-  love.graphics.setColor(v, v, v)
+  local a = ovw.house.ambientColor
+  love.graphics.setColor(v * a[1] / 255, v * a[2] / 255, v * a[3] / 255)
   love.graphics.draw(self.image, x, y + 12, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())
 end
 
@@ -143,13 +145,38 @@ end
 
 function Player:heal()
   if tick - self.lastHit > 5 / tickRate then
-    self.iNeedHealing = math.max(self.iNeedHealing - 2 * tickRate, 0)
+    self.iNeedHealing = math.max(self.iNeedHealing - self.healRate * tickRate, 0)
   end
 end
 
 function Player:hurt(amount)
   self.iNeedHealing = self.iNeedHealing + amount
-  if self.iNeedHealing > self.iNeedTooMuchHealing then love.event.quit() end
+  if self.iNeedHealing > self.iNeedTooMuchHealing then
+    if self.crippled then
+      Overwatch:remove(ovw)
+      Overwatch:add(Game)
+      return
+    end
+    self:cripple()
+    self.iNeedHealing = 0
+  end
   self.lastHit = tick
   ovw.view.shake = 2
+end
+
+function Player:cripple()
+  if not self.crippled then
+    ovw.hud.fader:add('I need healing...')
+  end
+  self.maxSpeed = 100
+  self.light.maxDis = 150
+  self.crippled = true
+  ovw.house.targetAmbient = {255, 160, 160}
+end
+
+function Player:uncripple()
+  self.maxSpeed = 150
+  self.light.maxDis = 250
+  self.crippled = false
+  ovw.house.targetAmbient = {255, 255, 255}
 end

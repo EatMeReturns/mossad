@@ -32,6 +32,9 @@ House.tilemap.boss.ine = t(4, 0)
 House.tilemap.boss.isw = t(3, 1)
 House.tilemap.boss.ise = t(4, 1)
 
+House.ambientColor = {255, 255, 255}
+House.targetAmbient = {255, 255, 255}
+
 Tile = class()
 function Tile:init(type, x, y)
   self.type = type
@@ -46,7 +49,8 @@ end
 function Tile:draw()
   local v = self:brightness()
   if v > .01 then
-    love.graphics.setColor(v, v, v)
+    local a = House.ambientColor
+    love.graphics.setColor(v * a[1] / 255, v * a[2] / 255, v * a[3] / 255)
     local quad = House.tilemap[self.type][self.tile]
     local sc = ovw.house.cellSize / 32
     love.graphics.draw(House.tileImage, quad, self.x * ovw.house.cellSize, self.y * ovw.house.cellSize, 0, sc, sc)
