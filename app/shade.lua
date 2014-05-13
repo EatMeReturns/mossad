@@ -40,8 +40,13 @@ function Shade:destroy()
 
   local probs = {
     {Glowstick, .35},
-    {FirstAid, .2}
+    {FirstAid, .2},
+    {Ammo, .4}
   }
+
+  table.sort(probs, function(a, b)
+    return love.math.random() < .5
+  end)
 
   local x = love.math.random()
 

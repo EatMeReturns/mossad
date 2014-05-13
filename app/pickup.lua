@@ -10,11 +10,16 @@ function Pickup:init(data)
   self.x, self.y = 0, 0
   self.item = nil
   self.itemType = nil
-  table.merge(data, self)
+  for k, v in pairs(data) do self[k] = v end
   assert(self.item or self.itemType)
   self.radius = 8
   ovw.collision:register(self)
   ovw.view:register(self)
+end
+
+function Pickup:destroy()
+  ovw.collision:unregister(self)
+  ovw.view:unregister(self)
 end
 
 function Pickup:draw()
@@ -28,9 +33,14 @@ function Pickup:setPosition(x, y)
 end
 
 function Pickup.collision.with.player(self, player, dx, dy)
-  if ovw.player.inventory:add(self.item or new(self.itemType)) then
-    ovw.collision:unregister(self)
-    ovw.view:unregister(self)
+  if self.itemType == Ammo then
+    ovw.player.ammo = ovw.player.ammo + math.round(math.clamp(love.math.randomNormal(4, 5), 1, 12))
+    return self:destroy()
+  end
+
+  self.item = self.item or new(self.itemType)
+  if ovw.player.inventory:add(self.item) then
+    self:destroy()
   end
 end
 

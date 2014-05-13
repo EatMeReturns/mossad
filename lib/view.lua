@@ -23,7 +23,7 @@ function View:update()
   self.prevy = self.y
   self.prevscale = self.scale
 
-  if not debug then self.targetScale = 1.3 end
+  if not devMode then self.targetScale = 1.3 end
   
   local prevw, prevh = self.w, self.h
   local xf, yf = love.mouse.getX() / love.graphics.getWidth(), love.mouse.getY() / love.graphics.getHeight()
@@ -55,9 +55,9 @@ function View:draw()
 
   for _, v in ipairs(self.toDraw) do f.exe(v.draw, v) end
   
-  if debug then
+  if devMode then
     local xx, yy = ovw.house:snap(x, y)
-    love.graphics.setColor(255, 255, 255, 30)
+    love.graphics.setColor(255, 255, 255, 20)
     for i = xx - ovw.house.cellSize, xx + self.w + ovw.house.cellSize, ovw.house.cellSize do
       love.graphics.line(i, y, i, y + self.h)
     end

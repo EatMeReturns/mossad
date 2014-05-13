@@ -1,7 +1,7 @@
 Game = class()
 
 function Game:load()
-  debug = false
+  devMode = false
   self.restartTimer = 0
 
   self.view = View()
@@ -39,7 +39,7 @@ end
 
 function Game:keypressed(key)
   if key == 'escape' then love.event.quit()
-  elseif key == '`' then debug = not debug end
+  elseif key == '`' then devMode = not devMode end
   self.player:keypressed(key)
 end
 

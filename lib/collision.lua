@@ -16,7 +16,7 @@ function Collision:init()
 end
 
 function Collision:draw()
-  if debug then
+  if devMode then
     local rect = {
       ovw.view.x,
       ovw.view.y,

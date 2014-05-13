@@ -48,6 +48,8 @@ function Player:init()
     falloff = 1,
     posterization = 1
   }
+
+  self.ammo = 20
   
   ovw.collision:register(self)
   ovw.view:register(self)

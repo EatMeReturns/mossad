@@ -39,6 +39,9 @@ function Hud:items()
       g.print(str, 2 + (size + 2) * (i - 1) + .5 + 4, 2 + .5 + 1)
     end
   end
+  if ovw.player.ammo == 0 then g.setColor(255, 0, 0)
+  else g.setColor(255, 255, 255) end
+  g.print('ammo: ' .. ovw.player.ammo, 2, size + 3)
 end
 
 function Hud:debug()
