@@ -41,6 +41,7 @@ function Hud:items()
 end
 
 function Hud:debug()
+  if not debug then return end
   g.setColor(255, 255, 255)
   g.print(love.timer.getFPS() .. 'fps ' .. (ovw.view.scale * 100) .. '%', 1, h() - g.getFont():getHeight())
 end

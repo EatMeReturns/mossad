@@ -22,6 +22,8 @@ function View:update()
   self.prevx = self.x
   self.prevy = self.y
   self.prevscale = self.scale
+
+  if not debug then self.targetScale = 1.3 end
   
   local prevw, prevh = self.w, self.h
   local xf, yf = love.mouse.getX() / love.graphics.getWidth(), love.mouse.getY() / love.graphics.getHeight()
@@ -53,7 +55,7 @@ function View:draw()
 
   for _, v in ipairs(self.toDraw) do f.exe(v.draw, v) end
   
-  if love.keyboard.isDown(' ') then
+  if debug then
     local xx, yy = ovw.house:snap(x, y)
     love.graphics.setColor(255, 255, 255, 30)
     for i = xx - ovw.house.cellSize, xx + self.w + ovw.house.cellSize, ovw.house.cellSize do

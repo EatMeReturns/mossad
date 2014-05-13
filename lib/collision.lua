@@ -16,7 +16,7 @@ function Collision:init()
 end
 
 function Collision:draw()
-  if love.keyboard.isDown(' ') then
+  if debug then
     local rect = {
       ovw.view.x,
       ovw.view.y,

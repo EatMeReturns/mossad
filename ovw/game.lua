@@ -1,6 +1,8 @@
 Game = class()
 
 function Game:load()
+  debug = false
+
   self.view = View()
   self.hud = Hud()
   self.collision = Collision()
@@ -37,7 +39,8 @@ function Game:draw()
 end
 
 function Game:keypressed(key)
-  if key == 'escape' then love.event.quit() end
+  if key == 'escape' then love.event.quit()
+  elseif key == '`' then debug = not debug end
   self.player:keypressed(key)
 end
 
