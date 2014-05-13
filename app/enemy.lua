@@ -2,23 +2,20 @@ Enemy = class()
 
 Enemy.tag = 'enemy' --for collision
 Enemy.collision = {}
+Enemy.collision.with = {
+  wall = function(self, other, dx, dy)
+    self:setPosition(self.x + dx, self.y + dy)
+  end,
 
-Enemy.collision.with = {}
-
-Enemy.collision.with.wall = function(self, other, dx, dy)
-  self:setPosition(self.x + dx, self.y + dy)
-end
-
-Enemy.collision.with.enemy = function(self, other, dx, dy)
-  if self.x < other.x then
+  enemy = function(self, other, dx, dy)
     self:setPosition(self.x + dx / 2, self.y + dy / 2)
     other:setPosition(other.x - dx / 2, other.y - dy / 2)
-  end
-end
+  end,
 
-Enemy.collision.with.player = function(self, player, dx, dy)
-  self:setPosition(self.x - dx, self.y - dy)
-end
+  player = function(self, player, dx, dy)
+    self:setPosition(self.x + dx, self.y + dy)
+  end
+}
 
 function Enemy:init(x, y)
   self.x = x

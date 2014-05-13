@@ -7,7 +7,7 @@ function Collision:init()
   local function onCollide(dt, a, b, dx, dy)
     a, b = a.owner, b.owner
     f.exe(a.collision.with and a.collision.with[b.tag], a, b, dx, dy)
-    f.exe(b.collision.with and b.collision.with[a.tag], b, a, dx, dy)
+    f.exe(b.collision.with and b.collision.with[a.tag], b, a, -dx, -dy)
   end
   
   self.hc = hardon(self.cellSize, onCollide)

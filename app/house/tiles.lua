@@ -66,7 +66,7 @@ function Tile:updateLight()
   if factor == 0 then return end
 
   if ovw.boss then
-    local target = self.type == 'boss' and 150 or 0
+    local target = self.type == 'boss' and 100 or 0
     self.ambient = math.lerp(self.ambient, target, math.min(2 * factor, 1))
   else
     self.ambient = math.lerp(self.ambient, 0, math.min(.08 * factor, 1))

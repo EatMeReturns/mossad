@@ -1,5 +1,6 @@
 Shade = extend(Enemy)
 
+Shade.collision = setmetatable({}, {__index = Enemy.collision})
 Shade.collision.shape = 'circle'
 Shade.radius = 16
 
