@@ -7,7 +7,6 @@ function Weapon:init()
   self.timers.shoot = 0
   self.timers.reload = 0
 
-  self.currentAmmo = self.ammo
   self.currentClip = self.clip
 end
 
@@ -18,9 +17,9 @@ end
 function Weapon:update()
   self.timers.shoot = timer.rot(self.timers.shoot)
   self.timers.reload = timer.rot(self.timers.reload, function()
-    local amt = math.min(self.clip - self.currentClip, self.currentAmmo)
+    local amt = math.min(self.clip - self.currentClip, ovw.player.ammo)
     self.currentClip = self.currentClip + amt
-    self.currentAmmo = self.currentAmmo - amt
+    ovw.player.ammo = ovw.player.ammo - amt
   end)
  
   if self.selected and love.mouse.isDown('l') then
@@ -49,4 +48,9 @@ function Weapon:reload()
   if self.currentClip < self.clip and self.timers.reload == 0 then
     selef.timers.reload = self.reloadSpeed
   end
+end
+
+function Weapon:val()
+  if self.timers.reload > 0 then return self.timers.reload / self.reloadSpeed end
+  return self.currentClip / self.clip
 end

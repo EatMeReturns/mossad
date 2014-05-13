@@ -37,6 +37,8 @@ function Hud:items()
       local str = item.name
       if item.stacks then str = item.stacks .. ' ' .. str end
       g.print(str, 2 + (size + 2) * (i - 1) + .5 + 4, 2 + .5 + 1)
+      local val = item.val and item:val() or 0
+      g.rectangle('fill', 2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size * val, 3)
     end
   end
   if ovw.player.ammo == 0 then g.setColor(255, 0, 0)

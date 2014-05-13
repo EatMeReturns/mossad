@@ -16,6 +16,7 @@ function Glowstick:init()
   }
 
   self.health = 15
+  self.maxHealth = self.health
   self.on = false
   self.stacks = self.stacks or math.round(math.clamp(love.math.randomNormal(2, 1.25), 1, 5))
 end
@@ -43,4 +44,9 @@ function Glowstick:mousepressed()
   if self.selected then
     self.on = not self.on
   end
+end
+
+function Glowstick:val()
+  if self.health == self.maxHealth then return 0 end
+  return self.health / self.maxHealth
 end
