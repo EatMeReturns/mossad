@@ -2,6 +2,7 @@ Game = class()
 
 function Game:load()
   debug = false
+  self.restartTimer = 0
 
   self.view = View()
   self.hud = Hud()
@@ -32,6 +33,10 @@ function Game:update()
   self.collision:resolve()
   self.view:update()
   self.hud.fader:update()
+  self.restartTimer = timer.rot(self.restartTimer, function()
+    Overwatch:remove(ovw)
+    Overwatch:add(Game)
+  end)
 end
 
 function Game:draw()

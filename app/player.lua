@@ -153,8 +153,11 @@ function Player:hurt(amount)
   self.iNeedHealing = self.iNeedHealing + amount
   if self.iNeedHealing > self.iNeedTooMuchHealing then
     if self.crippled then
-      Overwatch:remove(ovw)
-      Overwatch:add(Game)
+      if ovw.restartTimer == 0 then
+        ovw.hud.fader:add('Mossad starts writing my name in his notebook...')
+        ovw.house.targetAmbient = {0, 0, 0}
+        ovw.restartTimer = 4
+      end
       return
     end
     self:cripple()
@@ -179,4 +182,5 @@ function Player:uncripple()
   self.light.maxDis = 250
   self.crippled = false
   ovw.house.targetAmbient = {255, 255, 255}
+  ovw.restartTimer = 0
 end
