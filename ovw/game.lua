@@ -14,12 +14,6 @@ function Game:load()
   self.enemies = Manager()
   self.boss = nil
 
-  Pickup({
-    x = self.player.x,
-    y = self.player.y + 80,
-    itemType = Glowstick
-  })
-
   self.house:spawnEnemies()
 end
 

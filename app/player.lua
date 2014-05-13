@@ -38,6 +38,8 @@ function Player:init()
 
   self.inventory = Inventory()
   self.inventory:add(Pistol())
+  self.inventory:add(Glowstick())
+  self.inventory:add(FirstAid())
 
   self.light = {
     minDis = 50,

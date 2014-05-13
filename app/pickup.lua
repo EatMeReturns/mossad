@@ -23,9 +23,7 @@ function Pickup:draw()
 end
 
 function Pickup.collision.with.player(self, player, dx, dy)
-  if #player.inventory.items < 4 then
-    local item = self.item or new(self.itemType)
-    ovw.player.inventory:add(item)
+  if ovw.player.inventory:add(self.item or new(self.itemType)) then
     ovw.collision:unregister(self)
     ovw.view:unregister(self)
   end

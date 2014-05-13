@@ -28,7 +28,7 @@ end
 
 function Hud:items()
   local size = 40
-  for i = 1, 4 do
+  for i = 1, 5 do
     local item = ovw.player.inventory.items[i]
     local alpha = not item and 80 or (ovw.player.inventory.selected == i and 255 or 160)
     g.setColor(255, 255, 255, alpha)
