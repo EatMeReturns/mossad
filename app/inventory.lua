@@ -14,6 +14,15 @@ function Inventory:mousepressed(...)
 end
 
 function Inventory:add(item)
+  local stacks = item.stacks
+  if stacks then
+    for i = 1, #self.items do
+      if self.items[i].name == item.name then
+        self.items[i].stacks = self.items[i].stacks + stacks
+        return
+      end
+    end
+  end
   table.insert(self.items, item)
   item.index = #self.items
   if not self.selected then self:select(#self.items) end
@@ -22,6 +31,15 @@ end
 function Inventory:remove(index)
   local item = self.items[index]
   if item then
+    if item.stacks then
+      item.stacks = item.stacks - 1
+      if item.stacks > 0 then
+        local sel = item.selected
+        f.exe(item.init, item)
+        item.selected = sel
+        return
+      end
+    end
     item:destroy()
     table.remove(self.items, index)
     while not self.items[self.selected] do

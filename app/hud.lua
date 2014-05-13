@@ -33,7 +33,9 @@ function Hud:items()
     g.setColor(255, 255, 255, alpha)
     g.rectangle('line', 2 + (size + 2) * (i - 1) + .5, 2 + .5, size, size)
     if item then
-      g.print(item.name, 2 + (size + 2) * (i - 1) + .5 + 4, 2 + .5 + 1)
+      local str = item.name
+      if item.stacks then str = item.stacks .. ' ' .. str end
+      g.print(str, 2 + (size + 2) * (i - 1) + .5 + 4, 2 + .5 + 1)
     end
   end
 end

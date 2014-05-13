@@ -15,8 +15,9 @@ function Glowstick:init()
     posterization = 1
   }
 
-  self.health = 15
+  self.health = 5
   self.on = false
+  self.stacks = self.stacks or math.round(math.clamp(love.math.randomNormal(2, 1.25), 1, 5))
 end
 
 function Glowstick:select()
@@ -31,9 +32,10 @@ function Glowstick:update()
   if self.on then
     self.light.x, self.light.y = ovw.player.x, ovw.player.y
     ovw.house:applyLight(self.light, 'ambient')
-    self.health = timer.rot(self.health, function()
+    self.health = self.health - tickRate
+    if self.health <= 0 then
       ovw.player.inventory:remove(self.index)
-    end)
+    end
   end
 end
 
