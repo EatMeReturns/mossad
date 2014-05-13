@@ -16,6 +16,10 @@ Enemy.collision.with.enemy = function(self, other, dx, dy)
   end
 end
 
+Enemy.collision.with.player = function(self, player, dx, dy)
+  self:setPosition(self.x - dx, self.y - dy)
+end
+
 function Enemy:init(x, y)
   self.x = x
   self.y = y
@@ -36,7 +40,6 @@ end
 function Enemy:destroy()
   ovw.view:unregister(self)
   ovw.collision.hc:remove(self.shape)
-  ovw.enemies:remove(self)
 end
 
 Enemy.update = f.empty --perform movement, etc. calculations
@@ -45,7 +48,7 @@ Enemy.draw = f.empty --hurr durr
 function Enemy:hurt(amount)
   self.health = self.health - amount
   if self.health <= 0 then
-    self:destroy()
+    ovw.enemies:remove(self)
   end
 end
 

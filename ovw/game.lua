@@ -10,21 +10,13 @@ function Game:load()
   self.enemies = Manager()
   self.boss = nil
 
-  for i = 1, ovw.house.roomCount / 5 do
-    local room = self.house.rooms[love.math.random(1, #self.house.rooms)]
-    local x, y = self.house:pos(room.x + room.width / 2, room.y + room.height / 2)
-    if math.distance(x, y, ovw.player.x, ovw.player.y) < 300 then
-      i = i - 1
-    else
-      self.enemies:add(Shade(x, y))
-    end
-  end
-
   Pickup({
     x = self.player.x,
     y = self.player.y + 80,
     itemType = Glowstick
   })
+
+  self.house:spawnEnemies()
 end
 
 function Game:update()
@@ -32,6 +24,7 @@ function Game:update()
   self.player:update()
   self.spells:update()
   self.enemies:update()
+  if self.boss then self.boss:update() end
   self.collision:resolve()
   self.view:update()
   self.hud.fader:update()

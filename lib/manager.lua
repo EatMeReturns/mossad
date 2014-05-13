@@ -10,7 +10,15 @@ function Manager:add(object)
 end
 
 function Manager:remove(object)
+  if not object then return end
+  f.exe(object.destroy, object)
   self.objects[object] = nil
+end
+
+function Manager:clear()
+  table.each(self.objects, function(o)
+    self:remove(o)
+  end)
 end
 
 function Manager:each(fn)

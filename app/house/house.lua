@@ -60,6 +60,7 @@ function House:init()
 end
 
 function House:destroy()
+  ovw.collision.hc:remove(unpack(self.shapes))
   ovw.view:unregister(self)
 end
 
@@ -116,9 +117,9 @@ function House:calculateTileLight(x, y)
   local factor = (tick - self.tileTouched[x][y]) * tickRate
   if ovw.boss then
     local target = self.grid[x][y] == 'boss' and 150 or 0
-    self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], target, math.min(5 * factor, 1))
+    self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], target, math.min(2 * factor, 1))
   else
-    self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], 0, math.min(.065 * factor, 1))
+    self.tileAlpha[x][y] = math.lerp(self.tileAlpha[x][y], 0, math.min(.08 * factor, 1))
   end
   self.tileTouched[x][y] = tick
 end
@@ -152,18 +153,22 @@ function House:sealBossRoom()
   shape = ovw.collision.hc:addRectangle(x, y, w, border)
   ovw.collision.hc:setPassive(shape)
   shape.owner = self
+  table.insert(self.shapes, shape)
   
   shape = ovw.collision.hc:addRectangle(x, y, border, h)
   ovw.collision.hc:setPassive(shape)
   shape.owner = self
+  table.insert(self.shapes, shape)
 
   shape = ovw.collision.hc:addRectangle(x + w + border, y, border, h)
   ovw.collision.hc:setPassive(shape)
   shape.owner = self
+  table.insert(self.shapes, shape)
 
   shape = ovw.collision.hc:addRectangle(x, y + h + border, w, border)
   ovw.collision.hc:setPassive(shape)
   shape.owner = self
+  table.insert(self.shapes, shape)
 end
 
 function House:generate()
@@ -189,7 +194,7 @@ function House:generate()
   room.x, room.y = 100, 100
   self:addRoom(room)
 
-   furthestRoom = room
+  local furthestRoom = room
   local furthestDis = 0
 
   repeat
@@ -370,6 +375,8 @@ function House:computeTiles()
 end
 
 function House:computeShapes()
+  self.shapes = {}
+
   local function coords(x, y, w, d)
     if d == 'n' then
       return ovw.collision.hc:addRectangle(self:pos(x, y, w, .5))
@@ -487,7 +494,18 @@ function House:computeShapes()
         
         ovw.collision.hc:setPassive(shape)
         shape.owner = self
+        table.insert(self.shapes, shape)
       end
+    end
+  end
+end
+
+function House:spawnEnemies()
+  while table.count(ovw.enemies.objects) < self.enemyCount do
+    local room = self.rooms[love.math.random(1, #self.rooms)]
+    local x, y = self:pos(room.x + room.width / 2, room.y + room.height / 2)
+    if room ~= self.rooms[1] and room ~= self.bossRoom then
+      ovw.enemies:add(Shade(x, y))
     end
   end
 end

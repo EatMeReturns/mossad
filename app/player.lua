@@ -7,9 +7,6 @@ Player.collision = {
   with = {
     wall = function(self, other, dx, dy)
       self:setPosition(self.x + dx, self.y + dy)
-    end,
-    enemy = function(self, other, dx, dy)
-      other:setPosition(other.x - dx, other.y - dy)
     end
   }
 }
@@ -79,9 +76,9 @@ function Player:update()
     end
 
     if inside then
-      ovw.hud.fader:add('I hear a rumbling...')
+      ovw.hud.fader:add('caw caw, motherfucker.')
       ovw.house:sealBossRoom()
-      ovw.boss = 19 -- make a boss
+      ovw.boss = Avian()
     end
   end
 end

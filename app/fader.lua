@@ -6,6 +6,7 @@ local w, h = g.width, g.height
 function Fader:init()
   self.texts = {}
   self.texts[1] = 'mossad is coming'
+  self.texts[2] = 'no really...he is'
   self.opacity = -255
 end
 

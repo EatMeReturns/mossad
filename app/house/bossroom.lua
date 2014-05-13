@@ -5,8 +5,8 @@ BossRoom = extend(Room)
 function BossRoom:init()
   Room.init(self)
 
-  self.width = 12
-  self.height = 12
+  self.width = 15
+  self.height = 15
 
   for i = -1, self.width do
     self.walls.north[#self.walls.north + 1] = {x = i, y = -1, direction = 'north'}

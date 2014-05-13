@@ -6,11 +6,15 @@ Projectile.collision = {
   static = false,
   with = {
     wall = function(self, other, dx, dy)
-      self:destroy()
+      ovw.spells:remove(self)
     end,
     enemy = function(self, other, dx, dy)
       other:hurt(self.damage)
-      self:destroy()
+      ovw.spells:remove(self)
+    end,
+    boss = function(self, other, dx, dy)
+      other:hurt(self.damage)
+      ovw.spells:remove(self)
     end
   }
 }
@@ -30,7 +34,6 @@ function Projectile:init(damage, x, y, direction, speed)
 end
 
 function Projectile:destroy()
-  ovw.spells:remove(self)
   ovw.view:unregister(self)
   ovw.collision.hc:remove(self.shape)
 end
