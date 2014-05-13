@@ -16,6 +16,8 @@ function MuzzleFlash:init(dis, dir)
     local x, y = self.x + math.dx(d, dir), self.y + math.dy(d, dir)
     self.light.x, self.light.y = x, y
     ovw.house:applyLight(self.light, 'dynamic')
+    self.light.intensity = self.light.intensity - .015
+    if self.light.intensity <= 0 then break end
   end
 
   self.health = .2
