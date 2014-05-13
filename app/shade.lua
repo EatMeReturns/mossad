@@ -33,6 +33,18 @@ function Shade:init(...)
   self.health = love.math.random(18, 30)
 end
 
+function Shade:destroy()
+  Enemy.destroy(self)
+  local r = love.math.random()
+  if r < .35 then
+    Pickup({
+      x = self.x,
+      y = self.y,
+      itemType = Glowstick
+    })
+  end
+end
+
 function Shade:update()
   self.prevX = self.x
   self.prevY = self.y

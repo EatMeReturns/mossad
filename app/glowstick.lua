@@ -15,7 +15,7 @@ function Glowstick:init()
     posterization = 1
   }
 
-  self.health = 5
+  self.health = 15
   self.on = false
   self.stacks = self.stacks or math.round(math.clamp(love.math.randomNormal(2, 1.25), 1, 5))
 end
