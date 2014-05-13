@@ -22,9 +22,19 @@ function Pickup:draw()
   self.shape:draw('line')
 end
 
+function Pickup:setPosition(x, y)
+  self.x, self.y = x, y
+  self.shape:moveTo(x, y)
+end
+
 function Pickup.collision.with.player(self, player, dx, dy)
   if ovw.player.inventory:add(self.item or new(self.itemType)) then
     ovw.collision:unregister(self)
     ovw.view:unregister(self)
   end
+end
+
+function Pickup.collision.with.pickup(self, other, dx, dy)
+  self:setPosition(self.x + dx / 2, self.y + dy / 2)
+  other:setPosition(other.x - dx / 2, other.y - dy / 2)
 end

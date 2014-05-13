@@ -36,13 +36,21 @@ end
 
 function Shade:destroy()
   Enemy.destroy(self)
-  local r = love.math.random()
-  if r < .35 then
-    Pickup({
-      x = self.x,
-      y = self.y,
-      itemType = Glowstick
-    })
+  local function make(i) Pickup({x = self.x, y = self.y, itemType = i}) end
+
+  local probs = {
+    {Glowstick, .35},
+    {FirstAid, .2}
+  }
+
+  local x = love.math.random()
+
+  for _, t in ipairs(probs) do
+    local item, chance = unpack(t)
+    if x < chance then
+      make(item)
+      x = x + love.math.random() * (1 - chance) ^ 2
+    end
   end
 end
 
