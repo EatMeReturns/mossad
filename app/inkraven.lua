@@ -40,6 +40,7 @@ function InkRaven:init(...)
   self.swoopTimer = 0
 
   self.health = love.math.random(11, 28)
+  self.targetAngle = love.math.random() * 2 * math.pi
 end
 
 function InkRaven:destroy()
@@ -47,15 +48,14 @@ function InkRaven:destroy()
   local function make(i) Pickup({x = self.x, y = self.y, itemType = i}) end
 
   local probs = {
-    {Glowstick, .35},
+    {Glowstick, .4},
     {FirstAid, .2},
-    {Ammo, .4}
+    {Ammo, .3},
+    {TorchItem, .1}
   }
 
-  table.sort(probs, function(a, b)
-    return love.math.random() < .5
-  end)
-
+  table.shuffle(probs)
+  
   local x = love.math.random()
 
   for _, t in ipairs(probs) do
@@ -95,7 +95,7 @@ function InkRaven:scan()
   self.scanTimer = .8
 
   local target = nil
-  if dis < self.sight and math.abs(math.anglediff(dir, self.angle)) < (math.pi / 2) then
+  if dis < self.sight and math.abs(math.anglediff(dir, self.angle)) < (math.pi * 1.6) then
     target = ovw.player
     self:startGlide()
   end

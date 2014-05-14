@@ -41,15 +41,14 @@ function Shade:destroy()
   local function make(i) Pickup({x = self.x, y = self.y, itemType = i}) end
 
   local probs = {
-    {Glowstick, .35},
+    {Glowstick, .25},
     {FirstAid, .2},
-    {Ammo, .4}
+    {Ammo, .7},
+    {TorchItem, .1}
   }
 
-  table.sort(probs, function(a, b)
-    return love.math.random() < .5
-  end)
-
+  table.shuffle(probs)
+  
   local x = love.math.random()
 
   for _, t in ipairs(probs) do
