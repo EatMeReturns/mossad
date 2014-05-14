@@ -434,11 +434,12 @@ function House:computeShapes()
 end
 
 function House:spawnEnemies()
+  local types = {Shade, InkRaven}
   while table.count(ovw.enemies.objects) < self.enemyCount do
     local room = self.rooms[love.math.random(1, #self.rooms)]
     local x, y = self:pos(room.x + room.width / 2, room.y + room.height / 2)
     if room ~= self.rooms[1] and room ~= self.bossRoom then
-      ovw.enemies:add(Shade(x, y))
+      ovw.enemies:add(randomFrom(types)(x, y))
     end
   end
 end
