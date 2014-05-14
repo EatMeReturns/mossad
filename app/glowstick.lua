@@ -40,8 +40,8 @@ function Glowstick:update()
   end
 end
 
-function Glowstick:mousepressed()
-  if self.selected then
+function Glowstick:mousepressed(x, y, b)
+  if self.selected and b == 'l' then
     self.on = not self.on
   end
 end

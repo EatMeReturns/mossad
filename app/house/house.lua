@@ -437,7 +437,9 @@ function House:spawnEnemies()
   local types = {Shade, InkRaven}
   while table.count(ovw.enemies.objects) < self.enemyCount do
     local room = randomFrom(self.rooms)
-    local x, y = self:pos(room.x + room.width / 2, room.y + room.height / 2)
+    local x, y = self:pos(room.x, room.y)
+    x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
+    y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
     if room ~= self.rooms[1] and room ~= self.bossRoom then
       ovw.enemies:add(randomFrom(types)(x, y))
     end
@@ -447,7 +449,9 @@ end
 function House:spawnItems()
   local function make(i)
     local room = randomFrom(self.rooms)
-    local x, y = self:pos(room.x + room.width / 2, room.y + room.height / 2)
+    local x, y = self:pos(room.x, room.y)
+    x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
+    y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
     if room ~= self.bossRoom then
       Pickup({x = x, y = y, itemType = i})
       return true
@@ -467,7 +471,6 @@ function House:spawnItems()
       local item, chance = unpack(probs[j])
       if x < chance then
         if make(item) then
-          print('hi')
           break
         else
           i = i - 1
