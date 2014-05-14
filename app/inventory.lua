@@ -57,6 +57,26 @@ function Inventory:remove(index)
   end
 end
 
+function Inventory:drop(index)
+  index = index or self.selected
+  local item = self.items[index]
+  if item then
+    item.selected = false
+    f.exe(item.drop, item)
+    Pickup({
+      x = ovw.player.x,
+      y = ovw.player.y,
+      dirty = true,
+      item = item
+    })
+    table.remove(self.items, index)
+    while not self.items[self.selected] do
+      self.selected = self.selected - 1
+    end
+    self:select(self.selected)
+  end
+end
+
 function Inventory:select(index)
   local old, new = self.items[self.selected], self.items[index]
   self.selected = index

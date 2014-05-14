@@ -101,6 +101,9 @@ function Player:keypressed(key)
   if x and x >= 1 and x <= #self.inventory.items then
     self.inventory:select(x)
   end
+  if key == 'q' then
+    self.inventory:drop()
+  end
   self.inventory:keypressed(key)
 end
 
