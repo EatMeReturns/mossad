@@ -101,6 +101,7 @@ function Player:keypressed(key)
   if x and x >= 1 and x <= #self.inventory.items then
     self.inventory:select(x)
   end
+  self.inventory:keypressed(key)
 end
 
 function Player:mousepressed(...)

@@ -44,9 +44,11 @@ function Weapon:update()
   end
 end
 
-function Weapon:reload()
-  if self.currentClip < self.clip and self.timers.reload == 0 then
-    selef.timers.reload = self.reloadSpeed
+function Weapon:keypressed(key)
+  if key == 'r' then
+    if self.currentClip < self.clip and self.timers.reload == 0 then
+      self.timers.reload = self.reloadSpeed
+    end
   end
 end
 

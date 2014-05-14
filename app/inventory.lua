@@ -9,6 +9,10 @@ function Inventory:update()
   table.with(self.items, 'update')
 end
 
+function Inventory:keypressed(...)
+  table.with(self.items, 'keypressed', ...)
+end
+
 function Inventory:mousepressed(...)
   table.with(self.items, 'mousepressed', ...)
 end
