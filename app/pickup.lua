@@ -33,6 +33,12 @@ function Pickup:setPosition(x, y)
 end
 
 function Pickup.collision.with.player(self, player, dx, dy)
+  if self.dirty then
+    self:setPosition(self.x + dx * 1.3, self.y + dy * 1.3)
+    self.dirty = false
+    return
+  end
+
   if self.itemType == Ammo then
     ovw.player.ammo = ovw.player.ammo + math.round(math.clamp(love.math.randomNormal(4, 5), 1, 12))
     return self:destroy()

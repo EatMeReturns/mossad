@@ -2,12 +2,13 @@
 -- Layout
 ----------------
 House.cellSize = 32
-House.roomCount = 5
+House.roomCount = 10
 House.roomSpacing = 2
 House.carveSize = 2
 House.hallwayCount = 5
 House.hallwayLength = 30
-House.enemyCount = 2
+House.enemyCount = 10
+House.itemCount = 5
 
 House.increaseDifficulty = function()
   if House.roomCount < 100 then
@@ -22,5 +23,6 @@ House.increaseDifficulty = function()
     House.roomSpacing = 1
   end
 
-  House.enemyCount = House.enemyCount + 3
+  House.enemyCount = House.enemyCount + 6
+  House.itemCount = House.itemCount + 2
 end

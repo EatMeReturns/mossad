@@ -434,11 +434,50 @@ function House:computeShapes()
 end
 
 function House:spawnEnemies()
+  local types = {Shade, InkRaven}
   while table.count(ovw.enemies.objects) < self.enemyCount do
-    local room = self.rooms[love.math.random(1, #self.rooms)]
-    local x, y = self:pos(room.x + room.width / 2, room.y + room.height / 2)
+    local room = randomFrom(self.rooms)
+    local x, y = self:pos(room.x, room.y)
+    x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
+    y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
     if room ~= self.rooms[1] and room ~= self.bossRoom then
-      ovw.enemies:add(Shade(x, y))
+      ovw.enemies:add(randomFrom(types)(x, y))
+    end
+  end
+end
+
+function House:spawnItems()
+  local function make(i)
+    local room = randomFrom(self.rooms)
+    local x, y = self:pos(room.x, room.y)
+    x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
+    y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
+    if room ~= self.bossRoom then
+      Pickup({x = x, y = y, itemType = i})
+      return true
+    end
+  end
+
+  local probs = {
+    {Glowstick, .2},
+    {FirstAid, .15},
+    {Ammo, .5},
+    {TorchItem, .15}
+  }
+
+  for i = 1, self.itemCount do
+    local x = love.math.random()
+    for j = 1, #probs do
+      local item, chance = unpack(probs[j])
+      if x < chance then
+        if make(item) then
+          break
+        else
+          i = i - 1
+          break
+        end
+      end
+      x = x - chance
     end
   end
 end

@@ -15,6 +15,7 @@ function Game:load()
   self.boss = nil
 
   self.house:spawnEnemies()
+  self.house:spawnItems()
 end
 
 function Game:update()

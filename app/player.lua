@@ -23,8 +23,8 @@ function Player:init()
 
   self.crippled = false
   self.iNeedHealing = 0
-  self.iNeedTooMuchHealing = 30
-  self.healRate = 5
+  self.iNeedTooMuchHealing = 10
+  self.healRate = 2
   self.lastHit = tick - (1 / tickRate)
 
   self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
@@ -101,6 +101,10 @@ function Player:keypressed(key)
   if x and x >= 1 and x <= #self.inventory.items then
     self.inventory:select(x)
   end
+  if key == 'q' then
+    self.inventory:drop()
+  end
+  self.inventory:keypressed(key)
 end
 
 function Player:mousepressed(...)
@@ -148,9 +152,7 @@ function Player:turn()
 end
 
 function Player:heal()
-  if tick - self.lastHit > 5 / tickRate then
-    self.iNeedHealing = math.max(self.iNeedHealing - self.healRate * tickRate, 0)
-  end
+  self.iNeedHealing = math.max(self.iNeedHealing - self.healRate * tickRate, 0)
 end
 
 function Player:hurt(amount)

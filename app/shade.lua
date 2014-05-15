@@ -1,3 +1,5 @@
+require 'app/enemy'
+
 Shade = extend(Enemy)
 
 Shade.collision = setmetatable({}, {__index = Enemy.collision})
@@ -39,15 +41,14 @@ function Shade:destroy()
   local function make(i) Pickup({x = self.x, y = self.y, itemType = i}) end
 
   local probs = {
-    {Glowstick, .35},
+    {Glowstick, .25},
     {FirstAid, .2},
-    {Ammo, .4}
+    {Ammo, .7},
+    {TorchItem, .1}
   }
 
-  table.sort(probs, function(a, b)
-    return love.math.random() < .5
-  end)
-
+  table.shuffle(probs)
+  
   local x = love.math.random()
 
   for _, t in ipairs(probs) do
@@ -89,7 +90,7 @@ end
 function Shade:scan()
   self.target = nil
   local dis, dir = math.vector(self.x, self.y, ovw.player.x, ovw.player.y)
-  if dis < self.sight and math.anglediff(dir, self.angle) < 90 then
+  if dis < self.sight and math.abs(math.anglediff(dir, self.angle)) < math.pi / 2 then
     local blocked = ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall')
     if not blocked then
       self.target = ovw.player
