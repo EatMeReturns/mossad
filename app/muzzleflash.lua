@@ -1,6 +1,6 @@
 MuzzleFlash = class()
 
-function MuzzleFlash:init(dis, dir)
+function MuzzleFlash:init(dis, dir, pos)
   self.light = {
     minDis = 0,
     maxDis = 64,
@@ -9,9 +9,9 @@ function MuzzleFlash:init(dis, dir)
     posterization = 1
   }
 
-  self.x, self.y = ovw.player.x, ovw.player.y - 15
+  self.x, self.y = pos.x, pos.y
   self.endX, self.endY = self.x + math.dx(dis, dir), self.y + math.dy(dis, dir)
-
+  
   for d = 0, dis, 15 do
     local x, y = self.x + math.dx(d, dir), self.y + math.dy(d, dir)
     self.light.x, self.light.y = x, y

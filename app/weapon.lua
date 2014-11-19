@@ -7,6 +7,8 @@ function Weapon:init()
   self.timers.shoot = 0
   self.timers.reload = 0
 
+  self.tipOffset = {getX = function() return math.sin(ovw.player.angle + math.pi * 37 / 72) * 40 end, getY = function() return 10 - math.cos(ovw.player.angle + math.pi * 37 / 72) * 40 end}
+
   self.currentClip = self.clip
 end
 
@@ -24,7 +26,7 @@ function Weapon:update()
  
   if self.selected and love.mouse.isDown('l') then
     if self.timers.shoot == 0 and self.timers.reload == 0 and self.currentClip > 0 then
-      local x, y = ovw.player.x, ovw.player.y - 15
+      local x, y = ovw.player.x + self.tipOffset.getX(), ovw.player.y + self.tipOffset.getY()
       local x2, y2 = x + math.dx(1200, ovw.player.angle), y + math.dy(1200, ovw.player.angle)
       local wall, d = ovw.collision:lineTest(x, y, x2, y2, 'wall', false, true)
       d = d == math.huge and 1200 or d
@@ -35,7 +37,7 @@ function Weapon:update()
       
       if enemy then enemy:hurt(self.damage) end
 
-      ovw.particles:add(MuzzleFlash(d, ovw.player.angle))
+      ovw.particles:add(MuzzleFlash(d, ovw.player.angle, {x = x, y = y}))
 
       self.timers.shoot = self.fireSpeed
       self.currentClip = self.currentClip - 1

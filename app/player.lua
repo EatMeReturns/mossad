@@ -17,6 +17,7 @@ function Player:init()
   self.y = ovw.house:pos(ovw.house.rooms[1].y + ovw.house.rooms[1].height / 2)
   self.angle = 0
   self.radius = 16
+  self.rotation = 0
   
   self.speed = 0
   self.maxSpeed = 150
@@ -27,8 +28,10 @@ function Player:init()
   self.healRate = 2
   self.lastHit = tick - (1 / tickRate)
 
-  self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
-  self.backImage = love.graphics.newImage('media/graphics/anImageBack.png')
+  --self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
+  --self.backImage = love.graphics.newImage('media/graphics/anImageBack.png')
+  self.frontImage = love.graphics.newImage('media/graphics/brute.png')
+  self.backImage = love.graphics.newImage('media/graphics/brute.png')
   self.image = self.frontImage
 
   self.prevX = self.x
@@ -37,7 +40,7 @@ function Player:init()
   self.depth = -1
 
   self.inventory = Inventory()
-  self.inventory:add(Pistol())
+  self.inventory:add(Rifle())
   self.inventory:add(Glowstick())
   self.inventory:add(FirstAid())
 
@@ -49,7 +52,7 @@ function Player:init()
     posterization = 1
   }
 
-  self.ammo = 20
+  self.ammo = 64
   
   ovw.collision:register(self)
   ovw.view:register(self)
@@ -64,6 +67,8 @@ function Player:update()
   self:turn()
   self:heal()
   self.inventory:update()
+
+  self.rotation = math.direction(self.x, self.y, love.mouse.getX(), love.mouse.getY())
 
   self.light.x, self.light.y = self.x, self.y
   ovw.house:applyLight(self.light, 'ambient')
@@ -93,7 +98,7 @@ function Player:draw()
   local v = math.clamp(ovw.house.tiles[tx][ty]:brightness() + 50, 0, 255)
   local a = ovw.house.ambientColor
   love.graphics.setColor(v * a[1] / 255, v * a[2] / 255, v * a[3] / 255)
-  love.graphics.draw(self.image, x, y + 12, 0, .5, .5, self.image:getWidth() / 2, self.image:getHeight())
+  love.graphics.draw(self.image, x, y + 12, self.angle - math.pi / 2, 1, 1, self.image:getWidth() / 2, self.image:getHeight() / 4)
 end
 
 function Player:keypressed(key)
