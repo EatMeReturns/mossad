@@ -20,28 +20,47 @@ function Weapon:update()
   self.timers.shoot = timer.rot(self.timers.shoot)
   self.timers.reload = timer.rot(self.timers.reload, function()
     local amt = math.min(self.clip - self.currentClip, ovw.player.ammo)
+    if self.fireMode == 'Single' then amt = math.min(amt, 1) end
     self.currentClip = self.currentClip + amt
     ovw.player.ammo = ovw.player.ammo - amt
+    self.reloading = true
   end)
+
+  if not self.firing and self.reloading and self.timers.reload == 0 then
+    if self.fireMode == 'Single' and self.currentClip < self.clip then self.timers.reload = self.reloadSpeed end
+  else
+    self.reloading = false
+  end
+
+  if self.selected and not love.mouse.isDown('l') then
+    self.firing = false
+  end
  
   if self.selected and love.mouse.isDown('l') then
-    if self.timers.shoot == 0 and self.timers.reload == 0 and self.currentClip > 0 then
-      local x, y = ovw.player.x + self.tipOffset.getX(), ovw.player.y + self.tipOffset.getY()
-      local x2, y2 = x + math.dx(1200, ovw.player.angle), y + math.dy(1200, ovw.player.angle)
-      local wall, d = ovw.collision:lineTest(x, y, x2, y2, 'wall', false, true)
-      d = d == math.huge and 1200 or d
+    if not (self.fireMode == 'Semiautomatic' and self.firing) then
+      if self.timers.shoot == 0 and (self.timers.reload == 0 or self.fireMode == 'Single') and self.currentClip > 0 then
+        self.firing = true
 
-      x2, y2 = x + math.dx(d, ovw.player.angle), y + math.dy(d, ovw.player.angle)
-      local enemy, d2 = ovw.collision:lineTest(x, y, x2, y2, 'enemy', false, true)
-      d = d2 == math.huge and d or d2
-      
-      if enemy then enemy:hurt(self.damage) end
+        for i = 0, self.spread - 1 do 
+          local dAngle = i * (love.math.random() * 0.05 - 0.025)
+          local x, y = ovw.player.x + self.tipOffset.getX(), ovw.player.y + self.tipOffset.getY()
+          local x2, y2 = x + math.dx(1200, ovw.player.angle + dAngle), y + math.dy(1200, ovw.player.angle + dAngle)
+          local wall, d = ovw.collision:lineTest(x, y, x2, y2, 'wall', false, true)
+          d = d == math.huge and 1200 or d
 
-      ovw.particles:add(MuzzleFlash(d, ovw.player.angle, {x = x, y = y}))
+          x2, y2 = x + math.dx(d, ovw.player.angle + dAngle), y + math.dy(d, ovw.player.angle + dAngle)
+          local enemy, d2 = ovw.collision:lineTest(x, y, x2, y2, 'enemy', false, true)
+          d = d2 == math.huge and d or d2
+          
+          if enemy then enemy:hurt(self.damage) end
+          ovw.particles:add(MuzzleFlash(d, ovw.player.angle + i * love.math.random() * 0.075 - 0.0375, {x = x, y = y}))
+        end
 
-      self.timers.shoot = self.fireSpeed
-      self.currentClip = self.currentClip - 1
-      if self.currentClip == 0 then self.timers.reload = self.reloadSpeed end
+        self.timers.shoot = self.fireSpeed
+        self.currentClip = self.currentClip - 1
+        if self.fireMode == 'Single' then self.timers.reload = 0 end
+        if self.currentClip == 0 then self.timers.reload = self.reloadSpeed end
+      end
     end
   end
 end

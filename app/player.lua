@@ -45,8 +45,8 @@ function Player:init()
   self.inventory:add(FirstAid())
 
   self.light = {
-    minDis = 50,
-    maxDis = 250,
+    minDis = 100,
+    maxDis = 400,
     intensity = .5,
     falloff = 1,
     posterization = 1
