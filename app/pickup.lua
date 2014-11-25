@@ -45,7 +45,7 @@ function Pickup.collision.with.player(self, player, dx, dy)
   end
 
   self.item = self.item or new(self.itemType)
-  if ovw.player.inventory:add(self.item) then
+  if ovw.player.hotbar:add(self.item) then
     self:destroy()
   end
 end

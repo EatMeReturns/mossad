@@ -11,4 +11,4 @@ Flaregun.reloadSpeed = 3
 Flaregun.clip = 6
 Flaregun.ammo = 24
 
-Flaregun.spread = 12
+Flaregun.spread = 1

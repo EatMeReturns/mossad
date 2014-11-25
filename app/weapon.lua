@@ -7,6 +7,9 @@ function Weapon:init()
   self.timers.shoot = 0
   self.timers.reload = 0
 
+  self.state = 'Idle'
+  self.selected = false
+
   self.tipOffset = {getX = function() return math.sin(ovw.player.angle + math.pi * 37 / 72) * 40 end, getY = function() return 10 - math.cos(ovw.player.angle + math.pi * 37 / 72) * 40 end}
 
   self.currentClip = self.clip
@@ -18,28 +21,37 @@ end
 
 function Weapon:update()
   self.timers.shoot = timer.rot(self.timers.shoot)
-  self.timers.reload = timer.rot(self.timers.reload, function()
-    local amt = math.min(self.clip - self.currentClip, ovw.player.ammo)
-    if self.fireMode == 'Single' then amt = math.min(amt, 1) end
-    self.currentClip = self.currentClip + amt
-    ovw.player.ammo = ovw.player.ammo - amt
-    self.reloading = true
-  end)
-
-  if not self.firing and self.reloading and self.timers.reload == 0 then
-    if self.fireMode == 'Single' and self.currentClip < self.clip then self.timers.reload = self.reloadSpeed end
+  if self.selected then
+    if self.timers.reload > 0 then 
+      self.state = 'Reloading'
+    end
+    self.timers.reload = timer.rot(self.timers.reload, function()
+      local amt = math.min(self.clip - self.currentClip, ovw.player.ammo)
+      if self.fireMode == 'Single' then amt = math.min(amt, 1) end
+      self.currentClip = self.currentClip + amt
+      ovw.player.ammo = ovw.player.ammo - amt
+    end)
   else
-    self.reloading = false
+    self.timers.reload = 0
+    self.state = 'Idle'
   end
 
-  if self.selected and not love.mouse.isDown('l') then
-    self.firing = false
+  if self.state == 'Reloading' and self.timers.reload == 0 then
+    if self.fireMode == 'Single' and self.currentClip < self.clip then
+      self.timers.reload = self.reloadSpeed
+    else
+      self.state = 'Firing'
+    end
+  end
+
+  if self.state == 'Firing' and not love.mouse.isDown('l') then
+    self.state = 'Idle'
   end
  
   if self.selected and love.mouse.isDown('l') then
-    if not (self.fireMode == 'Semiautomatic' and self.firing) then
+    if not (self.fireMode ~= 'Automatic' and self.state == 'Firing') then
       if self.timers.shoot == 0 and (self.timers.reload == 0 or self.fireMode == 'Single') and self.currentClip > 0 then
-        self.firing = true
+        self.state = 'Firing'
 
         for i = 0, self.spread - 1 do 
           local dAngle = i * (love.math.random() * 0.05 - 0.025)

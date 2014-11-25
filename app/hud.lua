@@ -12,7 +12,8 @@ end
 function Hud:gui()
   g.setFont(self.font)
   self:blood()
-  self:items()
+  self:hotbar() 
+  self:arsenal()
   self.fader:gui()
   self:debug()
 end
@@ -26,11 +27,11 @@ function Hud:blood() -- Yo sach a hudblood, haarry
   g.rectangle('fill', 0, 0, w(), h())
 end
 
-function Hud:items()
+function Hud:hotbar()
   local size = 40
   for i = 1, 5 do
-    local item = ovw.player.inventory.items[i]
-    local alpha = not item and 80 or (ovw.player.inventory.selected == i and 255 or 160)
+    local item = ovw.player.hotbar.items[i]
+    local alpha = not item and 20 or (ovw.player.hotbar.items[i].active and 255 or 100)
     g.setColor(255, 255, 255, alpha)
     g.rectangle('line', 2 + (size + 2) * (i - 1) + .5, 2 + .5, size, size)
     if item then
@@ -41,9 +42,31 @@ function Hud:items()
       g.rectangle('fill', 2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size * val, 3)
     end
   end
+end
+
+function Hud:arsenal()
+  local size = 40
+  for i = 1, 2 do
+    local weapon = ovw.player.arsenal.weapons[i]
+    local alpha = not weapon and 10 or (ovw.player.arsenal.selected == i and 255 or 100)
+    g.setColor(255, 255, 255, alpha)
+    g.rectangle('line', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size, size)
+    if weapon then
+      local str = weapon.name
+      if weapon.stacks then str = weapon.stacks .. ' ' .. str end
+      g.print(str, 2 + .5 + 1, 2 + (size + 2) * (i + 1) + .5 + 4)
+      local val = weapon.val and weapon:val() or 0
+      if weapon.state == 'Reloading' then 
+        g.setColor(255, 255, 0, alpha)
+      elseif weapon.state == 'Firing' then
+        g.setColor(255, 0, 0, alpha)
+      end
+      g.rectangle('fill', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size * val, 3)
+    end
+  end
   if ovw.player.ammo == 0 then g.setColor(255, 0, 0)
   else g.setColor(255, 255, 255) end
-  g.print('ammo: ' .. ovw.player.ammo, 2, size + 3)
+  g.print('ammo: ' .. ovw.player.ammo, 2, size * 2 - 8)
 end
 
 function Hud:debug()

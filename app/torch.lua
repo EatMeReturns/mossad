@@ -7,11 +7,9 @@ function TorchItem:init()
   self.stacks = self.stacks or 1
 end
 
-function TorchItem:mousepressed(x, y, b)
-  if self.selected and b == 'l' then
-    ovw.spells:add(Torch())
-    ovw.player.inventory:remove(self.index)
-  end
+function TorchItem:activate()
+  ovw.spells:add(Torch())
+  ovw.player.hotbar:remove(self.index)
 end
 
 ---

@@ -39,10 +39,13 @@ function Player:init()
 
   self.depth = -1
 
-  self.inventory = Inventory()
-  self.inventory:add(Rifle())
-  self.inventory:add(Glowstick())
-  self.inventory:add(FirstAid())
+  self.hotbar = Hotbar()
+  self.hotbar:add(Glowstick())
+  self.hotbar:add(FirstAid())
+
+  self.arsenal = Arsenal()
+  self.arsenal:add(Shotgun())
+  self.arsenal:add(Pistol())
 
   self.light = {
     minDis = 100,
@@ -66,7 +69,8 @@ function Player:update()
   self:move()
   self:turn()
   self:heal()
-  self.inventory:update()
+  self.hotbar:update()
+  self.arsenal:update()
 
   self.rotation = math.direction(self.x, self.y, love.mouse.getX(), love.mouse.getY())
 
@@ -103,17 +107,18 @@ end
 
 function Player:keypressed(key)
   local x = tonumber(key)
-  if x and x >= 1 and x <= #self.inventory.items then
-    self.inventory:select(x)
+  if x and x >= 1 and x <= #self.hotbar.items then
+    self.hotbar:activate(x)
   end
   if key == 'q' then
-    self.inventory:drop()
+    self.hotbar:drop()
   end
-  self.inventory:keypressed(key)
+  self.arsenal:keypressed(key)
 end
 
 function Player:mousepressed(...)
-  self.inventory:mousepressed(...)
+  self.hotbar:mousepressed(...)
+  self.arsenal:mousepressed(...)
 end
 
 function Player:setPosition(x, y)

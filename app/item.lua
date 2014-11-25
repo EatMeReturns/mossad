@@ -1,7 +1,7 @@
 Item = class()
 
 function Item:init()
-  self.selected = false
+  self.active = false
 end
 
 function Item:destroy()
@@ -16,5 +16,4 @@ function Item:draw()
 
 end
 
-Item.mousepressed = f.empty
-Item.mousereleased = f.empty
+Item.activate = f.empty

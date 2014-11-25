@@ -15,18 +15,10 @@ function Glowstick:init()
     posterization = 1
   }
 
-  self.health = 15
+  self.health = 120
   self.maxHealth = self.health
   self.on = false
   self.stacks = self.stacks or math.round(math.clamp(love.math.randomNormal(2, 1.25), 1, 5))
-end
-
-function Glowstick:select()
-
-end
-
-function Glowstick:deselect()
-
 end
 
 function Glowstick:update()
@@ -35,18 +27,16 @@ function Glowstick:update()
     ovw.house:applyLight(self.light, 'ambient')
     self.health = self.health - tickRate
     if self.health <= 0 then
-      ovw.player.inventory:remove(self.index)
+      ovw.player.hotbar:remove(self.index)
     end
   end
 end
 
-function Glowstick:mousepressed(x, y, b)
-  if self.selected and b == 'l' then
-    self.on = not self.on
-  end
+function Glowstick:activate()
+  self.on = not self.on
+  self.active = self.on
 end
 
 function Glowstick:val()
-  if self.health == self.maxHealth then return 0 end
   return self.health / self.maxHealth
 end
