@@ -20,7 +20,8 @@ function Player:init()
   self.rotation = 0
   
   self.speed = 0
-  self.maxSpeed = 150
+  self.maxSpeed = 100
+  self.runSpeed = 225
 
   self.crippled = false
   self.iNeedHealing = 0
@@ -38,6 +39,10 @@ function Player:init()
   self.prevY = self.y
 
   self.depth = -1
+
+  self.inventory = Inventory()
+  self.inventory:add(TorchItem())
+  self.inventory:add(TorchItem())
 
   self.hotbar = Hotbar()
   self.hotbar:add(Glowstick())
@@ -69,8 +74,11 @@ function Player:update()
   self:move()
   self:turn()
   self:heal()
+  self.inventory:update()
   self.hotbar:update()
-  self.arsenal:update()
+  if not love.keyboard.isDown('e') then
+    self.arsenal:update()
+  end
 
   self.rotation = math.direction(self.x, self.y, love.mouse.getX(), love.mouse.getY())
 
@@ -106,14 +114,16 @@ function Player:draw()
 end
 
 function Player:keypressed(key)
-  local x = tonumber(key)
-  if x and x >= 1 and x <= #self.hotbar.items then
-    self.hotbar:activate(x)
+  if not love.keyboard.isDown('e') then
+    local x = tonumber(key)
+    if x and x >= 1 and x <= #self.hotbar.items then
+      self.hotbar:activate(x)
+    end
+    if key == 'q' then
+      self.hotbar:drop()
+    end
+    self.arsenal:keypressed(key)
   end
-  if key == 'q' then
-    self.hotbar:drop()
-  end
-  self.arsenal:keypressed(key)
 end
 
 function Player:mousepressed(...)
@@ -127,13 +137,14 @@ function Player:setPosition(x, y)
 end
 
 function Player:move()
+  local e, f = love.keyboard.isDown('e'), love.keyboard.isDown('f')
   local w, a, s, d = love.keyboard.isDown('w'), love.keyboard.isDown('a'), love.keyboard.isDown('s'), love.keyboard.isDown('d')
-  local moving = w or a or s or d
+  local moving = not (e or f) and (w or a or s or d)
   
   local up, down, left, right = 1.5 * math.pi, .5 * math.pi, math.pi, 2.0 * math.pi
   local dx, dy = nil, nil
 
-  if moving then self.speed = self.maxSpeed
+  if moving then self.speed = (love.keyboard.isDown('lshift') and self.runSpeed) or self.maxSpeed
   else self.speed = 0 end
     
   if not moving then return end

@@ -38,7 +38,7 @@ end
 
 function Shade:destroy()
   Enemy.destroy(self)
-  local function make(i) Pickup({x = self.x, y = self.y, itemType = i}) end
+  local function make(i) ovw.pickups:add(Pickup({x = self.x, y = self.y, itemType = i})) end
 
   local probs = {
     {Glowstick, .25},

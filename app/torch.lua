@@ -4,6 +4,8 @@ TorchItem = extend(Item)
 TorchItem.name = 'Torch'
 
 function TorchItem:init()
+  Item.init(self)
+
   self.stacks = self.stacks or 1
 end
 

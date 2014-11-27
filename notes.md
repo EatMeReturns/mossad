@@ -75,18 +75,18 @@ Combat Rules
 Keyboard Commands
 ---
 
-- `1-5`: Quick-Use utility/active items.
-- `Spacebar`: Roll.
-- `M1`: Fire equipped weapon/melee attack.
-- `M2`: Melee equipped weapon/heavy melee attack.
-- `Scroll`: Cycle equipped weapon.
-- `WASD`: Walk.
-- `Shift+WASD`: Run.
-- `R`: Reload.
-- `H`: Apply First Aid to crippled body section.
-- `E`: Open the backpack/interact.
-- `Mouse`: Aim.
-- `U`: Upgrade equipment?
+- `1-5`: Press to activate hotbar items.
+- `Spacebar`: Press to roll.
+- `M1`: Click to fire equipped weapon/melee attack/select in UI.
+- `M2`: Click to melee equipped weapon/heavy melee attack.
+- `Scroll`: Cycle to swap equipped weapon.
+- `WASD`: Hold to walk.
+- `LShift+WASD`: Hold to run.
+- `R`: Press to reload.
+- `Tab`: Hold to open the first aid UI.
+- `E`: Hold to open the backpack UI/interact.
+- `F`: Hold to pick up loot.
+- `Mouse`: Move to aim.
 
 Some Paragraphs Regarding Combat
 ---

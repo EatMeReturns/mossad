@@ -453,7 +453,7 @@ function House:spawnItems()
     x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
     y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
     if room ~= self.bossRoom then
-      Pickup({x = x, y = y, itemType = i})
+      ovw.pickups:add(Pickup({x = x, y = y, itemType = i}))
       return true
     end
   end

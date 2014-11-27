@@ -110,7 +110,7 @@ function View:follow()
   if not self.target then return end
 
   local dis, dir = math.vector(self.target.x, self.target.y, self:mouseX(), self:mouseY())
-  local margin = 0.8
+  local margin = (love.keyboard.isDown('e') and 0.5) or 0.8
 
   dis = dis / 5
  

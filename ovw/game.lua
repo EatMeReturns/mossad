@@ -5,13 +5,14 @@ function Game:load()
   self.restartTimer = 0
 
   self.view = View()
-  self.hud = Hud()
   self.collision = Collision()
+  self.hud = Hud()
   self.house = House()
   self.player = Player()
   self.spells = Manager()
   self.particles = Manager()
   self.enemies = Manager()
+  self.pickups = Manager()
   self.boss = nil
 
   self.house:spawnEnemies()
@@ -24,6 +25,7 @@ function Game:update()
   self.spells:update()
   self.particles:update()
   self.enemies:update()
+  self.pickups:update()
   if self.boss then self.boss:update() end
   self.collision:resolve()
   self.view:update()
