@@ -42,9 +42,9 @@ function Shade:destroy()
 
   local probs = {
     {Glowstick, .25},
-    {FirstAid, .2},
+    {FirstAidKit, .2},
     {Ammo, .7},
-    {TorchItem, .1}
+    {Torch, .1}
   }
 
   table.shuffle(probs)

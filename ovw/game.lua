@@ -49,4 +49,5 @@ end
 function Game:mousepressed(...)
   self.view:mousepressed(...)
   self.player:mousepressed(...)
+  self.hud:mousepressed(...)
 end

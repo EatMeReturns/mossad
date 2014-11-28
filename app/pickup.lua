@@ -47,6 +47,11 @@ function Pickup:activate()
     return self:destroy()
   end
 
+  if self.itemType == FirstAidKit then
+    ovw.player.kits = ovw.player.kits + 1
+    return self:destroy()
+  end
+
   self.item = self.item or new(self.itemType)
   if ovw.player.hotbar:add(self.item) then
     self:destroy()

@@ -41,16 +41,17 @@ function Player:init()
   self.depth = -1
 
   self.inventory = Inventory()
-  self.inventory:add(TorchItem())
-  self.inventory:add(TorchItem())
+  self.inventory:add(Torch())
+  self.inventory:add(Torch())
 
   self.hotbar = Hotbar()
   self.hotbar:add(Glowstick())
-  self.hotbar:add(FirstAid())
 
   self.arsenal = Arsenal()
   self.arsenal:add(Shotgun())
   self.arsenal:add(Pistol())
+
+  self.firstAid = FirstAid()
 
   self.light = {
     minDis = 100,
@@ -61,6 +62,7 @@ function Player:init()
   }
 
   self.ammo = 64
+  self.kits = 1
   
   ovw.collision:register(self)
   ovw.view:register(self)
@@ -114,7 +116,7 @@ function Player:draw()
 end
 
 function Player:keypressed(key)
-  if not love.keyboard.isDown('e') then
+  if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then
     local x = tonumber(key)
     if x and x >= 1 and x <= #self.hotbar.items then
       self.hotbar:activate(x)
@@ -137,9 +139,9 @@ function Player:setPosition(x, y)
 end
 
 function Player:move()
-  local e, f = love.keyboard.isDown('e'), love.keyboard.isDown('f')
+  local tab, e, f = love.keyboard.isDown('tab'), love.keyboard.isDown('e'), love.keyboard.isDown('f')
   local w, a, s, d = love.keyboard.isDown('w'), love.keyboard.isDown('a'), love.keyboard.isDown('s'), love.keyboard.isDown('d')
-  local moving = not (e or f) and (w or a or s or d)
+  local moving = not (tab or e or f) and (w or a or s or d)
   
   local up, down, left, right = 1.5 * math.pi, .5 * math.pi, math.pi, 2.0 * math.pi
   local dx, dy = nil, nil

@@ -1,24 +1,25 @@
 require 'app/item'
 
-TorchItem = extend(Item)
-TorchItem.name = 'Torch'
+Torch = extend(Item)
+Torch.name = 'Torch'
 
-function TorchItem:init()
+function Torch:init()
   Item.init(self)
 
+  self.type = 'Consumable'
   self.stacks = self.stacks or 1
 end
 
-function TorchItem:activate()
-  ovw.spells:add(Torch())
+function Torch:activate()
+  ovw.spells:add(TorchSpell())
   ovw.player.hotbar:remove(self.index)
 end
 
 ---
 
-Torch = class()
+TorchSpell = class()
 
-function Torch:init()
+function TorchSpell:init()
   self.x, self.y = ovw.player.x, ovw.player.y
   self.light = {
     minDis = 30,
@@ -35,11 +36,11 @@ function Torch:init()
   ovw.view:register(self)
 end
 
-function Torch:destroy()
+function TorchSpell:destroy()
   ovw.view:unregister(self)
 end
 
-function Torch:update()
+function TorchSpell:update()
   self.light.intensity = self.light.intensity - (.5 / self.maxHealth * tickRate)
   ovw.house:applyLight(self.light, 'ambient')
   self.health = timer.rot(self.health, function()
@@ -47,7 +48,7 @@ function Torch:update()
   end)
 end
 
-function Torch:draw()
+function TorchSpell:draw()
   love.graphics.setColor(255, 255, 255)
   love.graphics.circle('line', self.x, self.y, 10)
 end

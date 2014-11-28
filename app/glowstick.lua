@@ -15,14 +15,14 @@ function Glowstick:init()
     posterization = 1
   }
 
+  self.type = 'Consumable'
   self.health = 120
   self.maxHealth = self.health
-  self.on = false
   self.stacks = self.stacks or math.round(math.clamp(love.math.randomNormal(2, 1.25), 1, 5))
 end
 
 function Glowstick:update()
-  if self.on then
+  if self.active then
     self.light.x, self.light.y = ovw.player.x, ovw.player.y
     ovw.house:applyLight(self.light, 'ambient')
     self.health = self.health - tickRate
@@ -33,8 +33,7 @@ function Glowstick:update()
 end
 
 function Glowstick:activate()
-  self.on = not self.on
-  self.active = self.on
+  self.active = not self.active
 end
 
 function Glowstick:val()

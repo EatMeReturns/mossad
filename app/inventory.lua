@@ -19,10 +19,6 @@ function Inventory:update()
 	end
 end
 
-function Inventory:mousepressed(...)
-	table.with(self.items, 'mousepressed', ...)
-end
-
 function Inventory:add(item)
   local stacks = item.stacks
   if stacks then
@@ -45,7 +41,7 @@ function Inventory:add(item)
 end
 
 function Inventory:remove(index)
-  local item = self.items[math.max(1, math.ceil(index / 8))][(index % 8) + 1]
+  local item = self.items[math.max(1, math.ceil(index / 8))][(index % 8 == 0 and 8) or (index % 8)]
   if item then
     if item.stacks then
       item.stacks = item.stacks - 1

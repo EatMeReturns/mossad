@@ -11,6 +11,7 @@ function Weapon:init()
   self.selected = false
   
   self.image = itemImage
+  self.type = 'Weapon'
 
   self.tipOffset = {getX = function() return math.sin(ovw.player.angle + math.pi * 37 / 72) * 40 end, getY = function() return 10 - math.cos(ovw.player.angle + math.pi * 37 / 72) * 40 end}
 

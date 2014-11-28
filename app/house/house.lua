@@ -462,7 +462,7 @@ function House:spawnItems()
     {Glowstick, .2},
     {FirstAid, .15},
     {Ammo, .5},
-    {TorchItem, .15}
+    {Torch, .15}
   }
 
   for i = 1, self.itemCount do
