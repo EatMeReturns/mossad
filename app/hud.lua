@@ -94,6 +94,7 @@ function Hud:arsenal()
       g.rectangle('fill', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size * val, 3)
     end
   end
+
   if ovw.player.ammo == 0 then g.setColor(255, 0, 0)
   else g.setColor(255, 255, 255) end
   g.print('ammo: ' .. ovw.player.ammo, 2, size * 2 - 8)
@@ -101,6 +102,18 @@ end
 
 function Hud:firstaid()
   local size = 40
+  for i = 1, 4 do
+    local bodyPart = ovw.player.firstAid.bodyParts[i]
+    local green, blue = 255, 255
+    local alpha = ovw.player.firstAid.timers.fadeOut * (bodyPart.wounded and 255 or (bodyPart.crippled and 255 or 100))
+    if bodyPart.crippled then blue = 0 end
+    if bodyPart.wounded then green = 0 end
+    g.setColor(255, green, blue, alpha)
+    g.draw(bodyPart.image, 300 + .5, 220 + (size + 2) * (i - 1) + .5)
+    g.rectangle('line', 300 + .5, 220 + (size + 2) * (i - 1) + .5, size, size)
+    local val = bodyPart.val and bodyPart:val() or 0
+    g.rectangle('fill', 300 + .5, 220 + (size + 2) * (i - 1) + size - 3 + .5, size * val, 3)
+  end
 
   if ovw.player.kits == 0 then g.setColor(255, 0, 0)
   else g.setColor(255, 255, 255) end
@@ -168,7 +181,17 @@ function Hud:mouse()
     if self.grabbed.item then self:returnGrabbedItem() end
 
     if love.keyboard.isDown('tab') then
-      --heal UI
+      --highlight firstaid slots
+      for i = 1, 4 do
+        local bodyPart = ovw.player.firstAid.bodyParts[i]
+        if self:mouseOverSlot(300 + .5, 220 + (size + 2) * (i - 1) + .5, size) then
+          --draw a highlight box
+          if bodyPart.wounded or bodyPart.crippled then g.setColor(0, 255, 0) else g.setColor(255, 255, 255) end
+          g.rectangle('line', 300 + .5, 220 + (size + 2) * (i - 1) + .5, size, size)
+          --set the mouseText
+          self.mouseText = bodyPart.name .. ((bodyPart.wounded and ' wounded!') or ((bodyPart.crippled and ' crippled!') or ''))
+        end
+      end
     end
   end
 
@@ -339,6 +362,20 @@ function Hud:mousepressed(x, y, button)
 
     if self.grabbed.item then
       --drop dat bass
+      if button == 'l' then
+      --drop the stack
+      elseif button == 'r' then
+        --drop one from stack
+      end
+    end
+  elseif love.keyboard.isDown('tab') then
+    if button == 'l' or button == 'r' then
+      for i = 1, 4 do
+        local bodyPart = ovw.player.firstAid.bodyParts[i]
+        if self:mouseOverSlot(300 + .5, 220 + (size + 2) * (i - 1) + .5, size) then
+          ovw.player.firstAid:setHeal(i)
+        end
+      end
     end
   end
 end

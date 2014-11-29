@@ -63,6 +63,17 @@ function Player:init()
 
   self.ammo = 64
   self.kits = 1
+
+  self.agility = 1
+  self.health = 3
+  self.stamina = 2
+
+  self.firstAid.debuffs = {
+  {val = self.light.maxDis, modifier = 100},
+  {val = self.agility, modifier = 1},
+  {val = self.stamina, modifier = 1},
+  {val = self.maxSpeed, modifier = 50}
+  }
   
   ovw.collision:register(self)
   ovw.view:register(self)
@@ -75,12 +86,12 @@ function Player:update()
 
   self:move()
   self:turn()
-  self:heal()
   self.inventory:update()
   self.hotbar:update()
-  if not love.keyboard.isDown('e') then
+  if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then
     self.arsenal:update()
   end
+  self.firstAid:update()
 
   self.rotation = math.direction(self.x, self.y, love.mouse.getX(), love.mouse.getY())
 
@@ -125,6 +136,11 @@ function Player:keypressed(key)
       self.hotbar:drop()
     end
     self.arsenal:keypressed(key)
+  elseif love.keyboard.isDown('tab') then
+    local x = tonumber(key)
+    if x and x >= 1 and x <= 4 then
+      self.firstAid:setHeal(x)
+    end
   end
 end
 
@@ -174,42 +190,25 @@ function Player:turn()
   self.angle = math.direction(400, 300, love.mouse.getX(), love.mouse.getY())
 end
 
-function Player:heal()
-  self.iNeedHealing = math.max(self.iNeedHealing - self.healRate * tickRate, 0)
-end
-
 function Player:hurt(amount)
-  self.iNeedHealing = self.iNeedHealing + amount
-  if self.iNeedHealing > self.iNeedTooMuchHealing then
-    if self.crippled then
-      if ovw.restartTimer == 0 then
-        ovw.hud.fader:add('Mossad starts writing my name in his notebook...')
-        ovw.house.targetAmbient = {0, 0, 0}
-        ovw.restartTimer = 4
-      end
-      return
-    end
-    self:cripple()
-    self.iNeedHealing = 0
-  end
+  --ample damage! smack a body part
+  local x = love.math.random() * 4
+  x = math.max(1, math.ceil(x))
+  self.firstAid.bodyParts[x]:damage(amount)
+
   self.lastHit = tick
   ovw.view.shake = 2
 end
 
 function Player:cripple()
-  if not self.crippled then
-    ovw.hud.fader:add('I need healing...')
-  end
+  ovw.hud.fader:add('I need healing...')
   self.maxSpeed = 100
   self.light.maxDis = 150
-  self.crippled = true
   ovw.house.targetAmbient = {255, 160, 160}
 end
 
 function Player:uncripple()
   self.maxSpeed = 150
   self.light.maxDis = 250
-  self.crippled = false
   ovw.house.targetAmbient = {255, 255, 255}
-  ovw.restartTimer = 0
 end

@@ -460,7 +460,7 @@ function House:spawnItems()
 
   local probs = {
     {Glowstick, .2},
-    {FirstAid, .15},
+    {FirstAidKit, .15},
     {Ammo, .5},
     {Torch, .15}
   }
