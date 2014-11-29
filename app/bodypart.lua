@@ -23,12 +23,12 @@ function BodyPart:update()
 	if self.hasKit then --if healing then
 		self.timers.heal = timer.rot(self.timers.heal, function()
 			self.hasKit = false
-			self.timers.heal = self.healSpeed
+			self.timers.heal = self.healSpeed * (10 / (10 + ovw.player.agility))
 			self:heal()
 			ovw.player.firstAid.healPart = 0
 		end)
 	else
-		self.timers.heal = self.healSpeed
+		self.timers.heal = self.healSpeed * (10 / (10 + ovw.player.agility))
 
 		if self.wounded then --if killing then
 			self.timers.kill = timer.rot(self.timers.kill, function()
@@ -51,7 +51,7 @@ function BodyPart:cancelHeal()
 end
 
 function BodyPart:damage(amt)
-	self.currentHealth = self.currentHealth - amt
+	self.currentHealth = self.currentHealth - math.max(1, math.floor(amt * (10 / (10 + ovw.player.armor))))
 	if self.currentHealth <= 0 then
 		if self.crippled and not self.wounded then
 			--mortally wound!
@@ -103,8 +103,16 @@ function BodyPart:wound()
 	self.timers.kill = self.killSpeed
 end
 
+function BodyPart:regen()
+	--passive health regen when not  crippled/wounded
+	if not self.crippled and self.currentHealth < self.maxHealth then
+		self.currentHealth = self.currentHealth + ovw.player.healthRegen * tickRate
+		if self.currentHealth > self.maxHealth then self.currentHealth = self.maxHealth end
+	end
+end
+
 function BodyPart:val()
-  if ovw.player.firstAid.healPart == self.index and self.timers.heal > 0 then return self.timers.heal / self.healSpeed end
+  if ovw.player.firstAid.healPart == self.index and self.timers.heal > 0 then return self.timers.heal / (self.healSpeed * (10 / (10 + ovw.player.agility))) end
   if self.wounded and self.timers.kill > 0 then return self.timers.kill / self.killSpeed end
   return self.currentHealth / self.maxHealth
 end

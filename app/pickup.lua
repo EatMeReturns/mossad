@@ -9,7 +9,8 @@ Pickup.collision = {
 function Pickup:init(data)
   self.x, self.y = 0, 0
   self.timers = {}
-  self.timers.pickup = 1.25
+  self.timers.pickup = 1.25 * (10 / (10 + ovw.player.agility))
+  self.pickupSpeed = 1.25
   self.state = 'Not'
   self.item = nil
   self.itemType = nil
@@ -27,7 +28,7 @@ end
 
 function Pickup:draw()
   if self.state == 'Hot' then
-    local val = self.timers.pickup / 1.25
+    local val = self.timers.pickup / (self.pickupSpeed * (10 / (10 + ovw.player.agility)))
     love.graphics.setColor(255, 255, 0, 255)
     love.graphics.rectangle('fill', self.x - self.radius, self.y + self.radius + 2, self.radius * 2 * val, 3)
   else
@@ -66,7 +67,7 @@ function Pickup:update()
     if love.keyboard.isDown('f') then
       self.timers.pickup = timer.rot(self.timers.pickup, function() self:activate() end)
     else
-      self.timers.pickup = 1.25
+      self.timers.pickup = self.pickupSpeed * (10 / (10 + ovw.player.agility))
     end
   else
     self.state = 'Not'

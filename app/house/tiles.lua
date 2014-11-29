@@ -80,10 +80,28 @@ function Tile:applyLight(light, type)
   local xx, yy = light.x - ovw.house.cellSize / 2, light.y - ovw.house.cellSize / 2
   
   self:updateLight()
+
   local dis = ovw.house:snap(math.distance(xx, yy, ovw.house:pos(self.x, self.y)))
   dis = math.clamp(dis ^ light.falloff, light.minDis, light.maxDis)
   dis = math.clamp((1 - (dis / light.maxDis)) * light.intensity, 0, 1)
   local value = math.round(dis * 255 / light.posterization) * light.posterization
   local factor = type == 'ambient' and 5 * tickRate or 1
-  self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+
+  if light.shape then
+    if light.shape == 'circle' then
+      self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+    elseif light.shape == 'cone' then
+      local dir = math.direction(light.x, light.y, self.x * ovw.house.cellSize, self.y * ovw.house.cellSize)
+      if light.dir < -math.pi / 2 and dir > 0 then dir = dir - math.pi * 2 end
+      if light.dir > math.pi / 2 and dir < 0 then dir = dir + math.pi * 2 end
+      if dir >= light.dir - light.angle and dir <= light.dir + light.angle then
+        self[type] = math.lerp(self[type], math.max(self[type], value / 2), factor / 2)
+        if dir >= light.dir - light.angle / 2 and dir <= light.dir + light.angle / 2 then
+          self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+        end
+      end
+    end
+  else
+    self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+  end
 end

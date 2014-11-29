@@ -39,3 +39,7 @@ end
 function Glowstick:val()
   return self.health / self.maxHealth
 end
+
+function Glowstick:maxVal()
+  return self.maxHealth
+end

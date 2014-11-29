@@ -41,7 +41,7 @@ function Weapon:update()
 
   if self.state == 'Reloading' and self.timers.reload == 0 then
     if self.fireMode == 'Single' and self.currentClip < self.clip then
-      self.timers.reload = self.reloadSpeed
+      self.timers.reload = self.reloadSpeed * (10 / (10 + ovw.player.agility))
     else
       self.state = 'Firing'
     end
@@ -74,7 +74,7 @@ function Weapon:update()
         self.timers.shoot = self.fireSpeed
         self.currentClip = self.currentClip - 1
         if self.fireMode == 'Single' then self.timers.reload = 0 end
-        if self.currentClip == 0 then self.timers.reload = self.reloadSpeed end
+        if self.currentClip == 0 then self.timers.reload = self.reloadSpeed * (10 / (10 + ovw.player.agility)) end
       end
     end
   end
@@ -89,6 +89,11 @@ function Weapon:keypressed(key)
 end
 
 function Weapon:val()
-  if self.timers.reload > 0 then return self.timers.reload / self.reloadSpeed end
+  if self.timers.reload > 0 then return self.timers.reload / (self.reloadSpeed * (10 / (10 + ovw.player.agility))) end
   return self.currentClip / self.clip
+end
+
+function Weapon:maxVal()
+  if self.timers.reload > 0 then return (self.reloadSpeed * (10 / (10 + ovw.player.agility))) end
+  return self.clip
 end

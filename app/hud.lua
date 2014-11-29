@@ -17,6 +17,7 @@ end
 function Hud:gui()
   g.setFont(self.font)
   self:blood()
+  self:stamina()
   self:inventory()
   self:hotbar() 
   self:arsenal()
@@ -26,13 +27,36 @@ function Hud:gui()
   self:debug()
 end
 
+function Hud:drawBar(x, y, w, h, v, d)
+  local segmentW = w / d
+  local segmentI = 0
+  while v >= 1 / d do
+    g.rectangle('fill', x + segmentI * segmentW, y, segmentW - 1, h)
+    v = v - 1 / d
+    segmentI = segmentI + 1
+  end
+  if v > 0 then g.rectangle('fill', x + segmentI * segmentW, y, w * v, h) end
+end
+
 function Hud:blood() -- Yo sach a hudblood, haarry
   local p = ovw.player
-  local amt = 1 - (p.iNeedHealing / p.iNeedTooMuchHealing)
   local alpha = math.max(1 - (tick - p.lastHit) * tickRate, 0) / 6
   alpha = math.min(alpha * 100, 100)
   g.setColor(80, 0, 0, alpha)
   g.rectangle('fill', 0, 0, w(), h())
+end
+
+function Hud:stamina()
+  local p = ovw.player
+  local x = 400 - 50
+  local y = 600 - 30
+  local ww = 100
+  local hh = 7
+  local val = p.energy / p.stamina
+  local maxVal = p.stamina
+  local alpha = val > .9 and 60 + (1 - val) * 1950 or 255
+  g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
+  self:drawBar(x, y, ww, hh, val, maxVal)
 end
 
 function Hud:inventory()
@@ -68,7 +92,9 @@ function Hud:hotbar()
         g.print(item.stacks, 2 + (size + 2) * (i - 1) + .5 + 4, 2 + .5 + 1)
       end
       local val = item.val and item:val() or 0
-      g.rectangle('fill', 2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size * val, 3)
+      local maxVal = item.maxVal and math.min(20, item:maxVal()) or 1
+      self:drawBar(2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size, 3, val, maxVal)
+      --g.rectangle('fill', 2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size * val, 3)
     end
   end
 end
@@ -86,12 +112,14 @@ function Hud:arsenal()
         g.print(weapon.stacks, 2 + .5 + 1, 2 + (size + 2) * (i + 1) + .5 + 4)
       end
       local val = weapon.val and weapon:val() or 0
+      local maxVal = weapon.maxVal and weapon:maxVal() or 1
       if weapon.state == 'Reloading' then 
         g.setColor(255, 255, 0, alpha)
       elseif weapon.state == 'Firing' then
         g.setColor(255, 0, 0, alpha)
       end
-      g.rectangle('fill', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size * val, 3)
+      self:drawBar(2 + .5, 2 + (size + 2) * (i + 1) + .5, size, 3, val, maxVal)
+      --g.rectangle('fill', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size * val, 3)
     end
   end
 

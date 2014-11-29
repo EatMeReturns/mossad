@@ -21,12 +21,8 @@ function Player:init()
   
   self.speed = 0
   self.maxSpeed = 100
-  self.runSpeed = 225
+  self.runModifier = 125
 
-  self.crippled = false
-  self.iNeedHealing = 0
-  self.iNeedTooMuchHealing = 10
-  self.healRate = 2
   self.lastHit = tick - (1 / tickRate)
 
   --self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
@@ -48,7 +44,7 @@ function Player:init()
   self.hotbar:add(Glowstick())
 
   self.arsenal = Arsenal()
-  self.arsenal:add(Shotgun())
+  self.arsenal:add(Crossbow())
   self.arsenal:add(Pistol())
 
   self.firstAid = FirstAid()
@@ -56,17 +52,32 @@ function Player:init()
   self.light = {
     minDis = 100,
     maxDis = 400,
+    intensity = .4,
+    falloff = 1,
+    posterization = 1
+  }
+
+  self.flashlight = {
+    minDis = 100,
+    maxDis = 600,
+    shape = 'cone',
+    dir = 0,
+    angle = math.pi / 6,
     intensity = .5,
     falloff = 1,
     posterization = 1
   }
 
-  self.ammo = 64
-  self.kits = 1
+  self.ammo = 24
+  self.kits = 2
+  self.energy = 2
 
-  self.agility = 1
-  self.health = 3
-  self.stamina = 2
+  self.agility = 1 --reload, heal, and loot faster
+  self.armor = 0 --take less damage
+  self.stamina = 2 --regenerate stamina faster and higher max stamina
+
+  self.healthRegen = 0
+  self.staminaRegen = 0.1
 
   self.firstAid.debuffs = {
   {val = self.light.maxDis, modifier = 100},
@@ -84,6 +95,7 @@ function Player:update()
   self.prevX = self.x
   self.prevY = self.y
 
+  self:regen()
   self:move()
   self:turn()
   self.inventory:update()
@@ -93,10 +105,14 @@ function Player:update()
   end
   self.firstAid:update()
 
-  self.rotation = math.direction(self.x, self.y, love.mouse.getX(), love.mouse.getY())
+  self.rotation = math.direction(400, 300, love.mouse.getX(), love.mouse.getY())
+  --if self.rotation < 0 then self.rotation = self.rotation + math.pi * 2 end
 
   self.light.x, self.light.y = self.x, self.y
   ovw.house:applyLight(self.light, 'ambient')
+
+  self.flashlight.x, self.flashlight.y, self.flashlight.dir = self.x, self.y, self.rotation
+  ovw.house:applyLight(self.flashlight, 'dynamic')
 
   if not ovw.boss then
     local tx, ty = ovw.house:cell(self.x, self.y)
@@ -154,15 +170,28 @@ function Player:setPosition(x, y)
   self.shape:moveTo(x, y)
 end
 
+function Player:regen()
+  table.with(self.firstAid.bodyParts, 'regen')
+  if self.energy < self.stamina then
+    self.energy = self.energy + self.stamina * self.staminaRegen * tickRate
+    if self.energy > self.stamina then self.energy = self.stamina end
+  end
+end
+
 function Player:move()
   local tab, e, f = love.keyboard.isDown('tab'), love.keyboard.isDown('e'), love.keyboard.isDown('f')
   local w, a, s, d = love.keyboard.isDown('w'), love.keyboard.isDown('a'), love.keyboard.isDown('s'), love.keyboard.isDown('d')
   local moving = not (tab or e or f) and (w or a or s or d)
+  local running = self.energy >= 0.2 * tickRate and love.keyboard.isDown('lshift')
   
   local up, down, left, right = 1.5 * math.pi, .5 * math.pi, math.pi, 2.0 * math.pi
   local dx, dy = nil, nil
 
-  if moving then self.speed = (love.keyboard.isDown('lshift') and self.runSpeed) or self.maxSpeed
+  if moving then self.speed = self.maxSpeed
+    if running then
+      self.speed = self.speed + self.runModifier
+      self.energy = self.energy - tickRate
+    end
   else self.speed = 0 end
     
   if not moving then return end
@@ -191,24 +220,11 @@ function Player:turn()
 end
 
 function Player:hurt(amount)
-  --ample damage! smack a body part
+  --smack a random body part
   local x = love.math.random() * 4
   x = math.max(1, math.ceil(x))
   self.firstAid.bodyParts[x]:damage(amount)
 
   self.lastHit = tick
   ovw.view.shake = 2
-end
-
-function Player:cripple()
-  ovw.hud.fader:add('I need healing...')
-  self.maxSpeed = 100
-  self.light.maxDis = 150
-  ovw.house.targetAmbient = {255, 160, 160}
-end
-
-function Player:uncripple()
-  self.maxSpeed = 150
-  self.light.maxDis = 250
-  ovw.house.targetAmbient = {255, 255, 255}
 end
