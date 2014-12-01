@@ -13,20 +13,23 @@ function Hotbar:mousepressed(...)
 end
 
 function Hotbar:add(item)
-  local stacks = item.stacks
-  if stacks then
-    for i = 1, #self.items do
-      if self.items[i].name == item.name then
-        self.items[i].stacks = self.items[i].stacks + stacks
-        return true
+  if item.type == 'Consumable' or item.type == 'Active' then
+    local stacks = item.stacks
+    if stacks then
+      for i = 1, #self.items do
+        if self.items[i].name == item.name then
+          self.items[i].stacks = self.items[i].stacks + stacks
+          return true
+        end
       end
     end
+    if #self.items < 5 then
+      table.insert(self.items, item)
+      item.index = #self.items
+      return true
+    end
   end
-  if #self.items < 5 then
-    table.insert(self.items, item)
-    item.index = #self.items
-    return true
-  end
+  
   return false
 end
 

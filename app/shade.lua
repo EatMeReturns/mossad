@@ -41,24 +41,7 @@ function Shade:destroy()
   local function make(i) ovw.pickups:add(Pickup({x = self.x, y = self.y, itemType = i})) end
   ovw.player:learn(9 + math.ceil(love.math.random() * 10))
 
-  local probs = {
-    {Glowstick, .25},
-    {FirstAidKit, .2},
-    {Ammo, .7},
-    {Torch, .1}
-  }
-
-  table.shuffle(probs)
-  
-  local x = love.math.random()
-
-  for _, t in ipairs(probs) do
-    local item, chance = unpack(t)
-    if x < chance then
-      make(item)
-      x = x + love.math.random() * (1 - chance) ^ 2
-    end
-  end
+  table.each(makeLootTable(), function(v, k) make(v) end)
 end
 
 function Shade:update()

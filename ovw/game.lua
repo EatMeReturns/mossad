@@ -14,6 +14,18 @@ function Game:load()
   self.pickups = Manager()
   self.boss = nil
 
+  WeightedLoot = WeightedRandom(
+  {
+      {Glowstick, .25},
+      {FirstAidKit, .2},
+      {Ammo, .7},
+      {Torch, .1}}, 1.25)
+
+  WeightedLootSizes = WeightedRandom(
+  {{1, .5}, {2, .2}, {3, .05}, {4, .01}}, 0.76)
+
+  makeLootTable = function() return WeightedLoot:pick((WeightedLootSizes:pick(1))[1]) end
+
   self.house:spawnEnemies()
   self.house:spawnItems()
 end

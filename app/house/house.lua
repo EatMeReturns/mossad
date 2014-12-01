@@ -460,26 +460,5 @@ function House:spawnItems()
     end
   end
 
-  local probs = {
-    {Glowstick, .2},
-    {FirstAidKit, .15},
-    {Ammo, .5},
-    {Torch, .15}
-  }
-
-  for i = 1, self.itemCount do
-    local x = love.math.random()
-    for j = 1, #probs do
-      local item, chance = unpack(probs[j])
-      if x < chance then
-        if make(item) then
-          break
-        else
-          i = i - 1
-          break
-        end
-      end
-      x = x - chance
-    end
-  end
+  table.each(makeLootTable(), function(v, k) make(v) end)
 end

@@ -137,6 +137,31 @@ function love.graphics.printCenter(str, x, y, h, v)
   love.graphics.print(str, xx, yy)
 end
 
+WeightedRandom = class()
+
+function WeightedRandom:init(weights, sum)
+	self.weights = weights
+	self.sum = sum or 1
+end
+
+function WeightedRandom:pick(x)
+	local picked = {}
+	for i = 1, x do
+		local r = love.math.random() * self.sum
+		for _, t in ipairs(self.weights) do
+			local entry, chance = t[1], t[2]--unpack(t)
+			if r < chance then
+				table.insert(picked, entry)
+				break
+			else
+				r = r - chance
+			end
+		end
+	end
+
+	return picked
+end
+
 timer = {}
 timer.rot = function(val, fn) if not val or val == 0 then return val end if val <= tickRate then f.exe(fn) return 0 end return val - tickRate end
 
