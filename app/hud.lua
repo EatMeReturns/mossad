@@ -18,6 +18,7 @@ function Hud:gui()
   g.setFont(self.font)
   self:blood()
   self:stamina()
+  self:experience()
   self:inventory()
   self:hotbar() 
   self:arsenal()
@@ -48,8 +49,8 @@ end
 
 function Hud:stamina()
   local p = ovw.player
-  local x = 400 - 50
-  local y = 600 - 30
+  local x = 400 - 50 + .5
+  local y = 600 - 80 + .5
   local ww = 100
   local hh = 7
   local val = p.energy / p.stamina
@@ -57,6 +58,36 @@ function Hud:stamina()
   local alpha = val > .9 and 60 + (1 - val) * 1950 or 255
   g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
   self:drawBar(x, y, ww, hh, val, maxVal)
+  g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), 255)
+  g.rectangle('line', x, y, ww, hh)
+end
+
+function Hud:experience()
+  local size = 40
+  local p = ovw.player
+  local x = 400 - 100 + .5
+  local y = 600 - 67 + .5
+  local ww = 200
+  local hh = 5
+  local val = p.exp / (50 + p.level * 20)
+  local maxVal = (50 + p.level * 20) / 10
+  g.setColor(100, 100 + 155 * val, 100, 255)
+  self:drawBar(x, y, ww, hh, val, maxVal)
+  g.setColor(255, 255, 255, 255)
+  g.rectangle('line', x, y, ww, hh)
+
+  local alpha = ovw.player.firstAid.timers.fadeOut * 255
+  for i = 1, 3 do
+    g.setColor(255, 255, 255, alpha)
+    g.draw(itemImage, 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5)
+    g.rectangle('line', 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5, size, size)
+    local label = i == 1 and ovw.player.agility or (i == 2 and ovw.player.armor or ovw.player.stamina)
+    g.print(label, 400 - 70 + (size + 10) * (i - 1) + .5 + 4, 600 - 56 + .5 + 1)
+  end
+
+  if p.levelPoints > 0 then
+    g.printf('Levels to spend: ' .. p.levelPoints, 400 - 50, 600 - 15, 100, 'center')
+  end
 end
 
 function Hud:inventory()
@@ -218,6 +249,14 @@ function Hud:mouse()
           g.rectangle('line', 300 + .5, 220 + (size + 2) * (i - 1) + .5, size, size)
           --set the mouseText
           self.mouseText = bodyPart.name .. ((bodyPart.wounded and ' wounded!') or ((bodyPart.crippled and ' crippled!') or ''))
+        end
+      end
+
+      for i = 1, 3 do
+        if self:mouseOverSlot(400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5, size) then
+          g.setColor(255, 255, 0)
+          if ovw.player.levelPoints > 0 then g.rectangle('line', 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5, size, size) end
+          self.mouseText = i == 1 and 'Agility' or (i == 2 and 'Armor' or 'Stamina')
         end
       end
     end
@@ -402,6 +441,21 @@ function Hud:mousepressed(x, y, button)
         local bodyPart = ovw.player.firstAid.bodyParts[i]
         if self:mouseOverSlot(300 + .5, 220 + (size + 2) * (i - 1) + .5, size) then
           ovw.player.firstAid:setHeal(i)
+        end
+      end
+
+      if ovw.player.levelPoints > 0 then
+        for i = 1, 3 do
+          if self:mouseOverSlot(400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5, size) then
+            ovw.player.levelPoints = ovw.player.levelPoints - 1
+            if i == 1 then
+              ovw.player.agility = ovw.player.agility + 1
+            elseif i == 2 then
+              ovw.player.armor = ovw.player.armor + 1
+            else
+              ovw.player.stamina = ovw.player.stamina + 1
+            end
+          end
         end
       end
     end

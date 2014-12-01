@@ -46,6 +46,7 @@ end
 function InkRaven:destroy()
   Enemy.destroy(self)
   local function make(i) ovw.pickups:add(Pickup({x = self.x, y = self.y, itemType = i})) end
+  ovw.player:learn(9 + math.ceil(love.math.random() * 5))
 
   local probs = {
     {Glowstick, .4},

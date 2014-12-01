@@ -50,20 +50,20 @@ function Player:init()
   self.firstAid = FirstAid()
 
   self.light = {
-    minDis = 100,
-    maxDis = 400,
-    intensity = .4,
-    falloff = 1,
+    minDis = 0,
+    maxDis = 100,
+    intensity = 0.5,
+    falloff = 0.9,
     posterization = 1
   }
 
   self.flashlight = {
     minDis = 100,
-    maxDis = 600,
+    maxDis = 400,
     shape = 'cone',
     dir = 0,
-    angle = math.pi / 6,
-    intensity = .5,
+    angle = math.pi / 3,
+    intensity = .7,
     falloff = 1,
     posterization = 1
   }
@@ -75,6 +75,10 @@ function Player:init()
   self.agility = 1 --reload, heal, and loot faster
   self.armor = 0 --take less damage
   self.stamina = 2 --regenerate stamina faster and higher max stamina
+
+  self.exp = 0
+  self.level = 0
+  self.levelPoints = 0
 
   self.healthRegen = 0
   self.staminaRegen = 0.1
@@ -227,4 +231,16 @@ function Player:hurt(amount)
 
   self.lastHit = tick
   ovw.view.shake = 2
+end
+
+function Player:learn(amount)
+  self.exp = self.exp + amount
+  local reqExp = 50 + self.level * 20
+  while self.exp >= reqExp do
+    self.level = self.level + 1
+    self.levelPoints = self.levelPoints + 1
+    self.exp = self.exp - reqExp
+    reqExp = 50 + self.level * 20
+    ovw.hud.fader:add('My efforts have improved my skills...')
+  end
 end

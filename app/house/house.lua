@@ -17,6 +17,8 @@ function House:init()
   self.rooms = {}
 
   self.tiles = {}
+
+  self.lightMap = {}
   
   self:generate()
 

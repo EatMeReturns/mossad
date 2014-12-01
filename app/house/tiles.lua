@@ -36,6 +36,7 @@ House.ambientColor = {255, 255, 255}
 House.targetAmbient = {255, 255, 255}
 
 Tile = class()
+
 function Tile:init(type, x, y)
   self.type = type
   self.tile = nil
@@ -44,6 +45,9 @@ function Tile:init(type, x, y)
   self.ambient = 0
   self.dynamic = 0
   self.lastTouched = tick
+
+  self.visible = false
+  self.seen = false
 end
 
 function Tile:draw()
@@ -69,7 +73,7 @@ function Tile:updateLight()
     local target = self.type == 'boss' and 100 or 0
     self.ambient = math.lerp(self.ambient, target, math.min(2 * factor, 1))
   else
-    self.ambient = math.lerp(self.ambient, 0, math.min(.08 * factor, 1))
+    self.ambient = math.lerp(self.ambient, 0, math.min(1 * factor, 1))
   end
 
   self.dynamic = math.lerp(self.dynamic, 0, math.min(5 * factor,1))
@@ -86,22 +90,29 @@ function Tile:applyLight(light, type)
   dis = math.clamp((1 - (dis / light.maxDis)) * light.intensity, 0, 1)
   local value = math.round(dis * 255 / light.posterization) * light.posterization
   local factor = type == 'ambient' and 5 * tickRate or 1
+  local hitX, hitY = self.x * ovw.house.cellSize, self.y * ovw.house.cellSize
+  if hitX + 17 < light.x then hitX = hitX + 35 end
+  if hitY + 17 < light.y then hitY = hitY + 35 end
+  local wall, d = ovw.collision:lineTest(light.x, light.y, hitX, hitY, 'wall', false, true)
+  if wall then self.visible = false else self.visible = true end
 
-  if light.shape then
-    if light.shape == 'circle' then
-      self[type] = math.lerp(self[type], math.max(self[type], value), factor)
-    elseif light.shape == 'cone' then
-      local dir = math.direction(light.x, light.y, self.x * ovw.house.cellSize, self.y * ovw.house.cellSize)
-      if light.dir < -math.pi / 2 and dir > 0 then dir = dir - math.pi * 2 end
-      if light.dir > math.pi / 2 and dir < 0 then dir = dir + math.pi * 2 end
-      if dir >= light.dir - light.angle and dir <= light.dir + light.angle then
-        self[type] = math.lerp(self[type], math.max(self[type], value / 2), factor / 2)
-        if dir >= light.dir - light.angle / 2 and dir <= light.dir + light.angle / 2 then
-          self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+  if self.visible then
+    if light.shape then
+      if light.shape == 'circle' then
+        self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+      elseif light.shape == 'cone' then
+        local dir = math.direction(light.x, light.y, self.x * ovw.house.cellSize, self.y * ovw.house.cellSize)
+        if light.dir < -math.pi / 2 and dir > 0 then dir = dir - math.pi * 2 end
+        if light.dir > math.pi / 2 and dir < 0 then dir = dir + math.pi * 2 end
+        if dir >= light.dir - light.angle and dir <= light.dir + light.angle then
+          self[type] = math.lerp(self[type], math.max(self[type], value * 2 / 3), factor)
+          if dir >= light.dir - light.angle / 2 and dir <= light.dir + light.angle / 2 then
+            self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+          end
         end
       end
+    else
+      self[type] = math.lerp(self[type], math.max(self[type], value), factor)
     end
-  else
-    self[type] = math.lerp(self[type], math.max(self[type], value), factor)
   end
 end
