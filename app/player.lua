@@ -54,7 +54,8 @@ function Player:init()
     maxDis = 100,
     intensity = 0.5,
     falloff = 0.9,
-    posterization = 1
+    posterization = 1,
+    flicker = 1
   }
 
   self.flashlight = {
@@ -65,7 +66,8 @@ function Player:init()
     angle = math.pi / 3,
     intensity = .7,
     falloff = 1,
-    posterization = 1
+    posterization = 1,
+    flicker = 0.95
   }
 
   self.ammo = 24
@@ -77,7 +79,9 @@ function Player:init()
   self.stamina = 2 --regenerate stamina faster and higher max stamina
 
   self.exp = 0
+  self.drawExp = self.exp
   self.level = 0
+  self.drawLevel = self.level
   self.levelPoints = 0
 
   self.healthRegen = 0
@@ -110,12 +114,13 @@ function Player:update()
   self.firstAid:update()
 
   self.rotation = math.direction(400, 300, love.mouse.getX(), love.mouse.getY())
-  --if self.rotation < 0 then self.rotation = self.rotation + math.pi * 2 end
 
   self.light.x, self.light.y = self.x, self.y
   ovw.house:applyLight(self.light, 'ambient')
 
   self.flashlight.x, self.flashlight.y, self.flashlight.dir = self.x, self.y, self.rotation
+  local head = self.firstAid.bodyParts[1]
+  if head.wounded then self.flashlight.flicker = 0.2 elseif head.crippled then self.flashlight.flicker = math.max(0.2, 0.75 * head.currentHealth / head.maxHealth) else self.flashlight.flicker = 0.95 end
   ovw.house:applyLight(self.flashlight, 'dynamic')
 
   if not ovw.boss then
@@ -150,7 +155,7 @@ function Player:keypressed(key)
   if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then
     local x = tonumber(key)
     if x and x >= 1 and x <= #self.hotbar.items then
-      self.hotbar:activate(x)
+      self.hotbar:activate(x, love.keyboard.isDown('lalt'))
     end
     if key == 'q' then
       self.hotbar:drop()

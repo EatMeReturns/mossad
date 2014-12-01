@@ -23,6 +23,7 @@ function Hud:gui()
   self:hotbar() 
   self:arsenal()
   self:firstaid()
+  self:buffs()
   self:mouse()
   self.fader:gui()
   self:debug()
@@ -69,8 +70,13 @@ function Hud:experience()
   local y = 600 - 67 + .5
   local ww = 200
   local hh = 5
-  local val = p.exp / (50 + p.level * 20)
-  local maxVal = (50 + p.level * 20) / 10
+
+  if p.drawExp < p.exp or p.drawLevel < p.level then p.drawExp = p.drawExp + math.max(1, (p.drawLevel == p.level and p.exp - p.drawExp or (50 + p.drawLevel * 20)) * 4) * tickRate end
+  if p.drawExp > p.exp and p.drawLevel == p.level then p.drawExp = p.exp end
+  if p.drawExp >= 50 + p.drawLevel * 20 then p.drawExp = 0 p.drawLevel = p.drawLevel + 1 end
+
+  local val = p.drawExp / (50 + p.drawLevel * 20)
+  local maxVal = (50 + p.drawLevel * 20) / 10
   g.setColor(100, 100 + 155 * val, 100, 255)
   self:drawBar(x, y, ww, hh, val, maxVal)
   g.setColor(255, 255, 255, 255)
@@ -177,6 +183,29 @@ function Hud:firstaid()
   if ovw.player.kits == 0 then g.setColor(255, 0, 0)
   else g.setColor(255, 255, 255) end
   g.print('kits: ' .. ovw.player.kits, 2, size * 2 - 20)
+end
+
+function Hud:buffs()
+  local buffs = {}
+  local alpha = 100 + ovw.player.firstAid.timers.fadeOut * 155
+
+  ovw.spells:each(function(spell, key) 
+    if spell.type == 'Buff' then table.insert(buffs, spell) end
+  end)
+
+  table.each(buffs, function(buff, index)
+    local val = buff:val()
+    local maxVal = buff:maxVal() / 10
+    local name = buff.buffName
+    local x, y = 2 + .5, 250 + 22 * (index - 1) + .5
+    local ww, hh = 75, 3
+    g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
+    self:drawBar(x, y, ww, hh, val, maxVal)
+    g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
+    g.rectangle('line', x, y, ww, hh)
+    g.setColor(255, 255, 255, alpha)
+    g.print(name, x, y + 3)
+  end)
 end
 
 function Hud:mouse()

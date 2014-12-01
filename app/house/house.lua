@@ -75,13 +75,15 @@ function House:pos(x, ...)
 end
 
 function House:applyLight(light, type)
-  local x1, x2 = self:cell(light.x - light.maxDis, light.x + light.maxDis)
-  local y1, y2 = self:cell(light.y - light.maxDis, light.y + light.maxDis)
-  
-  for x = x1, x2 do
-    for y = y1, y2 do
-      if self.tiles[x] and self.tiles[x][y] then
-        self.tiles[x][y]:applyLight(light, type)
+  if love.math.random() < (light.flicker or 1) then
+    local x1, x2 = self:cell(light.x - light.maxDis, light.x + light.maxDis)
+    local y1, y2 = self:cell(light.y - light.maxDis, light.y + light.maxDis)
+    
+    for x = x1, x2 do
+      for y = y1, y2 do
+        if self.tiles[x] and self.tiles[x][y] then
+          self.tiles[x][y]:applyLight(light, type)
+        end
       end
     end
   end

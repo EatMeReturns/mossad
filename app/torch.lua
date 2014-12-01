@@ -1,6 +1,6 @@
 require 'app/item'
 
-Torch = extend(Item)
+Torch = extend(Item) --UNUSED.
 Torch.name = 'Torch'
 
 function Torch:init()
@@ -20,6 +20,7 @@ end
 TorchSpell = class()
 
 function TorchSpell:init()
+  self.type = 'Placed' --buff, placed, active?
   self.x, self.y = ovw.player.x, ovw.player.y
   self.light = {
     minDis = 30,
@@ -27,11 +28,12 @@ function TorchSpell:init()
     intensity = 1,
     falloff = 1,
     posterization = 10,
+    flicker = 0.5,
     x = self.x,
     y = self.y
   }
 
-  self.health = 15
+  self.health = 60
   self.maxHealth = self.health
   ovw.view:register(self)
 end

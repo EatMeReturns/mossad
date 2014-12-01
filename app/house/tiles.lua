@@ -81,38 +81,51 @@ function Tile:updateLight()
 end
         
 function Tile:applyLight(light, type)
-  local xx, yy = light.x - ovw.house.cellSize / 2, light.y - ovw.house.cellSize / 2
   
   self:updateLight()
 
-  local dis = ovw.house:snap(math.distance(xx, yy, ovw.house:pos(self.x, self.y)))
-  dis = math.clamp(dis ^ light.falloff, light.minDis, light.maxDis)
-  dis = math.clamp((1 - (dis / light.maxDis)) * light.intensity, 0, 1)
-  local value = math.round(dis * 255 / light.posterization) * light.posterization
-  local factor = type == 'ambient' and 5 * tickRate or 1
-  local hitX, hitY = self.x * ovw.house.cellSize, self.y * ovw.house.cellSize
-  if hitX + 17 < light.x then hitX = hitX + 35 end
-  if hitY + 17 < light.y then hitY = hitY + 35 end
-  local wall, d = ovw.collision:lineTest(light.x, light.y, hitX, hitY, 'wall', false, true)
-  if wall then self.visible = false else self.visible = true end
+  local selfX, selfY = self.x * ovw.house.cellSize, self.y * ovw.house.cellSize
+  local disToPlayer = math.distance(ovw.player.x, ovw.player.y, selfX, selfY)
+  local inShape = false
 
-  if self.visible then
+  local valueMult = 1
+
+  if disToPlayer <= 500 then
     if light.shape then
       if light.shape == 'circle' then
-        self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+        inShape = true
       elseif light.shape == 'cone' then
-        local dir = math.direction(light.x, light.y, self.x * ovw.house.cellSize, self.y * ovw.house.cellSize)
+        local dir = math.direction(light.x, light.y, selfX, selfY)
         if light.dir < -math.pi / 2 and dir > 0 then dir = dir - math.pi * 2 end
         if light.dir > math.pi / 2 and dir < 0 then dir = dir + math.pi * 2 end
-        if dir >= light.dir - light.angle and dir <= light.dir + light.angle then
-          self[type] = math.lerp(self[type], math.max(self[type], value * 2 / 3), factor)
-          if dir >= light.dir - light.angle / 2 and dir <= light.dir + light.angle / 2 then
-            self[type] = math.lerp(self[type], math.max(self[type], value), factor)
-          end
+        if dir >= light.dir - light.angle / 2 and dir <= light.dir + light.angle / 2 then
+          inShape = true
+        elseif dir >= light.dir - light.angle and dir <= light.dir + light.angle then
+          inShape = true
+          valueMult = 2 / 3
         end
       end
     else
-      self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+      inShape = true
+    end
+
+    if inShape then
+      local xx, yy = light.x - ovw.house.cellSize / 2, light.y - ovw.house.cellSize / 2
+      local dis = ovw.house:snap(math.distance(xx, yy, ovw.house:pos(self.x, self.y)))
+      dis = math.clamp(dis ^ light.falloff, light.minDis, light.maxDis)
+      dis = math.clamp((1 - (dis / light.maxDis)) * light.intensity, 0, 1)
+      local value = math.round(dis * 255 / light.posterization) * light.posterization * valueMult
+      local factor = type == 'ambient' and 5 * tickRate or 1
+
+      local hitX, hitY = selfX, selfY
+      if hitX + 17 < light.x then hitX = hitX + 35 end
+      if hitY + 17 < light.y then hitY = hitY + 35 end
+      local wall, d = ovw.collision:lineTest(light.x, light.y, hitX, hitY, 'wall', false, true)
+      if wall then self.visible = false else self.visible = true end
+
+      if self.visible then
+        self[type] = math.lerp(self[type], math.max(self[type], value), factor)
+      end
     end
   end
 end

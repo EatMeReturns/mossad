@@ -18,8 +18,7 @@ function Game:load()
   {
       {Glowstick, .25},
       {FirstAidKit, .2},
-      {Ammo, .7},
-      {Torch, .1}}, 1.25)
+      {Ammo, .7}}, 1.15)
 
   WeightedLootSizes = WeightedRandom(
   {{1, .5}, {2, .2}, {3, .05}, {4, .01}}, 0.76)

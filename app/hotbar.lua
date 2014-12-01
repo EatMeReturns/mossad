@@ -62,6 +62,6 @@ function Hotbar:drop(index)
   end
 end
 
-function Hotbar:activate(index)
-  if self.items[index] then self.items[index]:activate() end
+function Hotbar:activate(index, alt)
+  if self.items[index] then self.items[index]:activate(alt) end
 end
