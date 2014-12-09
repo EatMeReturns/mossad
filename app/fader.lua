@@ -15,7 +15,7 @@ function Fader:add(text) --USE ME TO ADD A NEW MESSAGE TO THE FADER
 end
 
 function Fader:fade()
-  self.opacity = math.min(self.opacity + tickRate * 100, 255)
+  self.opacity = math.min(self.opacity + tickRate * 255, 255)
 end
 
 function Fader:update()

@@ -76,6 +76,7 @@ Keyboard Commands
 ---
 
 - `1-5`: Press to activate hotbar items.
+- `LAlt+1-5`: Press to secondary-activate hotbar items.
 - `Spacebar`: Press to roll.
 - `M1`: Click to fire equipped weapon/melee attack/select in UI.
 - `M2`: Click to melee equipped weapon/heavy melee attack.
@@ -86,6 +87,7 @@ Keyboard Commands
 - `Tab`: Hold to open the first aid UI.
 - `E`: Hold to open the backpack UI/interact.
 - `F`: Hold to pick up loot.
+- `LAlt+F`: Press to toggle flashlight.
 - `Mouse`: Move to aim.
 
 Some Paragraphs Regarding Combat

@@ -3,30 +3,73 @@ Game = class()
 function Game:load()
   devMode = false
 
+  ----------------------------------------------------------------------------------
+
+  WeightedLoot = {}
+
+  WeightedLoot.Common = WeightedRandom(
+    {
+      {Battery, .1},
+      {Glowstick, .05},
+      {FirstAidKit, .05},
+      {Ammo, .8}}, 1)
+
+  WeightedLoot.Rare = WeightedRandom(
+    {
+      {Pistol, .2},
+      {Shotgun, .2},
+      {Crossbow, .2},
+      {Flaregun, .2},
+      {Rifle, .2}}, 1)
+
+  ----------------------------------------------------------------------------------
+
+  WeightedLootSizes = {}
+
+  WeightedLootSizes.Common = WeightedRandom(
+  {{1, .6}, {2, .25}, {3, .12}, {4, .03}}, 1)
+
+  WeightedLootSizes.Rare = WeightedRandom(
+  {{1, 1}}, 1)
+
+  ----------------------------------------------------------------------------------
+
+  Shop.itemTables.Common = WeightedRandom(
+  {
+    {{Glowstick, 1}, 0.5},
+    {{Battery, 2}, 0.25},
+    {{FirstAidKit, 3}, 0.25}}, 1)
+
+  Shop.itemTables.Rare = WeightedRandom(
+  {
+    {{Glowstick, 1}, 0.5},
+    {{Battery, 2}, 0.25},
+    {{FirstAidKit, 3}, 0.25}}, 1)
+  
+  Shop.itemTableSizes = WeightedRandom(
+  {
+    {2, .25},
+    {3, .25},
+    {4, .5}}, 1)
+
+  ----------------------------------------------------------------------------------
+
+  function makeLootTable(rarity) return (WeightedLoot[rarity]):pick((WeightedLootSizes[rarity]):pick()[1]) end
+
   self.view = View()
   self.collision = Collision()
   self.hud = Hud()
-  self.house = House()
-  self.player = Player()
   self.spells = Manager()
   self.particles = Manager()
   self.enemies = Manager()
+  self.npcs = Manager()
   self.pickups = Manager()
+  self.house = House()
+  self.player = Player()
   self.boss = nil
 
-  WeightedLoot = WeightedRandom(
-  {
-      {Glowstick, .25},
-      {FirstAidKit, .2},
-      {Ammo, .7}}, 1.15)
-
-  WeightedLootSizes = WeightedRandom(
-  {{1, .5}, {2, .2}, {3, .05}, {4, .01}}, 0.76)
-
-  makeLootTable = function() return WeightedLoot:pick((WeightedLootSizes:pick(1))[1]) end
-
-  self.house:spawnEnemies()
-  self.house:spawnItems()
+  --self.house:spawnEnemies()
+  --self.house:spawnPickups()
 end
 
 function Game:update()
@@ -35,6 +78,7 @@ function Game:update()
   self.spells:update()
   self.particles:update()
   self.enemies:update()
+  self.npcs:update()
   self.pickups:update()
   if self.boss then self.boss:update() end
   self.collision:resolve()
@@ -47,6 +91,8 @@ function Game:draw()
 end
 
 function Game:restart()
+  print('restarted.')
+  ovw.house:destroy()
   Overwatch:remove(ovw)
   Overwatch:add(Game)
 end

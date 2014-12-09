@@ -4,7 +4,7 @@ local g = love.graphics
 local w, h = g.width, g.height
 
 function Hud:init()
-  self.font = love.graphics.newFont('media/fonts/pixel.ttf', 8)
+  self.font = g.newFont('media/fonts/pixel.ttf', 8)
   self.fader = Fader()
   self.mouseText = 'Test!'
   self.grabbed = {}
@@ -17,6 +17,8 @@ end
 function Hud:gui()
   g.setFont(self.font)
   self:blood()
+  if ovw.player.npc then self:npc() end
+  self:flashlight()
   self:stamina()
   self:experience()
   self:inventory()
@@ -29,23 +31,55 @@ function Hud:gui()
   self:debug()
 end
 
-function Hud:drawBar(x, y, w, h, v, d)
-  local segmentW = w / d
-  local segmentI = 0
-  while v >= 1 / d do
-    g.rectangle('fill', x + segmentI * segmentW, y, segmentW - 1, h)
-    v = v - 1 / d
-    segmentI = segmentI + 1
-  end
-  if v > 0 then g.rectangle('fill', x + segmentI * segmentW, y, w * v, h) end
-end
-
 function Hud:blood() -- Yo sach a hudblood, haarry
   local p = ovw.player
-  local alpha = math.max(1 - (tick - p.lastHit) * tickRate, 0) / 6
+  local alpha = math.max(1 - (tick - p.lastHit) * tickRate, 0) / 4
   alpha = math.min(alpha * 100, 100)
   g.setColor(80, 0, 0, alpha)
   g.rectangle('fill', 0, 0, w(), h())
+end
+
+function Hud:npc()
+  local npc = ovw.player.npc
+  local size = 40
+  local alpha = ovw.player.inventory.timers.fadeOut * 255
+  for i = 1, 5 do
+    local item = npc.items[i] and npc.items[i][1] or nil
+    local note = npc.items[i] and npc.items[i][2] or nil
+    local alpha = ovw.player.inventory.timers.fadeOut * (not item and 20 or (npc.items[i].focus and 255 or 100))
+    g.setColor(255, 255, 255, alpha)
+    if item then g.draw(item.image, 520 + .5, 100 + (size + 2) * (i - 1) + .5) end
+    g.rectangle('line', 520 + .5, 100 + (size + 2) * (i - 1) + .5, size, size)
+    if item then
+      if item.stacks then
+        g.print(item.stacks, 520 + .5 + 4, 100 + (size + 2) * (i - 1) + .5 + 1)
+      end
+      g.print(note .. npc.noteTag, 520 + size + .5 + 4, 100 + (size + 2) * (i - 1) + size / 2 + .5 + 1)
+      local val = item.val and item:val() or 0
+      g.rectangle('fill', 520 + .5, 100 + (size + 2) * (i - 1) + .5 + size - 3, size * val, 3)
+    end
+  end
+end
+
+function Hud:flashlight()
+  local p = ovw.player
+  local size = 40
+  local alpha = 100 + ovw.player.firstAid.timers.fadeOut * 155
+  local val = p.battery / p.batteryMax
+  local maxVal = p.batteryMax / 10
+  local name = 'Flashlight' .. ((p.flashlightOn and ' On') or ' Off')
+  local x, y = 2 + .5, 250 + 22 * -1 + .5
+  local ww, hh = 120, 3
+  g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
+  g.drawBar(x, y, ww, hh, val, maxVal)
+  g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
+  g.rectangle('line', x, y, ww, hh)
+  g.setColor(255, 255, 255, alpha)
+  g.print(name, x, y + 3)
+
+  if ovw.player.batteries == 0 then g.setColor(255, 0, 0)
+  else g.setColor(255, 255, 255) end
+  g.print('batteries: ' .. ovw.player.batteries, 2, size * 2 - 28)
 end
 
 function Hud:stamina()
@@ -58,7 +92,7 @@ function Hud:stamina()
   local maxVal = p.stamina
   local alpha = val > .9 and 60 + (1 - val) * 1950 or 255
   g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
-  self:drawBar(x, y, ww, hh, val, maxVal)
+  g.drawBar(x, y, ww, hh, val, maxVal)
   g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), 255)
   g.rectangle('line', x, y, ww, hh)
 end
@@ -78,7 +112,7 @@ function Hud:experience()
   local val = p.drawExp / (50 + p.drawLevel * 20)
   local maxVal = (50 + p.drawLevel * 20) / 10
   g.setColor(100, 100 + 155 * val, 100, 255)
-  self:drawBar(x, y, ww, hh, val, maxVal)
+  g.drawBar(x, y, ww, hh, val, maxVal)
   g.setColor(255, 255, 255, 255)
   g.rectangle('line', x, y, ww, hh)
 
@@ -92,6 +126,7 @@ function Hud:experience()
   end
 
   if p.levelPoints > 0 then
+    g.setColor(255, 255, 255, 100 + ovw.player.firstAid.timers.fadeOut * 155)
     g.printf('Levels to spend: ' .. p.levelPoints, 400 - 50, 600 - 15, 100, 'center')
   end
 end
@@ -130,7 +165,7 @@ function Hud:hotbar()
       end
       local val = item.val and item:val() or 0
       local maxVal = item.maxVal and math.min(20, item:maxVal()) or 1
-      self:drawBar(2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size, 3, val, maxVal)
+      g.drawBar(2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size, 3, val, maxVal)
       --g.rectangle('fill', 2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size * val, 3)
     end
   end
@@ -155,7 +190,7 @@ function Hud:arsenal()
       elseif weapon.state == 'Firing' then
         g.setColor(255, 0, 0, alpha)
       end
-      self:drawBar(2 + .5, 2 + (size + 2) * (i + 1) + .5, size, 3, val, maxVal)
+      g.drawBar(2 + .5, 2 + (size + 2) * (i + 1) + .5, size, 3, val, maxVal)
       --g.rectangle('fill', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size * val, 3)
     end
   end
@@ -182,7 +217,7 @@ function Hud:firstaid()
 
   if ovw.player.kits == 0 then g.setColor(255, 0, 0)
   else g.setColor(255, 255, 255) end
-  g.print('kits: ' .. ovw.player.kits, 2, size * 2 - 20)
+  g.print('kits: ' .. ovw.player.kits, 2, size * 2 - 18)
 end
 
 function Hud:buffs()
@@ -200,7 +235,7 @@ function Hud:buffs()
     local x, y = 2 + .5, 250 + 22 * (index - 1) + .5
     local ww, hh = 75, 3
     g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
-    self:drawBar(x, y, ww, hh, val, maxVal)
+    g.drawBar(x, y, ww, hh, val, maxVal)
     g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
     g.rectangle('line', x, y, ww, hh)
     g.setColor(255, 255, 255, alpha)
@@ -214,6 +249,21 @@ function Hud:mouse()
   self.mouseText = ''
 
   if love.keyboard.isDown('e') then
+
+    --highlight shop slots
+    if ovw.player.npc then
+      local npc = ovw.player.npc
+      for i = 1, 5 do
+        local item = npc.items[i] and npc.items[i][1] or nil
+        if self:mouseOverSlot(520 + .5, 100 + (size + 2) * (i - 1) + .5, size) and item then
+          --draw a yellow box
+          g.setColor(255, 255, 0)
+          g.rectangle('line', 520 + .5, 100 + (size + 2) * (i - 1) + .5, size, size)
+          --set the mouseText
+          self.mouseText = item.name
+        end
+      end
+    end
 
     --highlight inventory slots
     for i = 1, 3 do
@@ -301,11 +351,28 @@ function Hud:mousepressed(x, y, button)
 
   if love.keyboard.isDown('e') then
 
+    --interact with npc slots
+    if button == 'l' or button == 'r' then
+      local npc = ovw.player.npc
+      if npc then
+        for i = 1, 5 do
+          local item = npc.items[i]
+          if self:mouseOverSlot(520 + .5, 100 + (size + 2) * (i - 1) + .5, size) then
+            if item then
+              if not self.grabbed.item then
+                npc:activate(i)
+              end
+            end
+          end
+        end
+      end
+    end
+
     --grab inventory slots
     for i = 1, 3 do
       for j = 1, 8 do
         local item = ovw.player.inventory.items[i][j]
-        if self:mouseOverSlot(650 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5, size, x, y) then
+        if self:mouseOverSlot(650 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5, size) then
           if item then
             if self.grabbed.item then
               if self.grabbed.slotType == 'arsenal' and item.type ~= 'Weapon' then
@@ -362,7 +429,7 @@ function Hud:mousepressed(x, y, button)
     --grab hotbar slots
     for i = 1, 5 do
       local item = ovw.player.hotbar.items[i]
-      if self:mouseOverSlot(2 + (size + 2) * (i - 1) + .5, 2 + .5, size, x, y) then
+      if self:mouseOverSlot(2 + (size + 2) * (i - 1) + .5, 2 + .5, size) then
         if item then
           if self.grabbed.item then
             if self.grabbed.item.type ~= 'Consumable' and self.grabbed.item.type ~= 'Active' then
@@ -421,7 +488,7 @@ function Hud:mousepressed(x, y, button)
     if button == 'l' then
       for i = 1, 2 do
         local weapon = ovw.player.arsenal.weapons[i]
-        if self:mouseOverSlot(2 + .5, 2 + (size + 2) * (i + 1) + .5, size, x, y) then
+        if self:mouseOverSlot(2 + .5, 2 + (size + 2) * (i + 1) + .5, size) then
           if weapon then
             if self.grabbed.item then
               if self.grabbed.item.type ~= 'Weapon' then
@@ -548,6 +615,6 @@ function Hud:debug()
   g.print(love.timer.getFPS() .. 'fps ' .. (ovw.view.scale * 100) .. '%', 1, h() - g.getFont():getHeight())
 end
 
-function Hud:mouseOverSlot(x, y, size, mx, my)
-  return (mx or love.mouse.getX()) >= x and (mx or love.mouse.getX()) <= x + size and (my or love.mouse.getY()) >= y and (my or love.mouse.getY()) <= y + size
+function Hud:mouseOverSlot(x, y, size)
+  return love.mouse.inBox(x, y, size, size)
 end

@@ -21,6 +21,7 @@ function Shade:init(...)
   self.walkSpeed = 50
 
   self.damage = 5
+  self.exp = 9 + math.ceil(love.math.random() * 10)
 
   self.windupTime = .3 -- Time it takes to deal damage
   self.windupTimer = 0
@@ -36,14 +37,6 @@ function Shade:init(...)
   self.health = love.math.random(18, 30)
 end
 
-function Shade:destroy()
-  Enemy.destroy(self)
-  local function make(i) ovw.pickups:add(Pickup({x = self.x, y = self.y, itemType = i})) end
-  ovw.player:learn(9 + math.ceil(love.math.random() * 10))
-
-  table.each(makeLootTable(), function(v, k) make(v) end)
-end
-
 function Shade:update()
   self.prevX = self.x
   self.prevY = self.y
@@ -57,7 +50,7 @@ end
 function Shade:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
-  local v = ovw.house.tiles[tx][ty]:brightness()
+  local v = (ovw.house.tiles[tx] and ovw.house.tiles[tx][ty]) and ovw.house.tiles[tx][ty]:brightness() or 1
   if self.attackTimer > 0 then
     local a = .4
     local d = self.angle

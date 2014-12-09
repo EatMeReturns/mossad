@@ -31,7 +31,7 @@ function Arsenal:add(weapon)
       end
     end
   end
-  if #self.weapons < 5 then
+  if #self.weapons < 2 then
     table.insert(self.weapons, weapon)
     weapon.index = #self.weapons
     if not self.selected then self:select(#self.weapons) end

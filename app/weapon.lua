@@ -59,16 +59,21 @@ function Weapon:update()
         for i = 0, self.spread - 1 do 
           local dAngle = i * (love.math.random() * 0.05 - 0.025)
           local x, y = ovw.player.x + self.tipOffset.getX(), ovw.player.y + self.tipOffset.getY()
-          local x2, y2 = x + math.dx(1200, ovw.player.angle + dAngle), y + math.dy(1200, ovw.player.angle + dAngle)
-          local wall, d = ovw.collision:lineTest(x, y, x2, y2, 'wall', false, true)
-          d = d == math.huge and 1200 or d
 
-          x2, y2 = x + math.dx(d, ovw.player.angle + dAngle), y + math.dy(d, ovw.player.angle + dAngle)
-          local enemy, d2 = ovw.collision:lineTest(x, y, x2, y2, 'enemy', false, true)
-          d = d2 == math.huge and d or d2
-          
-          if enemy then enemy:hurt(self.damage) end
-          ovw.particles:add(MuzzleFlash(d, ovw.player.angle + i * love.math.random() * 0.075 - 0.0375, {x = x, y = y}))
+          if self.name == 'Flaregun' then
+            ovw.spells:add(FlareSpell(ovw.player.angle + dAngle, x, y, self.damage))
+          else
+            local x2, y2 = x + math.dx(1200, ovw.player.angle + dAngle), y + math.dy(1200, ovw.player.angle + dAngle)
+            local wall, d = ovw.collision:lineTest(x, y, x2, y2, 'wall', false, true)
+            d = d == math.huge and 1200 or d
+
+            x2, y2 = x + math.dx(d, ovw.player.angle + dAngle), y + math.dy(d, ovw.player.angle + dAngle)
+            local enemy, d2 = ovw.collision:lineTest(x, y, x2, y2, 'enemy', false, true)
+            d = d2 == math.huge and d or d2
+            
+            if enemy then enemy:hurt(self.damage) end
+            ovw.particles:add(MuzzleFlash(d, ovw.player.angle + i * love.math.random() * 0.075 - 0.0375, {x = x, y = y}))
+          end
         end
 
         self.timers.shoot = self.fireSpeed
@@ -82,8 +87,8 @@ end
 
 function Weapon:keypressed(key)
   if key == 'r' then
-    if self.currentClip < self.clip and self.timers.reload == 0 then
-      self.timers.reload = self.reloadSpeed
+    if self.currentClip < self.clip and self.timers.reload == 0 and ovw.player.ammo > 0 then
+      self.timers.reload = self.reloadSpeed * (10 / (10 + ovw.player.agility))
     end
   end
 end

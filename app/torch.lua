@@ -20,15 +20,17 @@ end
 TorchSpell = class()
 
 function TorchSpell:init()
-  self.type = 'Placed' --buff, placed, active?
+  self.type = 'Placed' --buff, placed, projectile, active?
   self.x, self.y = ovw.player.x, ovw.player.y
   self.light = {
     minDis = 30,
     maxDis = 250,
+    shape = 'circle',
     intensity = 1,
     falloff = 1,
     posterization = 10,
     flicker = 0.5,
+    color = {100, 255, 100, 5}, --the fourth value is color intensity, not alpha
     x = self.x,
     y = self.y
   }

@@ -7,6 +7,19 @@ Player.collision = {
   with = {
     wall = function(self, other, dx, dy)
       self:setPosition(self.x + dx, self.y + dy)
+    end,
+
+    room = function(self, other)
+      if self.room ~= other then
+        self.room = other
+        if self.room.boss and self.room.biome ~= 'main' then
+          ovw.house.biome = 'main'
+          self.room.biome = 'main'
+          ovw.house:sealRoom(self.room)
+          self.room:spawnBoss()
+        elseif ovw.house.biome ~= self.room.biome then if self.room.biome == 'gray' then ovw.hud.fader:add('Fear is the mind killer...') end ovw.house.biome = self.room.biome end
+        ovw.house:regenerate(self.room)
+      end
     end
   }
 }
@@ -37,25 +50,26 @@ function Player:init()
   self.depth = -1
 
   self.inventory = Inventory()
-  self.inventory:add(Torch())
-  self.inventory:add(Torch())
 
   self.hotbar = Hotbar()
   self.hotbar:add(Glowstick())
 
   self.arsenal = Arsenal()
-  self.arsenal:add(Crossbow())
   self.arsenal:add(Pistol())
 
   self.firstAid = FirstAid()
 
+  self.npc = nil
+
   self.light = {
     minDis = 0,
     maxDis = 100,
+    shape = 'circle',
     intensity = 0.5,
     falloff = 0.9,
     posterization = 1,
-    flicker = 1
+    flicker = 1,
+    color = {255, 255, 255, 0}
   }
 
   self.flashlight = {
@@ -63,16 +77,21 @@ function Player:init()
     maxDis = 400,
     shape = 'cone',
     dir = 0,
-    angle = math.pi / 3,
+    angle = math.pi / 5,
     intensity = .7,
     falloff = 1,
     posterization = 1,
-    flicker = 0.95
+    flicker = 0.95,
+    color = {255, 175, 100, 0.75} --the fourth value is color intensity, not alpha
   }
 
   self.ammo = 24
   self.kits = 2
   self.energy = 2
+  self.batteries = 1
+  self.battery = 0
+  self.batteryMax = 120
+  self.flashlightOn = false
 
   self.agility = 1 --reload, heal, and loot faster
   self.armor = 0 --take less damage
@@ -118,10 +137,24 @@ function Player:update()
   self.light.x, self.light.y = self.x, self.y
   ovw.house:applyLight(self.light, 'ambient')
 
-  self.flashlight.x, self.flashlight.y, self.flashlight.dir = self.x, self.y, self.rotation
-  local head = self.firstAid.bodyParts[1]
-  if head.wounded then self.flashlight.flicker = 0.2 elseif head.crippled then self.flashlight.flicker = math.max(0.2, 0.75 * head.currentHealth / head.maxHealth) else self.flashlight.flicker = 0.95 end
-  ovw.house:applyLight(self.flashlight, 'dynamic')
+  if self.flashlightOn then
+    self.flashlight.x, self.flashlight.y, self.flashlight.dir = self.x, self.y, self.rotation
+    local head = self.firstAid.bodyParts[1]
+    if self.battery > 0 then
+      self.battery = self.battery - tickRate
+      if self.battery < self.batteryMax / 5 then self.flashlight.flicker = 0.75 * (self.battery / (self.batteryMax / 5)) else self.flashlight.flicker = 0.95 end
+      ovw.house:applyLight(self.flashlight, 'dynamic')
+    elseif self.batteries > 0 then
+      self.battery = self.batteryMax
+      self.batteries = self.batteries - 1
+      self.flashlight.flicker = 0.95
+      ovw.house:applyLight(self.flashlight, 'dynamic')
+    else
+      self.battery = 0
+      self.flashlightOn = false
+      ovw.hud.fader:add('No batteries, no flashlight, no prayers...')
+    end
+  end
 
   if not ovw.boss then
     local tx, ty = ovw.house:cell(self.x, self.y)
@@ -145,7 +178,7 @@ end
 function Player:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
-  local v = math.clamp(ovw.house.tiles[tx][ty]:brightness() + 50, 0, 255)
+  local v = math.clamp((ovw.house.tiles[tx] and ovw.house.tiles[tx][ty]) and ovw.house.tiles[tx][ty]:brightness() or 0 + 50, 0, 255)
   local a = ovw.house.ambientColor
   love.graphics.setColor(v * a[1] / 255, v * a[2] / 255, v * a[3] / 255)
   love.graphics.draw(self.image, x, y + 12, self.angle - math.pi / 2, 1, 1, self.image:getWidth() / 2, self.image:getHeight() / 4)
@@ -156,6 +189,9 @@ function Player:keypressed(key)
     local x = tonumber(key)
     if x and x >= 1 and x <= #self.hotbar.items then
       self.hotbar:activate(x, love.keyboard.isDown('lalt'))
+    end
+    if love.keyboard.isDown('lalt') and key == 'f' then
+      self.flashlightOn = not self.flashlightOn
     end
     if key == 'q' then
       self.hotbar:drop()
@@ -229,13 +265,15 @@ function Player:turn()
 end
 
 function Player:hurt(amount)
+  amount = amount * ovw.house.difficultyMult
+
   --smack a random body part
   local x = love.math.random() * 4
   x = math.max(1, math.ceil(x))
   self.firstAid.bodyParts[x]:damage(amount)
 
   self.lastHit = tick
-  ovw.view.shake = 2
+  ovw.view.shake = ovw.view.shake + math.sqrt(amount) ^ 3
 end
 
 function Player:learn(amount)
@@ -246,6 +284,7 @@ function Player:learn(amount)
     self.levelPoints = self.levelPoints + 1
     self.exp = self.exp - reqExp
     reqExp = 50 + self.level * 20
-    ovw.hud.fader:add('My efforts have improved my skills...')
+    ovw.hud.fader:add('My efforts have improved my skills.')
+    ovw.house:increaseDifficulty()
   end
 end

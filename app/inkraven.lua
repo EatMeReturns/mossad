@@ -34,6 +34,7 @@ function InkRaven:init(...)
   self.glideSpeed = 100
 
   self.damage = 6
+  self.exp = 9 + math.ceil(love.math.random() * 5)
 
   self.scanTimer = 1
   self.glideTimer = 0
@@ -41,14 +42,6 @@ function InkRaven:init(...)
 
   self.health = love.math.random(11, 28)
   self.targetAngle = love.math.random() * 2 * math.pi
-end
-
-function InkRaven:destroy()
-  Enemy.destroy(self)
-  local function make(i) ovw.pickups:add(Pickup({x = self.x, y = self.y, itemType = i})) end
-  ovw.player:learn(9 + math.ceil(love.math.random() * 5))
-
-  table.each(makeLootTable(), function(v, k) make(v) end)
 end
 
 function InkRaven:update()
@@ -64,7 +57,7 @@ end
 function InkRaven:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
-  local v = ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 0
+  local v = ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
   love.graphics.setColor(255, 255, 255, v)
   local p23 = math.pi * 2 / 3
   local x1, y1 = self.x + math.dx(self.radius, self.angle), self.y + math.dy(self.radius, self.angle)

@@ -8,34 +8,58 @@ function Boss.collision.with.wall(self, other, dx, dy)
   self:setPosition(self.x + dx, self.y + dy)
 end
 
-function Boss.collision.with.player(self, player, dx, dy)
-  player:setPosition(player.x + dx, player.y + dy)
+function Boss.collision.with.player(self, other, dx, dy)
+  other:setPosition(other.x + dx, other.y + dy)
+end
+
+function Boss.collision.with.room(self, other, dx, dy)
+  if self.room then
+    if self.room ~= other then
+      self.room:removeObject(self)
+      other:addObject(self)
+    end
+  else
+    other:addObject(self)
+  end
 end
 
 function Boss:init()
-  self.x = ovw.house:pos(ovw.house.bossRoom.x + ovw.house.bossRoom.width / 2)
-  self.y = ovw.house:pos(ovw.house.bossRoom.y + ovw.house.bossRoom.height / 2)
+  self.x = ovw.house:pos(ovw.player.room.x + ovw.player.room.width / 2)
+  self.y = ovw.house:pos(ovw.player.room.y + ovw.player.room.height / 2)
+
+  self.exp = 50
+  self.lootSpawnTable = WeightedRandom({{3, 0.7}, {4, 0.25}, {5, 0.05}}, 1)
+
   ovw.view:register(self)
   ovw.collision:register(self)
 end
 
 function Boss:destroy()
-  ovw.boss = nil
-  ovw.enemies:clear()
-  ovw.house:destroy()
+  ovw.house:openRoom(ovw.player.room)
   ovw.house:increaseDifficulty()
-  ovw.house = House()
-  ovw.player.x = ovw.house:pos(ovw.house.rooms[1].x + ovw.house.rooms[1].width / 2)
-  ovw.player.y = ovw.house:pos(ovw.house.rooms[1].y + ovw.house.rooms[1].height / 2)
-  ovw.house:spawnEnemies()
+  self.room:removeObject(self)
   ovw.collision:unregister(self)
   ovw.view:unregister(self)
-  ovw.hud.fader:add('the house twists and creaks around you, and before long you find yourself enveloped in darkness once again...')
+  ovw.hud.fader:add('an evil has been thwarted... for now')
+end
+
+function Boss:remove()
+  ovw.enemies:remove(self)
 end
 
 function Boss:hurt(amount)
   self.health = self.health - amount
-  if self.health <= 0 then self:destroy() end
+  if self.health <= 0 then
+    local function make(i) ovw.pickups:add(Pickup({x = self.x, y = self.y, itemType = i, room = self.room})) end
+    ovw.player:learn(self.exp)
+    local i = self.lootSpawnTable:pick()[1]
+    while i > 0 do
+      table.each(makeLootTable('Common'), function(v, k) make(v) end)
+      i = i - 1
+    end
+    make(makeLootTable('Rare')[1])
+    self:remove()
+  end
 end
 
 function Boss:setPosition(x, y)

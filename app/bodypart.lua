@@ -57,12 +57,12 @@ function BodyPart:damage(amt)
 			--mortally wound!
 			self:wound()
 	        ovw.hud.fader:add('Mossad starts writing my name in his notebook...')
-	        ovw.house.targetAmbient = {0, 0, 0}
+	        --ovw.house.targetAmbient = {0, 0, 0}
 		elseif not self.crippled then 
 			--cripple!
 			self:cripple()
 			ovw.hud.fader:add('I need healing...')
-			ovw.house.targetAmbient = {255, 160, 160}
+			--ovw.house.targetAmbient = {255, 160, 160}
 		else
 			--already wounded
 		end
@@ -78,7 +78,7 @@ function BodyPart:heal()
 		self.crippled = false
 		self.currentHealth = self.maxHealth
     	ovw.hud.fader:add('ty raka')
-    	ovw.house.targetAmbient = {255, 255, 255}
+    	--ovw.house.targetAmbient = {255, 255, 255}
 		local debuff = ovw.player.firstAid.debuffs[self.index]
 		debuff.val = debuff.val + debuff.modifier
 	elseif self.currentHealth < self.maxHealth then

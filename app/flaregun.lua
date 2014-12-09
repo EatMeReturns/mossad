@@ -4,7 +4,7 @@ Flaregun = extend(Weapon)
 
 Flaregun.name = 'Flaregun'
 
-Flaregun.damage = 15
+Flaregun.damage = 10
 Flaregun.fireMode = 'Semiautomatic'
 Flaregun.fireSpeed = 0
 Flaregun.reloadSpeed = 3

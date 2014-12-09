@@ -12,6 +12,9 @@ Avian.collision.shape = 'circle'
 
 function Avian:init()
   Boss.init(self)
+  
+  self.prevX = self.x
+  self.prevY = self.y
 
   self.state = 'derp'
 

@@ -31,10 +31,12 @@ function GlowstickSpell:init()
   self.light = {
     minDis = 50,
     maxDis = 400,
+    shape = 'circle',
     intensity = .75,
     falloff = 1,
     posterization = 1,
-    flicker = 0.5
+    flicker = 0.5,
+    color = {100, 255, 100, 5} --the fourth value is color intensity, not alpha
   }
 
   self.health = 60
@@ -47,10 +49,6 @@ function GlowstickSpell:update()
   self.health = timer.rot(self.health, function()
     ovw.spells:remove(self)
   end)
-end
-
-function GlowstickSpell:buff()
-  print('Glowstick buff')
 end
 
 function GlowstickSpell:val()
