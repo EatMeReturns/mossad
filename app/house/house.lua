@@ -144,7 +144,7 @@ function House:generate()
 
   local room = MainRectangle()
   room.x, room.y = 100, 100
-  self:addRoom(room)
+  self:addRoom(room, 0, 0)
 
   --local furthestRoom = room
   --local furthestDis = 0
@@ -251,7 +251,7 @@ function House:createRoom(oldRoom, oldDirection)
     oldRoom:addDoor(door, oldWall.direction)
     newRoom:addDoor(door, newWall.direction)
 
-    self:addRoom(newRoom)
+    self:addRoom(newRoom, newRoom.enemySpawnTable:pick()[1], newRoom.pickupSpawnTable:pick()[1])
     self:carve(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y, newRoom)
 
     return true
@@ -264,7 +264,7 @@ function House:removeRoom(room)
   self.rooms[room.id] = nil
 end
 
-function House:addRoom(room)
+function House:addRoom(room, enemyCount, pickupCount)
   table.insert(self.rooms, self.idCounter, room)
   room.id = self.idCounter
   self.idCounter = self.idCounter + 1
@@ -286,8 +286,8 @@ function House:addRoom(room)
   end
 
   if room.npcSpawnTable then self:spawnNPCsInRoom(room.npcSpawnTable:pick()[1], room) end
-  self:spawnEnemiesInRoom(room.enemySpawnTable:pick()[1], room)
-  self:spawnPickupsInRoom(room.pickupSpawnTable:pick()[1], room)
+  self:spawnEnemiesInRoom(enemyCount, room)
+  self:spawnPickupsInRoom(pickupCount, room)
 
   self:computeTiles()
   self:computeShapes()
@@ -556,12 +556,19 @@ function House:spawnNPCsInRoom(npc, room)
 end
 
 function House:spawnEnemiesInRoom(amt, room)
-  local types = {Shade, InkRaven}
+  local types = {Spiderling, Shade, InkRaven}
   for i = 1, amt do
     local x, y = self:pos(room.x, room.y)
     x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
     y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
-    ovw.enemies:add(randomFrom(types)(x, y, room))
+    local enemyType = randomFrom(types)
+    if enemyType == Spiderling then
+      for i = 1, 1 + math.ceil(love.math.random() * 2) do
+        ovw.enemies:add(randomFrom(types)(x, y, room))
+      end
+    else
+      ovw.enemies:add(randomFrom(types)(x, y, room))
+    end
   end
 end
 

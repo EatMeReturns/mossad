@@ -5,6 +5,7 @@ InkRaven = extend(Enemy)
 InkRaven.collision = setmetatable({}, {__index = Enemy.collision})
 InkRaven.collision.shape = 'circle'
 InkRaven.collision.with = {
+  wall = Enemy.collision.with.wall,
   enemy = Enemy.collision.with.enemy,
   player = function(self, player, dx, dy)
     if self.state == 'swoop' then
@@ -26,9 +27,10 @@ function InkRaven:init(...)
   Enemy.init(self, ...)
 
   self.state = 'lurk'
+  self.glideTargetX = self.x
+  self.glideTargetY = self.y
 
-  self.sight = 300
-  self.scanTimer = 0
+  self.sight = 250
   
   self.swoopSpeed = 500
   self.glideSpeed = 100
@@ -58,7 +60,13 @@ function InkRaven:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
   local v = ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
-  love.graphics.setColor(255, 255, 255, v)
+  if self.state == 'swoop' then
+    love.graphics.setColor(255, 0, 0, v)
+  elseif self.state ~= 'lurk' then
+    love.graphics.setColor(255, 255, 0, v)
+  else
+    love.graphics.setColor(255, 255, 255, v)
+  end
   local p23 = math.pi * 2 / 3
   local x1, y1 = self.x + math.dx(self.radius, self.angle), self.y + math.dy(self.radius, self.angle)
   local x2, y2 = self.x + math.dx(self.radius, self.angle - p23), self.y + math.dy(self.radius, self.angle - p23)
@@ -74,7 +82,7 @@ function InkRaven:scan()
   local target = nil
   if dis < self.sight and math.abs(math.anglediff(dir, self.angle)) < (math.pi * 1.6) then
     target = ovw.player
-    self:startGlide()
+    self.state = 'swoop'
   end
 
   if not target then
@@ -121,7 +129,7 @@ function InkRaven:glide()
 
   self.glideTimer = self.glideTimer - tickRate
   local d = math.distance(self.x, self.y, ovw.player.x, ovw.player.y)
-  if self.glideTimer <= 0 and d < 200 and not ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall') then
+  if ((self.glideTimer <= 0 and d < 200) or self.glideTimer < -.5) and not ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall') then
     self.state = 'swoop'
     self.swoopTimer = .8
   end

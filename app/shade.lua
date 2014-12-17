@@ -13,7 +13,7 @@ function Shade:init(...)
 
   self.state = 'roam'
 
-  self.sight = 300
+  self.sight = 350
   self.target = nil
   self.scanTimer = 0
   
@@ -31,7 +31,7 @@ function Shade:init(...)
   self.attackTimer = 0
   self.attackRange = 35 -- Damage is dealt if player is this close after lunging
 
-  self.fatigueTime = 1 -- Time it stands still after attacking
+  self.fatigueTime = .5 -- Time it stands still after attacking
   self.fatigueTimer = 0
 
   self.health = love.math.random(18, 30)
@@ -60,7 +60,13 @@ function Shade:draw()
       a = a - .1
     end
   end
-  love.graphics.setColor(255, 255, 255, v)
+  if self.state == 'attack' then
+    love.graphics.setColor(255, 0, 0, v)
+  elseif self.state ~= 'roam' then
+    love.graphics.setColor(255, 255, 0, v)
+  else
+    love.graphics.setColor(255, 255, 255, v)
+  end
   love.graphics.draw(self.image, x, y, self.angle, 1, 1, 29, 14)
 end
 

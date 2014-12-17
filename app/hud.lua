@@ -70,6 +70,7 @@ function Hud:flashlight()
   local name = 'Flashlight' .. ((p.flashlightOn and ' On') or ' Off')
   local x, y = 2 + .5, 250 + 22 * -1 + .5
   local ww, hh = 120, 3
+  g.hotkeyTab(alpha, 'f', x + ww / 2, y - 2, ww / 2, 10, 'top', 'Alt')
   g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
   g.drawBar(x, y, ww, hh, val, maxVal)
   g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
@@ -85,7 +86,7 @@ end
 function Hud:stamina()
   local p = ovw.player
   local x = 400 - 50 + .5
-  local y = 600 - 80 + .5
+  local y = 600 - 90 + .5
   local ww = 100
   local hh = 7
   local val = p.energy / p.stamina
@@ -101,9 +102,11 @@ function Hud:experience()
   local size = 40
   local p = ovw.player
   local x = 400 - 100 + .5
-  local y = 600 - 67 + .5
+  local y = 600 - 77 + .5
   local ww = 200
   local hh = 5
+  local hotkeys = {'z', 'x', 'c'}
+  local labels = {ovw.player.agility, ovw.player.armor, ovw.player.stamina}
 
   if p.drawExp < p.exp or p.drawLevel < p.level then p.drawExp = p.drawExp + math.max(1, (p.drawLevel == p.level and p.exp - p.drawExp or (50 + p.drawLevel * 20)) * 4) * tickRate end
   if p.drawExp > p.exp and p.drawLevel == p.level then p.drawExp = p.exp end
@@ -118,16 +121,16 @@ function Hud:experience()
 
   local alpha = ovw.player.firstAid.timers.fadeOut * 255
   for i = 1, 3 do
+    g.hotkeyTab(alpha, hotkeys[i], 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5 + size + 2, size, 10, 'bottom', 'Tab')
     g.setColor(255, 255, 255, alpha)
     g.draw(itemImage, 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5)
     g.rectangle('line', 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5, size, size)
-    local label = i == 1 and ovw.player.agility or (i == 2 and ovw.player.armor or ovw.player.stamina)
-    g.print(label, 400 - 70 + (size + 10) * (i - 1) + .5 + 4, 600 - 56 + .5 + 1)
+    g.print(labels[i], 400 - 70 + (size + 10) * (i - 1) + .5 + 4, 600 - 56 + .5 + 1)
   end
 
   if p.levelPoints > 0 then
     g.setColor(255, 255, 255, 100 + ovw.player.firstAid.timers.fadeOut * 155)
-    g.printf('Levels to spend: ' .. p.levelPoints, 400 - 50, 600 - 15, 100, 'center')
+    g.printf('Levels to spend: ' .. p.levelPoints, 400 - 50, 600 - 30 - size, 100, 'center')
   end
 end
 
@@ -149,6 +152,8 @@ function Hud:inventory()
       end
     end
   end
+  g.setColor(255, 255, 255, ovw.player.inventory.timers.fadeOut * 255)
+  g.printf('Backpack', 650 + .5 + 10, 100 - 15 - .5, 100, 'center')
 end
 
 function Hud:hotbar()
@@ -156,6 +161,7 @@ function Hud:hotbar()
   for i = 1, 5 do
     local item = ovw.player.hotbar.items[i]
     local alpha = not item and 20 or (ovw.player.hotbar.items[i].active and 255 or 100)
+    g.hotkeyTab(alpha, i, 2 + (size + 2) * (i - 1) + .5, 2 + .5 + size + 2, size, 10, 'bottom', nil, {'tab', 'e'})
     g.setColor(255, 255, 255, alpha)
     if item then g.draw(item.image, 2 + (size + 2) * (i - 1) + .5, 2 + .5) end
     g.rectangle('line', 2 + (size + 2) * (i - 1) + .5, 2 + .5, size, size)
@@ -166,7 +172,6 @@ function Hud:hotbar()
       local val = item.val and item:val() or 0
       local maxVal = item.maxVal and math.min(20, item:maxVal()) or 1
       g.drawBar(2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size, 3, val, maxVal)
-      --g.rectangle('fill', 2 + (size + 2) * (i - 1) + .5, 2 + .5 + size - 3, size * val, 3)
     end
   end
 end
@@ -191,7 +196,9 @@ function Hud:arsenal()
         g.setColor(255, 0, 0, alpha)
       end
       g.drawBar(2 + .5, 2 + (size + 2) * (i + 1) + .5, size, 3, val, maxVal)
-      --g.rectangle('fill', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size * val, 3)
+      if val < 1 then --can reload
+        g.hotkeyTab(alpha, 'r', 2 + .5 + size + 2, 2 + (size + 2) * (i + 1) + .5, 10, size, 'right', nil, {'tab', 'e'})
+      end
     end
   end
 
@@ -202,12 +209,14 @@ end
 
 function Hud:firstaid()
   local size = 40
+
   for i = 1, 4 do
     local bodyPart = ovw.player.firstAid.bodyParts[i]
     local green, blue = 255, 255
     local alpha = ovw.player.firstAid.timers.fadeOut * (bodyPart.wounded and 255 or (bodyPart.crippled and 255 or 100))
     if bodyPart.crippled then blue = 0 end
     if bodyPart.wounded then green = 0 end
+    g.hotkeyTab(alpha, i, 300 + .5 - 2, 220 + (size + 2) * (i - 1) + .5, 10, size, 'left', 'Tab')
     g.setColor(255, green, blue, alpha)
     g.draw(bodyPart.image, 300 + .5, 220 + (size + 2) * (i - 1) + .5)
     g.rectangle('line', 300 + .5, 220 + (size + 2) * (i - 1) + .5, size, size)
@@ -218,6 +227,8 @@ function Hud:firstaid()
   if ovw.player.kits == 0 then g.setColor(255, 0, 0)
   else g.setColor(255, 255, 255) end
   g.print('kits: ' .. ovw.player.kits, 2, size * 2 - 18)
+  g.setColor(255, 255, 255, ovw.player.firstAid.timers.fadeOut * 255)
+  g.printf('First Aid', 320 + .5 - 50, 205 + .5, 100, 'center')
 end
 
 function Hud:buffs()
@@ -617,4 +628,73 @@ end
 
 function Hud:mouseOverSlot(x, y, size)
   return love.mouse.inBox(x, y, size, size)
+end
+
+function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMods) --key (doesn't have to be a key), duh, side
+  color = {255, 255, 255, alpha}
+
+  testKeyMod, testNotMod = nil, false
+  if keyMod then
+    testKeyMod = string.lower(keyMod)
+    if testKeyMod == 'alt' then testKeyMod = 'lalt' end
+    if testKeyMod == 'shift' then testKeyMod = 'lshift' end
+    if testKeyMod == 'tab' then keyMod = nil end
+  end
+  table.each(notMods, function(notMod, k)
+      notMod = string.lower(notMod)
+      if notMod == 'alt' then notMod = 'lalt' end
+      if notMod == 'shift' then notMod = 'lshift' end
+      if love.keyboard.isDown(notMod) then testNotMod = true end
+    end)
+
+  if love.keyboard.isDown('' .. hkey) then
+    if not testKeyMod or love.keyboard.isDown(testKeyMod) then
+      if not testNotMod then
+        color[3] = 0
+        color[4] = math.min(255, alpha + 50)
+      end
+    end
+  end
+  hkey = string.upper(hkey)
+  if keyMod then hkey = keyMod .. '+' .. hkey end
+
+  if ts == 'top' then
+    love.graphics.setLineStyle('rough')
+    love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
+    love.graphics.polygon('fill', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty - th, tx + tw / 4, ty - th)
+    love.graphics.setColor(color[1], color[2], color[3], color[4])
+    love.graphics.polygon('line', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty - th, tx + tw / 4, ty - th)
+    love.graphics.printf(hkey, tx, ty - 3 - th, tw, 'center') --text x y w center
+    love.graphics.setLineStyle('smooth')
+
+  elseif ts == 'bottom' then
+    love.graphics.setLineStyle('rough')
+    love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
+    love.graphics.polygon('fill', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty + th, tx + tw / 4, ty + th)
+    love.graphics.setColor(color[1], color[2], color[3], color[4])
+    love.graphics.polygon('line', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty + th, tx + tw / 4, ty + th)
+    love.graphics.printf(hkey, tx, ty - 3, tw, 'center') --text x y w center
+    love.graphics.setLineStyle('smooth')
+
+  elseif ts == 'right' then
+    love.graphics.setLineStyle('rough')
+    love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
+    love.graphics.polygon('fill', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx + tw, ty + th * 3 / 4, tx + tw, ty + th / 4)
+    love.graphics.setColor(color[1], color[2], color[3], color[4])
+    love.graphics.polygon('line', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx + tw, ty + th * 3 / 4, tx + tw, ty + th / 4)
+    love.graphics.printf(hkey, tx, ty - 8 + th / 2, tw, 'center') --text x y w center
+    love.graphics.setLineStyle('smooth')
+
+  elseif ts == 'left' then
+    love.graphics.setLineStyle('rough')
+    love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
+    love.graphics.polygon('fill', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx - tw, ty + th * 3 / 4, tx - tw, ty + th / 4)
+    love.graphics.setColor(color[1], color[2], color[3], color[4])
+    love.graphics.polygon('line', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx - tw, ty + th * 3 / 4, tx - tw, ty + th / 4)
+    love.graphics.printf(hkey, tx - tw, ty - 8 + th / 2, tw, 'center') --text x y w center
+    love.graphics.setLineStyle('smooth')
+
+  else
+    --you dumb
+  end
 end

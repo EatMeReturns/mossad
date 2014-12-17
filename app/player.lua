@@ -50,6 +50,7 @@ function Player:init()
   self.depth = -1
 
   self.inventory = Inventory()
+  self.inventory:add(BeholdEye())
 
   self.hotbar = Hotbar()
   self.hotbar:add(Glowstick())
@@ -91,7 +92,7 @@ function Player:init()
   self.batteries = 1
   self.battery = 0
   self.batteryMax = 120
-  self.flashlightOn = false
+  self.flashlightOn = true
 
   self.agility = 1 --reload, heal, and loot faster
   self.armor = 0 --take less damage
@@ -142,7 +143,7 @@ function Player:update()
     local head = self.firstAid.bodyParts[1]
     if self.battery > 0 then
       self.battery = self.battery - tickRate
-      if self.battery < self.batteryMax / 5 then self.flashlight.flicker = 0.75 * (self.battery / (self.batteryMax / 5)) else self.flashlight.flicker = 0.95 end
+      if self.battery < self.batteryMax / 10 then self.flashlight.flicker = 0.75 * (self.battery / (self.batteryMax / 10)) else self.flashlight.flicker = 0.95 end
       ovw.house:applyLight(self.flashlight, 'dynamic')
     elseif self.batteries > 0 then
       self.battery = self.batteryMax
@@ -201,6 +202,18 @@ function Player:keypressed(key)
     local x = tonumber(key)
     if x and x >= 1 and x <= 4 then
       self.firstAid:setHeal(x)
+    end
+    if ovw.player.levelPoints > 0 then
+      if key == 'z' then
+        ovw.player.levelPoints = ovw.player.levelPoints - 1
+        ovw.player.agility = ovw.player.agility + 1
+      elseif key == 'x' then
+        ovw.player.levelPoints = ovw.player.levelPoints - 1
+        ovw.player.armor = ovw.player.armor + 1
+      elseif key == 'c' then
+        ovw.player.levelPoints = ovw.player.levelPoints - 1
+        ovw.player.stamina = ovw.player.stamina + 1
+      end
     end
   end
 end

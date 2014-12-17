@@ -91,7 +91,8 @@ function Tile:draw()
 end
 
 function Tile:brightness()
-  return math.min(self.ambient + self.dynamic, 255)
+  local base = (self.ambient + self.dynamic) * 0.5--math.max(0, (1 - (math.distance(self.x * ovw.house.cellSize, self.y * ovw.house.cellSize, ovw.player.x, ovw.player.y) / 400)) * 15)
+  return math.min(base + self.ambient + self.dynamic, 255)
 end
 
 function Tile:updateLight()

@@ -9,7 +9,11 @@ function Inventory:init()
 end
 
 function Inventory:update()
-	table.with(self.items, 'update')
+	table.each(self.items, function(row, key)
+    table.each(row, function(item, key)
+      if item.type == 'Passive' then item:update() end
+    end)
+  end)
 	if love.keyboard.isDown('e') then
 		self.timers.fadeIn = timer.rot(self.timers.fadeIn)
 		self.timers.fadeOut = 1 - self.timers.fadeIn
