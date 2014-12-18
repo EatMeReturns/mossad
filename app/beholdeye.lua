@@ -13,8 +13,8 @@ function BeholdEye:init()
 		minDis = 50,
 		maxDis = 100,
 		shape = 'circle',
-		intensity = .3,
-		falloff = .9,
+		intensity = 1,
+		falloff = 1,
 		posterization = 1,
 		flicker = 1,
 		color = {255, 255, 100, 5} --the fourth value is color intensity, not alpha

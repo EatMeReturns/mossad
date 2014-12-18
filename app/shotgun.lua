@@ -12,3 +12,5 @@ Shotgun.clip = 6
 Shotgun.ammo = 24
 
 Shotgun.spread = 12
+
+Shotgun.weight = 2 --used to calculate melee info

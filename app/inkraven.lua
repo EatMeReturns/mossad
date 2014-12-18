@@ -29,6 +29,8 @@ function InkRaven:init(...)
   self.state = 'lurk'
   self.glideTargetX = self.x
   self.glideTargetY = self.y
+  self.swoopTargetX = self.x
+  self.swoopTargetY = self.y
 
   self.sight = 250
   
@@ -82,7 +84,10 @@ function InkRaven:scan()
   local target = nil
   if dis < self.sight and math.abs(math.anglediff(dir, self.angle)) < (math.pi * 1.6) then
     target = ovw.player
+    self.targetAngle = math.direction(self.x, self.y, ovw.player.x, ovw.player.y)
+    self.swoopTargetX, self.swoopTargetY = ovw.player.x, ovw.player.y
     self.state = 'swoop'
+    self.swoopTimer = .5
   end
 
   if not target then
@@ -130,13 +135,14 @@ function InkRaven:glide()
   self.glideTimer = self.glideTimer - tickRate
   local d = math.distance(self.x, self.y, ovw.player.x, ovw.player.y)
   if ((self.glideTimer <= 0 and d < 200) or self.glideTimer < -.5) and not ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall') then
+    self.swoopTargetX, self.swoopTargetY = ovw.player.x, ovw.player.y
     self.state = 'swoop'
-    self.swoopTimer = .8
+    self.swoopTimer = .5
   end
 end
 
 function InkRaven:swoop()
-  local dis, dir = math.vector(self.x, self.y, ovw.player.x, ovw.player.y)
+  local dis, dir = math.vector(self.x, self.y, self.swoopTargetX, self.swoopTargetY)
   local speed = self.swoopSpeed * tickRate
   self.x = self.x + math.dx(speed, self.angle)
   self.y = self.y + math.dy(speed, self.angle)
@@ -146,7 +152,7 @@ function InkRaven:swoop()
   end)
 
   -- Let it change its direction slightly while swooping
-  self.targetAngle = math.anglerp(self.targetAngle, dir, 50 * tickRate)
+  self.targetAngle = math.anglerp(self.targetAngle, dir, 10 * tickRate)
 end
 
 function InkRaven:fatigue()

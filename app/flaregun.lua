@@ -12,3 +12,5 @@ Flaregun.clip = 6
 Flaregun.ammo = 24
 
 Flaregun.spread = 1
+
+Flaregun.weight = 1 --used to calculate melee info

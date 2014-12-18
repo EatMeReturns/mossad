@@ -38,9 +38,9 @@ function Spiderling:init(...)
 	self.sight = 300
 
 	self.biteSpeed = 400
-	self.skitterSpeed = 150
+	self.skitterSpeed = 225
 
-	self.damage = math.ceil(-.5 + love.math.random())
+	self.damage = 1
 	self.exp = math.ceil(love.math.random() * 1.5)
 
 	self.scanTimer = 1

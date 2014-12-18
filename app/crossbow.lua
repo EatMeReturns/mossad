@@ -12,3 +12,5 @@ Crossbow.clip = 1
 Crossbow.ammo = 12
 
 Crossbow.spread = 1
+
+Crossbow.weight = 3 --used to calculate melee info

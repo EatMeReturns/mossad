@@ -92,3 +92,56 @@ function Collision:lineTest(x1, y1, x2, y2, tag, all, first)
   
   return res, mindis
 end
+
+function Collision:arcTest(x, y, r, dir, theta, tag, all, first)
+  local res = all and {} or nil
+  local mindis = first and math.huge or nil
+  local x2, y2 = x + math.cos(dir) * r, y + math.sin(dir) * r
+  local _x1, _y1 = math.min(x, x2), math.min(y, y2)
+  local _x2, _y2 = math.max(x, x2), math.max(y, y2)
+  for _, shape in pairs(self.hc:shapesInRange(_x1, _y1, _x2, _y2)) do
+    if (not tag) or shape.owner.tag == tag then
+      local angle = math.direction(x, y, shape:center()) --angle from source to shape
+      --normalize the angle
+      if dir < -math.pi / 2 and angle > 0 then angle = angle - math.pi * 2 end
+      if dir > math.pi / 2 and angle < 0 then angle = angle + math.pi * 2 end
+
+      if angle >= dir - theta / 2 and angle <= dir + theta / 2 then
+        --inside the angle
+        if not first then
+          if all then table.insert(res, shape.owner)
+          else res = shape.owner break end
+        elseif d * r < mindis then
+          mindis = d * r
+          res = shape.owner
+        end
+      elseif angle < dir - theta / 2 then
+        local intersects, d = shape:intersectsRay(x, y, math.cos(dir - theta / 2) * r, math.sin(dir - theta / 2) * r)
+        if intersects and d >= 0 and d <= 1 then
+          --inside the angle
+          if not first then
+            if all then table.insert(res, shape.owner)
+            else res = shape.owner break end
+          elseif d * r < mindis then
+            mindis = d * r
+            res = shape.owner
+          end
+        end
+      elseif angle > dir + theta / 2 then
+        local intersects, d = shape:intersectsRay(x, y, math.cos(dir + theta / 2) * r, math.sin(dir + theta / 2) * r)
+        if intersects and d >= 0 and d <= 1 then
+          --inside the angle
+          if not first then
+            if all then table.insert(res, shape.owner)
+            else res = shape.owner break end
+          elseif d * r < mindis then
+            mindis = d * r
+            res = shape.owner
+          end
+        end
+      end
+    end
+  end
+
+  return res, mindis
+end

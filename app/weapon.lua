@@ -6,6 +6,7 @@ function Weapon:init()
   self.timers = {}
   self.timers.shoot = 0
   self.timers.reload = 0
+  self.timers.melee = 0
 
   self.state = 'Idle'
   self.selected = false
@@ -24,6 +25,7 @@ end
 
 function Weapon:update()
   self.timers.shoot = timer.rot(self.timers.shoot)
+  self.timers.melee = timer.rot(self.timers.melee)
   if self.selected then
     if self.timers.reload > 0 then 
       self.state = 'Reloading'
@@ -57,7 +59,7 @@ function Weapon:update()
         self.state = 'Firing'
 
         for i = 0, self.spread - 1 do 
-          local dAngle = i * (love.math.random() * 0.05 - 0.025)
+          local dAngle = i * (love.math.random() * 0.075 - 0.0375)
           local x, y = ovw.player.x + self.tipOffset.getX(), ovw.player.y + self.tipOffset.getY()
 
           if self.name == 'Flaregun' then
@@ -72,7 +74,7 @@ function Weapon:update()
             d = d2 == math.huge and d or d2
             
             if enemy then enemy:hurt(self.damage) end
-            ovw.particles:add(MuzzleFlash(d, ovw.player.angle + i * love.math.random() * 0.075 - 0.0375, {x = x, y = y}))
+            ovw.particles:add(MuzzleFlash(d, ovw.player.angle + dAngle, {x = x, y = y}))
           end
         end
 
@@ -80,6 +82,38 @@ function Weapon:update()
         self.currentClip = self.currentClip - 1
         if self.fireMode == 'Single' then self.timers.reload = 0 end
         if self.currentClip == 0 then self.timers.reload = self.reloadSpeed * (10 / (10 + ovw.player.agility)) end
+      end
+    end
+  end
+end
+
+function Weapon:melee()
+  local meleeRange = 54
+  local meleeArcW = math.pi / 2
+  --check reqs
+  if self.timers.melee == 0 then
+    if self.state ~= 'Firing' then
+      local p = ovw.player
+      local energyCost = self.weight * 2 / 10
+      if p.energy >= energyCost then
+        --we have the strength!
+        p.energy = p.energy - energyCost
+
+        --calculate info
+        local meleeDamage = math.ceil(math.sqrt(self.weight) * 15)
+        self.timers.melee = self.weight * 2 / 10
+
+        --find area and check for enemies
+        table.each(ovw.collision:arcTest(p.x, p.y, meleeRange, p.angle, meleeArcW, 'enemy', true, false), function(enemy, key)
+          --hit enemies in area
+          enemy:hurt(meleeDamage)
+        end)
+
+        --add a particle
+        ovw.particles:add(MeleeFlash(meleeRange, p.angle, {x = p.x, y = p.y}, meleeArcW))
+      else
+        --not enough energy
+        ovw.hud.fader:add('I am... so tired...')
       end
     end
   end

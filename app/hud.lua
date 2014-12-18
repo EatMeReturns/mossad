@@ -70,7 +70,7 @@ function Hud:flashlight()
   local name = 'Flashlight' .. ((p.flashlightOn and ' On') or ' Off')
   local x, y = 2 + .5, 250 + 22 * -1 + .5
   local ww, hh = 120, 3
-  g.hotkeyTab(alpha, 'f', x + ww / 2, y - 2, ww / 2, 10, 'top', 'Alt')
+  g.hotkeyTab(alpha, 'f', x + ww / 2, y - 2, ww / 2, 10, 'top', 'Alt', {'tab', 'e'})
   g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
   g.drawBar(x, y, ww, hh, val, maxVal)
   g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
@@ -197,7 +197,11 @@ function Hud:arsenal()
       end
       g.drawBar(2 + .5, 2 + (size + 2) * (i + 1) + .5, size, 3, val, maxVal)
       if val < 1 then --can reload
-        g.hotkeyTab(alpha, 'r', 2 + .5 + size + 2, 2 + (size + 2) * (i + 1) + .5, 10, size, 'right', nil, {'tab', 'e'})
+        if weapon.selected then
+          g.hotkeyTab(alpha, 'r', 2 + .5 + size + 2, 2 + (size + 2) * (i + 1) + .5, 10, size, 'right', nil, {'tab', 'e'})
+        else
+          g.hotkeyTab(alpha, 'r', 2 + .5 + size + 2, 2 + (size + 2) * (i + 1) + .5, 10, size, 'right', nil, {'r', 'tab', 'e'})
+        end
       end
     end
   end
@@ -659,7 +663,7 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
   if keyMod then hkey = keyMod .. '+' .. hkey end
 
   if ts == 'top' then
-    love.graphics.setLineStyle('rough')
+    --love.graphics.setLineStyle('rough')
     love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
     love.graphics.polygon('fill', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty - th, tx + tw / 4, ty - th)
     love.graphics.setColor(color[1], color[2], color[3], color[4])
@@ -668,7 +672,7 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
     love.graphics.setLineStyle('smooth')
 
   elseif ts == 'bottom' then
-    love.graphics.setLineStyle('rough')
+    --love.graphics.setLineStyle('rough')
     love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
     love.graphics.polygon('fill', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty + th, tx + tw / 4, ty + th)
     love.graphics.setColor(color[1], color[2], color[3], color[4])
@@ -677,7 +681,7 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
     love.graphics.setLineStyle('smooth')
 
   elseif ts == 'right' then
-    love.graphics.setLineStyle('rough')
+    --love.graphics.setLineStyle('rough')
     love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
     love.graphics.polygon('fill', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx + tw, ty + th * 3 / 4, tx + tw, ty + th / 4)
     love.graphics.setColor(color[1], color[2], color[3], color[4])
@@ -686,7 +690,7 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
     love.graphics.setLineStyle('smooth')
 
   elseif ts == 'left' then
-    love.graphics.setLineStyle('rough')
+    --love.graphics.setLineStyle('rough')
     love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
     love.graphics.polygon('fill', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx - tw, ty + th * 3 / 4, tx - tw, ty + th / 4)
     love.graphics.setColor(color[1], color[2], color[3], color[4])

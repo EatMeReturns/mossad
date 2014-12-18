@@ -12,3 +12,5 @@ Pistol.clip = 8
 Pistol.ammo = 32
 
 Pistol.spread = 1
+
+Pistol.weight = 1 --used to calculate melee info

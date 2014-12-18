@@ -14,7 +14,9 @@ function Arsenal:keypressed(...)
 end
 
 function Arsenal:mousepressed(x, y, b)
-  if b == 'wu' and self.selected > 1 then
+  if b == 'r' then
+    self.weapons[self.selected]:melee()
+  elseif b == 'wu' and self.selected > 1 then
     self:select(self.selected - 1)
   elseif b == 'wd' and self.selected < #self.weapons then
     self:select(self.selected + 1)

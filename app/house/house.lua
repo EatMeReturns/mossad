@@ -154,44 +154,6 @@ function House:generate()
     local oldRoom = randomFrom(self.rooms)
     self:createRoom(oldRoom)
   end
-
-  local hallways = 0
-  while hallways < self.hallwayCount do
-    local room = randomFrom(self.rooms)
-    local wall = room:randomWall()
-    local length = love.math.randomNormal(self.hallwayLength / 4, self.hallwayLength)
-    local x, y = room.x + wall.x, room.y + wall.y
-    local x1, y1 = x, y
-    local dx, dy = math.sign(directionOffsets[wall.direction][1]), math.sign(directionOffsets[wall.direction][2])
-    for i = 1, length do
-      x, y = x + dx, y + dy
-      if get(x, y) then
-        hallways = hallways + 1
-        self:carve(x1, y1, x, y)
-        break
-      end
-    end
-  end
-
-  --local i = 0
-  --while true do
-    --i = i + 1
-    --local oldWall = oldRoom:randomWall()
-    --local newWall = newRoom:randomWall(oppositeDirections[oldWall.direction])
-
-    --newRoom:moveTo(0, 0)
-    --newRoom:move(oldRoom.x + oldWall.x - newWall.x, oldRoom.y + oldWall.y - newWall.y)
-    --local dx, dy = unpack(directionOffsets[oldWall.direction])
-    --newRoom:move(dx * 1, dy * 1)
-
-    -- If it doesn't overlap with another room, add it.
-    --if self:collisionTest(newRoom) then
-      --self:addRoom(newRoom)
-      --self:carve(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y, newRoom)
-      --break
-    --end
-    --if i == 4 then oldRoom = randomFrom(self.rooms) end
-  --end
 end
 
 function House:regenerate(pRoom)
@@ -227,13 +189,6 @@ function House:createRoom(oldRoom, oldDirection)
 
   -- Generate unconnected doors on spawn
   newRoom:spawnDoors(oldDirection)
-  --for i = 1, newRoom.spawnDoors do
-    --local dir = table.random(directions)
-    --local spawnDoorMap = {}
-    --spawnDoorMap[dir] = newRoom
-    --local spawnDoor = Door(spawnDoorMap)
-    --newRoom:addDoor(spawnDoor, dir)
-  --end
 
   -- Select the associated wall from the new room
   local newWall = newRoom:randomWall(oppositeDirections[oldWall.direction])
@@ -252,7 +207,7 @@ function House:createRoom(oldRoom, oldDirection)
     newRoom:addDoor(door, newWall.direction)
 
     self:addRoom(newRoom, newRoom.enemySpawnTable:pick()[1], newRoom.pickupSpawnTable:pick()[1])
-    self:carve(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y, newRoom)
+    self:carveDoor(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y, newRoom)
 
     return true
   else
@@ -265,55 +220,46 @@ function House:removeRoom(room)
 end
 
 function House:addRoom(room, enemyCount, pickupCount)
+  --init room id
   table.insert(self.rooms, self.idCounter, room)
   room.id = self.idCounter
   self.idCounter = self.idCounter + 1
 
-  local val = room.floorType
-  for x = room.x, room.x + room.width do
-    for y = room.y, room.y + room.height do
-      self.tiles[x] = self.tiles[x] or {}
-      self.tiles[x][y] = Tile(val, x, y, room)
-    end
-  end
+  --the room needs tiles
+  room:carveRoom(self.tiles)
 
-  for _, dir in pairs({'north', 'south', 'east', 'west'}) do
-    for _, wall in pairs(room.walls[dir]) do
-      local x, y = room.x + wall.x, room.y + wall.y
-      self.tiles[x] = self.tiles[x] or {}
-      self.tiles[x][y] = Tile(val, x, y, room)
-    end
-  end
-
+  --spawn room contents
   if room.npcSpawnTable then self:spawnNPCsInRoom(room.npcSpawnTable:pick()[1], room) end
   self:spawnEnemiesInRoom(enemyCount, room)
   self:spawnPickupsInRoom(pickupCount, room)
 
+  --map tiles and collision pieces
   self:computeTiles()
   self:computeShapes()
-
   room:computeCollision(self:pos(room.x, room.y, room.width, room.height))
+end
+
+function House:carveDoor(x1, y1, x2, y2, room)
+  local dx = math.sign(x2 - x1)
+  local dy = math.sign(y2 - y1)
+
+  if dx == 0 then
+    self:carve(x1 - self.doorSize, y1, x1 + self.doorSize, y2, room)
+  end
+
+  if dy == 0 then
+    self:carve(x1, y1 - self.doorSize, x2, y1 + self.doorSize, room)
+  end
 end
 
 function House:carve(x1, y1, x2, y2, room)
   local dx = math.sign(x2 - x1)
   local dy = math.sign(y2 - y1)
 
-  if dx == 0 then
-    for y = y1, y2, dy do
-      for x = x1 - self.carveSize, x1 + self.carveSize do
-        self.tiles[x] = self.tiles[x] or {}
-        self.tiles[x][y] = self.tiles[x][y] or Tile(room.floorType, x, y, room)
-      end
-    end
-  end
-
-  if dy == 0 then
+  for y = y1, y2, dy do
     for x = x1, x2, dx do
-      for y = y1 - self.carveSize, y1 + self.carveSize do
-        self.tiles[x] = self.tiles[x] or {}
-        self.tiles[x][y] = self.tiles[x][y] or Tile(room.floorType, x, y, room)
-      end
+      self.tiles[x] = self.tiles[x] or {}
+      self.tiles[x][y] = self.tiles[x][y] or Tile(room.floorType, x, y, room)
     end
   end
 end
@@ -327,7 +273,7 @@ function House:collisionTest(room)
     end
   end
 
-  return true
+  return true --no other room colliding with room!
 end
 
 function House:computeTiles()
@@ -572,19 +518,6 @@ function House:spawnEnemiesInRoom(amt, room)
   end
 end
 
-function House:spawnEnemies()
-  local types = {Shade, InkRaven}
-  while table.count(ovw.enemies.objects) < self.enemyCount do
-    local room = randomFrom(self.rooms)
-    local x, y = self:pos(room.x, room.y)
-    x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
-    y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
-    if room ~= self.rooms[1] and room ~= self.bossRoom then
-      ovw.enemies:add(randomFrom(types)(x, y, room))
-    end
-  end
-end
-
 function House:spawnPickupsInRoom(amt, room)
   local function make(i)
     local x, y = self:pos(room.x, room.y)
@@ -602,19 +535,4 @@ function House:spawnPickupsInRoom(amt, room)
   for i = 1, amt do
     table.each(makeLootTable('Common'), function(v, k) make(v) end)
   end
-end
-
-function House:spawnPickups()
-  local function make(i)
-    local room = randomFrom(self.rooms)
-    local x, y = self:pos(room.x, room.y)
-    x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
-    y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
-    if room ~= self.bossRoom then
-      ovw.pickups:add(Pickup({x = x, y = y, itemType = i, room = room}))
-      return true
-    end
-  end
-
-  table.each(makeLootTable(), function(v, k) make(v) end)
 end

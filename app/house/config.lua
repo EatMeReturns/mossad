@@ -4,9 +4,7 @@
 House.cellSize = 32
 House.roomCount = 10
 House.roomSpacing = 2
-House.carveSize = 2
-House.hallwayCount = 0
-House.hallwayLength = 30
+House.doorSize = 2
 House.enemyCount = 10
 House.itemCount = 5
 House.spawnRange = 750

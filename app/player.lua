@@ -31,6 +31,11 @@ function Player:init()
   self.angle = 0
   self.radius = 16
   self.rotation = 0
+  self.rolling = false
+  self.rollTimer = 0
+  self.rollTimerMax = 0.34
+  self.rollSpeed = 275
+  self.rollDir = 0
   
   self.speed = 0
   self.maxSpeed = 100
@@ -50,7 +55,6 @@ function Player:init()
   self.depth = -1
 
   self.inventory = Inventory()
-  self.inventory:add(BeholdEye())
 
   self.hotbar = Hotbar()
   self.hotbar:add(Glowstick())
@@ -179,7 +183,7 @@ end
 function Player:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
-  local v = math.clamp((ovw.house.tiles[tx] and ovw.house.tiles[tx][ty]) and ovw.house.tiles[tx][ty]:brightness() or 0 + 50, 0, 255)
+  local v = 255--math.clamp((ovw.house.tiles[tx] and ovw.house.tiles[tx][ty]) and ovw.house.tiles[tx][ty]:brightness() or 0 + 50, 0, 255)
   local a = ovw.house.ambientColor
   love.graphics.setColor(v * a[1] / 255, v * a[2] / 255, v * a[3] / 255)
   love.graphics.draw(self.image, x, y + 12, self.angle - math.pi / 2, 1, 1, self.image:getWidth() / 2, self.image:getHeight() / 4)
@@ -196,6 +200,9 @@ function Player:keypressed(key)
     end
     if key == 'q' then
       self.hotbar:drop()
+    end
+    if key == ' ' then
+      self:roll()
     end
     self.arsenal:keypressed(key)
   elseif love.keyboard.isDown('tab') then
@@ -244,6 +251,7 @@ function Player:move()
   
   local up, down, left, right = 1.5 * math.pi, .5 * math.pi, math.pi, 2.0 * math.pi
   local dx, dy = nil, nil
+  local dir = 0
 
   if moving then self.speed = self.maxSpeed
     if running then
@@ -252,7 +260,7 @@ function Player:move()
     end
   else self.speed = 0 end
     
-  if not moving then return end
+  if not (moving or rolling) then return end
   
   if a and not d then dx = left elseif d then dx = right end
   if w and not s then dy = up elseif s then dy = down end
@@ -266,15 +274,41 @@ function Player:move()
     if not dy then dy = dx end
     if dx == right and dy == down then dx = 0 end
     
-    local dir = (dx + dy) / 2
-    self.x, self.y = self.x + math.cos(dir) * (self.speed * tickRate), self.y + math.sin(dir) * (self.speed * tickRate)
-
-    self:setPosition(self.x, self.y)
+    dir = (dx + dy) / 2
   end
+
+  if self.rolling then
+    if self.rollTimer == self.rollTimerMax then
+      self.rollDir = dir
+    end
+
+    self.speed = self.rollSpeed
+    self.rollTimer = self.rollTimer - tickRate
+    dir = self.rollDir
+
+    if self.rollTimer <= 0 then
+      self.rolling = false
+    end
+  end
+
+  self.x, self.y = self.x + math.cos(dir) * (self.speed * tickRate), self.y + math.sin(dir) * (self.speed * tickRate)
+  self:setPosition(self.x, self.y)
 end
 
 function Player:turn()
   self.angle = math.direction(400, 300, love.mouse.getX(), love.mouse.getY())
+end
+
+function Player:roll()
+  if not self.rolling then
+    if self.energy >= 1 then
+      self.rollTimer = self.rollTimerMax
+      self.energy = self.energy - 1
+      self.rolling = true;
+    else
+      ovw.hud.fader:add('I am... so tired...')
+    end
+  end
 end
 
 function Player:hurt(amount)

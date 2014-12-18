@@ -42,6 +42,25 @@ function MainRectangle:spawnDoors(dir)
   end
 end
 
+function MainRectangle:carveRoom(tileMap)
+  --spawn tiles
+  for x = self.x, self.x + self.width do
+    for y = self.y, self.y + self.height do
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
+  end
+
+  --spawn walls
+  for _, dir in pairs({'north', 'south', 'east', 'west'}) do
+    for _, wall in pairs(self.walls[dir]) do
+      local x, y = self.x + wall.x, self.y + wall.y
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
+  end
+end
+
 --------------------------------------------------------------------------------------
 
 MainCorridor = extend(Room)
@@ -61,8 +80,8 @@ function MainCorridor:init(dir)
     self.width = 5
     self.height = love.math.randomNormal(3, 14)
   end
-  self.width = math.round(self.width)
-  self.height = math.round(self.height)
+  self.width = math.round(math.clamp(self.width, 5, 50))
+  self.height = math.round(math.clamp(self.height, 5, 50))
 
   for i = -1, self.width do
     self.walls.north[#self.walls.north + 1] = {x = i, y = -1, direction = 'north'}
@@ -82,6 +101,25 @@ function MainCorridor:spawnDoors(dir)
     spawnDoorMap[spawnDir] = self
     local spawnDoor = Door(spawnDoorMap)
     self:addDoor(spawnDoor, spawnDir)
+  end
+end
+
+function MainCorridor:carveRoom(tileMap)
+  --spawn tiles
+  for x = self.x, self.x + self.width do
+    for y = self.y, self.y + self.height do
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
+  end
+
+  --spawn walls
+  for _, dir in pairs({'north', 'south', 'east', 'west'}) do
+    for _, wall in pairs(self.walls[dir]) do
+      local x, y = self.x + wall.x, self.y + wall.y
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
   end
 end
 
@@ -121,6 +159,25 @@ function MainBossRectangle:spawnDoors(dir)
   end
 end
 
+function MainBossRectangle:carveRoom(tileMap)
+  --spawn tiles
+  for x = self.x, self.x + self.width do
+    for y = self.y, self.y + self.height do
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
+  end
+
+  --spawn walls
+  for _, dir in pairs({'north', 'south', 'east', 'west'}) do
+    for _, wall in pairs(self.walls[dir]) do
+      local x, y = self.x + wall.x, self.y + wall.y
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
+  end
+end
+
 --------------------------------------------------------------------------------------
 
 MainShopRectangle = extend(Room)
@@ -152,6 +209,25 @@ function MainShopRectangle:spawnDoors(dir)
   MainRectangle.spawnDoors(self, dir)
 end
 
+function MainShopRectangle:carveRoom(tileMap)
+  --spawn tiles
+  for x = self.x, self.x + self.width do
+    for y = self.y, self.y + self.height do
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
+  end
+
+  --spawn walls
+  for _, dir in pairs({'north', 'south', 'east', 'west'}) do
+    for _, wall in pairs(self.walls[dir]) do
+      local x, y = self.x + wall.x, self.y + wall.y
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
+  end
+end
+
 
 --------------------------------------------------------------------------------------
 ---GRAY-DUNGEON-----------------------------------------------------------------------
@@ -172,6 +248,10 @@ function GrayChallengeRectangle:spawnDoors(dir)
   MainRectangle.spawnDoors(self, dir)
 end
 
+function GrayChallengeRectangle:carveRoom(tileMap)
+  MainRectangle.carveRoom(self, tileMap)
+end
+
 --------------------------------------------------------------------------------------
 
 GrayCorridor = extend(MainCorridor)
@@ -187,6 +267,10 @@ end
 
 function GrayCorridor:spawnDoors(dir)
   MainCorridor.spawnDoors(self, dir)
+end
+
+function GrayCorridor:carveRoom(tileMap)
+  MainCorridor.carveRoom(self, tileMap)
 end
 
 --------------------------------------------------------------------------------------
@@ -206,6 +290,10 @@ function GrayTreasureRectangle:spawnDoors(dir)
   MainRectangle.spawnDoors(self, dir)
 end
 
+function GrayTreasureRectangle:carveRoom(tileMap)
+  MainRectangle.carveRoom(self, tileMap)
+end
+
 --------------------------------------------------------------------------------------
 
 GrayExitRectangle = extend(MainBossRectangle)
@@ -221,6 +309,10 @@ end
 
 function GrayExitRectangle:spawnDoors(dir)
   MainBossRectangle.spawnDoors(self, dir)
+end
+
+function GrayExitRectangle:carveRoom(tileMap)
+  MainBossRectangle.carveRoom(self, tileMap)
 end
 
 --------------------------------------------------------------------------------------
