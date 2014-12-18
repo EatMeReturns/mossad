@@ -16,7 +16,7 @@ function Avian:init()
   self.prevX = self.x
   self.prevY = self.y
 
-  self.state = 'derp'
+  self.state = 'derp' --derp, gust, swoop?
 
   self.health = 115
 

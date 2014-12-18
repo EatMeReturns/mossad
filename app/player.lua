@@ -12,12 +12,12 @@ Player.collision = {
     room = function(self, other)
       if self.room ~= other then
         self.room = other
-        if self.room.boss and self.room.biome ~= 'main' then
-          ovw.house.biome = 'main'
-          self.room.biome = 'main'
+        if self.room.boss and self.room.biome ~= 'Main' then
+          ovw.house.biome = 'Main'
+          self.room.biome = 'Main'
           ovw.house:sealRoom(self.room)
           self.room:spawnBoss()
-        elseif ovw.house.biome ~= self.room.biome then if self.room.biome == 'gray' then ovw.hud.fader:add('Fear is the mind killer...') end ovw.house.biome = self.room.biome end
+        elseif ovw.house.biome ~= self.room.biome then if self.room.biome == 'Gray' then ovw.hud.fader:add('Fear is the mind killer...') end ovw.house.biome = self.room.biome end
         ovw.house:regenerate(self.room)
       end
     end
@@ -260,7 +260,7 @@ function Player:move()
     end
   else self.speed = 0 end
     
-  if not (moving or rolling) then return end
+  if not (moving or self.rolling) then return end
   
   if a and not d then dx = left elseif d then dx = right end
   if w and not s then dy = up elseif s then dy = down end
@@ -300,13 +300,13 @@ function Player:turn()
 end
 
 function Player:roll()
-  if not self.rolling then
-    if self.energy >= 1 then
-      self.rollTimer = self.rollTimerMax
-      self.energy = self.energy - 1
-      self.rolling = true;
-    else
-      ovw.hud.fader:add('I am... so tired...')
+  if self.speed > 0 then
+    if not self.rolling then
+      if self.energy >= 1 then
+        self.rollTimer = self.rollTimerMax
+        self.energy = self.energy - 1
+        self.rolling = true;
+      end
     end
   end
 end

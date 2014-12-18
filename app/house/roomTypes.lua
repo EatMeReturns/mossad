@@ -10,8 +10,8 @@ MainRectangle = extend(Room)
 MainRectangle.doorsToSpawn = 3
 MainRectangle.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
 MainRectangle.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
-MainRectangle.floorType = 'main'
-MainRectangle.biome = 'main'
+MainRectangle.floorType = 'Main'
+MainRectangle.biome = 'Main'
 
 function MainRectangle:init(dir, w, h)
   Room.init(self)
@@ -67,8 +67,8 @@ MainCorridor = extend(Room)
 MainCorridor.doorsToSpawn = 1
 MainCorridor.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
 MainCorridor.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
-MainCorridor.floorType = 'main'
-MainCorridor.biome = 'main'
+MainCorridor.floorType = 'Main'
+MainCorridor.biome = 'Main'
 
 function MainCorridor:init(dir)
   Room.init(self)
@@ -129,8 +129,8 @@ MainBossRectangle = extend(BossRoom)
 MainBossRectangle.doorsToSpawn = 6
 MainBossRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
 MainBossRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
-MainBossRectangle.floorType = 'main'
-MainBossRectangle.biome = 'main'
+MainBossRectangle.floorType = 'Main'
+MainBossRectangle.biome = 'Main'
 
 function MainBossRectangle:init(dir, w, h, boss)
   BossRoom.init(self, boss)
@@ -185,8 +185,8 @@ MainShopRectangle.doorsToSpawn = 0
 MainShopRectangle.npcSpawnTable = WeightedRandom({{Shop, 1}}, 1)
 MainShopRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
 MainShopRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
-MainShopRectangle.floorType = 'main'
-MainShopRectangle.biome = 'main'
+MainShopRectangle.floorType = 'Main'
+MainShopRectangle.biome = 'Main'
 
 function MainShopRectangle:init(dir, w, h)
   Room.init(self)
@@ -237,8 +237,8 @@ GrayChallengeRectangle = extend(MainRectangle)
 GrayChallengeRectangle.doorsToSpawn = 6
 GrayChallengeRectangle.enemySpawnTable = WeightedRandom({{5, 0.5}, {6, 0.25}, {7, 0.25}, {8, 0.1}, {9, 0.01}}, 1.11)
 GrayChallengeRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
-GrayChallengeRectangle.floorType = 'gray'
-GrayChallengeRectangle.biome = 'gray'
+GrayChallengeRectangle.floorType = 'Gray'
+GrayChallengeRectangle.biome = 'Gray'
 
 function GrayChallengeRectangle:init(dir)
   MainRectangle.init(self, dir, love.math.randomNormal(2, 18), love.math.randomNormal(2, 18))
@@ -258,8 +258,8 @@ GrayCorridor = extend(MainCorridor)
 GrayCorridor.doorsToSpawn = 1
 GrayCorridor.enemySpawnTable = WeightedRandom({{2, 0.5}, {3, 0.25}, {4, 0.25}, {5, 0.1}, {6, 0.01}}, 1.11)
 GrayCorridor.pickupSpawnTable = WeightedRandom({{0, 0.25}, {1, 0.625}, {2, 0.125}}, 1)
-GrayCorridor.floorType = 'gray'
-GrayCorridor.biome = 'gray'
+GrayCorridor.floorType = 'Gray'
+GrayCorridor.biome = 'Gray'
 
 function GrayCorridor:init(dir)
   MainCorridor.init(self, dir)
@@ -279,8 +279,8 @@ GrayTreasureRectangle = extend(MainRectangle)
 GrayTreasureRectangle.doorsToSpawn = 0
 GrayTreasureRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
 GrayTreasureRectangle.pickupSpawnTable = WeightedRandom({{3, 0.5}, {4, 0.5}}, 1)
-GrayTreasureRectangle.floorType = 'gray'
-GrayTreasureRectangle.biome = 'gray'
+GrayTreasureRectangle.floorType = 'Gray'
+GrayTreasureRectangle.biome = 'Gray'
 
 function GrayTreasureRectangle:init(dir)
   MainRectangle.init(self, dir, love.math.randomNormal(1, 5), love.math.randomNormal(1, 5))
@@ -300,8 +300,8 @@ GrayExitRectangle = extend(MainBossRectangle)
 GrayExitRectangle.doorsToSpawn = 6
 GrayExitRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
 GrayExitRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
-GrayExitRectangle.floorType = 'gray'
-GrayExitRectangle.biome = 'gray'
+GrayExitRectangle.floorType = 'Gray'
+GrayExitRectangle.biome = 'Gray'
 
 function GrayExitRectangle:init(dir)
   MainBossRectangle.init(self, dir, 20, 20, Avian)
@@ -319,14 +319,14 @@ end
 
 roomSpawnTables =
 {
-  main = WeightedRandom(
+  Main = WeightedRandom(
     {
       {MainRectangle, 0.75},
       {MainShopRectangle, 0.1},
       {MainCorridor, 0.1},
       {GrayCorridor, 0.05}
     }, 1),
-  gray = WeightedRandom(
+  Gray = WeightedRandom(
     {
       {GrayCorridor, 0.2},
       {GrayChallengeRectangle, 0.6},

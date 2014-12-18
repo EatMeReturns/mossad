@@ -34,7 +34,7 @@ function Shade:init(...)
   self.fatigueTime = .5 -- Time it stands still after attacking
   self.fatigueTimer = 0
 
-  self.health = love.math.random(18, 30)
+  self.health = love.math.random(21, 30)
 end
 
 function Shade:update()

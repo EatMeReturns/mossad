@@ -21,7 +21,7 @@ function House:init()
 
   self.lightMap = {}
 
-  self.biome = 'main'
+  self.biome = 'Main'
   
   self:generate()
 
@@ -167,7 +167,7 @@ function House:regenerate(pRoom)
 
   table.each(self.rooms, function(room, index)
     if math.distance(self:pos(pRoom.x + pRoom.width / 2, pRoom.y + pRoom.height / 2, room.x + room.width / 2, room.y + room.height / 2)) > self.spawnRange then
-      if self.biome == 'main' or room.biome ~= self.biome then room:destroy() end
+      if self.biome == 'Main' or room.biome ~= self.biome then room:destroy() end
     end
   end)
 

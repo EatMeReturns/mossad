@@ -5,6 +5,8 @@ local w, h = g.width, g.height
 
 function Hud:init()
   self.font = g.newFont('media/fonts/pixel.ttf', 8)
+  self.titleFont = g.newFont('media/fonts/pixel.ttf', 24)
+  self.subTitleFont = g.newFont('media/fonts/pixel.ttf', 16)
   self.fader = Fader()
   self.mouseText = 'Test!'
   self.grabbed = {}
@@ -17,6 +19,7 @@ end
 function Hud:gui()
   g.setFont(self.font)
   self:blood()
+  self:title()
   if ovw.player.npc then self:npc() end
   self:flashlight()
   self:stamina()
@@ -37,6 +40,38 @@ function Hud:blood() -- Yo sach a hudblood, haarry
   alpha = math.min(alpha * 100, 100)
   g.setColor(80, 0, 0, alpha)
   g.rectangle('fill', 0, 0, w(), h())
+end
+
+function Hud:title()
+  --info
+  local text = 'Mossad\'s Labyrinth'
+  local subtext = 'The ' .. ovw.house.biome .. ' Floor'
+  local color = {255, 255, 255, 255}
+
+  --flags
+  local p = ovw.player
+  local npc = p.npc
+
+  --calculate text
+  if npc then
+    text = npc.name
+  elseif false then --boss?
+    --
+  elseif p.kits <= 0 then
+    text = 'Not A Hospital'
+  elseif p.batteries <= 0 and p.battery <= 0 then
+    text = 'A Dark Place'
+  elseif p.ammo <= 0 and p.arsenal.weapons[p.arsenal.selected].currentClip <= 0 then
+    text = 'Certain Death'
+  end
+
+  --print the text
+  g.setColor(color[1], color[2], color[3], color[4])
+  g.setFont(self.titleFont)
+  g.printf(text, 0, 0, 800, 'center')
+  g.setFont(self.subTitleFont)
+  g.printf(subtext, 0, 30, 800, 'center')
+  g.setFont(self.font)
 end
 
 function Hud:npc()
@@ -92,6 +127,10 @@ function Hud:stamina()
   local val = p.energy / p.stamina
   local maxVal = p.stamina
   local alpha = val > .9 and 60 + (1 - val) * 1950 or 255
+  g.hotkeyTab(alpha, 'shift', x - ww / 2, y - 2 + 13, ww / 2, 10, 'top', nil, {'tab', 'e'})
+  g.hotkeyTab(alpha, 'space', x, y - 2, ww / 2, 10, 'top', nil, {'tab', 'e'})
+  g.mouseTab(alpha, 'r', x + ww / 2, y - 2, ww / 2, 10, 'top', nil, {'tab', 'e'})
+  g.hotkeyTab(alpha, 'f', x + ww, y - 2 + 13, ww / 2, 10, 'top')
   g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
   g.drawBar(x, y, ww, hh, val, maxVal)
   g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), 255)
@@ -634,8 +673,19 @@ function Hud:mouseOverSlot(x, y, size)
   return love.mouse.inBox(x, y, size, size)
 end
 
-function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMods) --key (doesn't have to be a key), duh, side
+function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMods)
   color = {255, 255, 255, alpha}
+
+  local pkey = hkey
+  if hkey == 'space' and not keyMod then
+    hkey, pkey = ' ', 'Roll'
+  elseif hkey == 'shift' and not keyMod then
+    hkey, pkey = 'lshift', 'Run'
+  elseif hkey == 'f' and not keyMod then
+    pkey = 'Loot'
+  else
+    pkey = string.upper(pkey)
+  end
 
   testKeyMod, testNotMod = nil, false
   if keyMod then
@@ -659,8 +709,7 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
       end
     end
   end
-  hkey = string.upper(hkey)
-  if keyMod then hkey = keyMod .. '+' .. hkey end
+  if keyMod then pkey = keyMod .. '+' .. pkey end
 
   if ts == 'top' then
     --love.graphics.setLineStyle('rough')
@@ -668,7 +717,7 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
     love.graphics.polygon('fill', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty - th, tx + tw / 4, ty - th)
     love.graphics.setColor(color[1], color[2], color[3], color[4])
     love.graphics.polygon('line', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty - th, tx + tw / 4, ty - th)
-    love.graphics.printf(hkey, tx, ty - 3 - th, tw, 'center') --text x y w center
+    love.graphics.printf(pkey, tx, ty - 3 - th, tw, 'center') --text x y w center
     love.graphics.setLineStyle('smooth')
 
   elseif ts == 'bottom' then
@@ -677,7 +726,7 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
     love.graphics.polygon('fill', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty + th, tx + tw / 4, ty + th)
     love.graphics.setColor(color[1], color[2], color[3], color[4])
     love.graphics.polygon('line', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty + th, tx + tw / 4, ty + th)
-    love.graphics.printf(hkey, tx, ty - 3, tw, 'center') --text x y w center
+    love.graphics.printf(pkey, tx, ty - 3, tw, 'center') --text x y w center
     love.graphics.setLineStyle('smooth')
 
   elseif ts == 'right' then
@@ -686,7 +735,7 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
     love.graphics.polygon('fill', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx + tw, ty + th * 3 / 4, tx + tw, ty + th / 4)
     love.graphics.setColor(color[1], color[2], color[3], color[4])
     love.graphics.polygon('line', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx + tw, ty + th * 3 / 4, tx + tw, ty + th / 4)
-    love.graphics.printf(hkey, tx, ty - 8 + th / 2, tw, 'center') --text x y w center
+    love.graphics.printf(pkey, tx, ty - 8 + th / 2, tw, 'center') --text x y w center
     love.graphics.setLineStyle('smooth')
 
   elseif ts == 'left' then
@@ -695,7 +744,86 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
     love.graphics.polygon('fill', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx - tw, ty + th * 3 / 4, tx - tw, ty + th / 4)
     love.graphics.setColor(color[1], color[2], color[3], color[4])
     love.graphics.polygon('line', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx - tw, ty + th * 3 / 4, tx - tw, ty + th / 4)
-    love.graphics.printf(hkey, tx - tw, ty - 8 + th / 2, tw, 'center') --text x y w center
+    love.graphics.printf(pkey, tx - tw, ty - 8 + th / 2, tw, 'center') --text x y w center
+    love.graphics.setLineStyle('smooth')
+
+  else
+    --you dumb
+  end
+end
+
+function love.graphics.mouseTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMods)
+  color = {255, 255, 255, alpha}
+
+  local pkey = hkey
+  if hkey == 'r' then
+    pkey = 'Melee'
+  elseif hkey == 'l' then
+    pkey = 'Fire'
+  elseif hkey == 'm' then
+    pkey = 'MMB'
+  else
+    pkey = string.upper(pkey)
+  end
+
+  testKeyMod, testNotMod = nil, false
+  if keyMod then
+    testKeyMod = string.lower(keyMod)
+    if testKeyMod == 'alt' then testKeyMod = 'lalt' end
+    if testKeyMod == 'shift' then testKeyMod = 'lshift' end
+    if testKeyMod == 'tab' then keyMod = nil end
+  end
+  table.each(notMods, function(notMod, k)
+      notMod = string.lower(notMod)
+      if notMod == 'alt' then notMod = 'lalt' end
+      if notMod == 'shift' then notMod = 'lshift' end
+      if love.keyboard.isDown(notMod) then testNotMod = true end
+    end)
+
+  if love.mouse.isDown('' .. hkey) then
+    if not testKeyMod or love.keyboard.isDown(testKeyMod) then
+      if not testNotMod then
+        color[3] = 0
+        color[4] = math.min(255, alpha + 50)
+      end
+    end
+  end
+  if keyMod then pkey = keyMod .. '+' .. pkey end
+
+  if ts == 'top' then
+    --love.graphics.setLineStyle('rough')
+    love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
+    love.graphics.polygon('fill', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty - th, tx + tw / 4, ty - th)
+    love.graphics.setColor(color[1], color[2], color[3], color[4])
+    love.graphics.polygon('line', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty - th, tx + tw / 4, ty - th)
+    love.graphics.printf(pkey, tx, ty - 3 - th, tw, 'center') --text x y w center
+    love.graphics.setLineStyle('smooth')
+
+  elseif ts == 'bottom' then
+    --love.graphics.setLineStyle('rough')
+    love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
+    love.graphics.polygon('fill', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty + th, tx + tw / 4, ty + th)
+    love.graphics.setColor(color[1], color[2], color[3], color[4])
+    love.graphics.polygon('line', tx + tw * 1 / 8, ty, tx + tw * 7 / 8, ty, tx + tw * 3 / 4, ty + th, tx + tw / 4, ty + th)
+    love.graphics.printf(pkey, tx, ty - 3, tw, 'center') --text x y w center
+    love.graphics.setLineStyle('smooth')
+
+  elseif ts == 'right' then
+    --love.graphics.setLineStyle('rough')
+    love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
+    love.graphics.polygon('fill', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx + tw, ty + th * 3 / 4, tx + tw, ty + th / 4)
+    love.graphics.setColor(color[1], color[2], color[3], color[4])
+    love.graphics.polygon('line', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx + tw, ty + th * 3 / 4, tx + tw, ty + th / 4)
+    love.graphics.printf(pkey, tx, ty - 8 + th / 2, tw, 'center') --text x y w center
+    love.graphics.setLineStyle('smooth')
+
+  elseif ts == 'left' then
+    --love.graphics.setLineStyle('rough')
+    love.graphics.setColor(color[1], color[2], color[3], color[4] / 3)
+    love.graphics.polygon('fill', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx - tw, ty + th * 3 / 4, tx - tw, ty + th / 4)
+    love.graphics.setColor(color[1], color[2], color[3], color[4])
+    love.graphics.polygon('line', tx, ty + th * 1 / 8, tx, ty + th * 7 / 8, tx - tw, ty + th * 3 / 4, tx - tw, ty + th / 4)
+    love.graphics.printf(pkey, tx - tw, ty - 8 + th / 2, tw, 'center') --text x y w center
     love.graphics.setLineStyle('smooth')
 
   else

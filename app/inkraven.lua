@@ -44,7 +44,7 @@ function InkRaven:init(...)
   self.glideTimer = 0
   self.swoopTimer = 0
 
-  self.health = love.math.random(11, 28)
+  self.health = love.math.random(17, 28)
   self.targetAngle = love.math.random() * 2 * math.pi
 end
 

@@ -11,6 +11,7 @@ function NPC:init(data)
 	for k, v in pairs(data) do self[k] = v end
 	assert(self.room)
 	self.id = 0
+	self.name = 'Unnamed Non-Player Character'
 	self.noteTag = ''
 	self.room:addObject(self)
 	self.angle = 0
