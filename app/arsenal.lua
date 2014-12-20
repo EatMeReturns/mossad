@@ -24,20 +24,22 @@ function Arsenal:mousepressed(x, y, b)
 end
 
 function Arsenal:add(weapon)
-  local stacks = weapon.stacks
-  if stacks then
-    for i = 1, #self.weapons do
-      if self.weapons[i].name == weapon.name then
-        self.weapons[i].stacks = self.weapons[i].stacks + stacks
-        return true
+  if weapon.type == 'Weapon' then
+    local stacks = weapon.stacks
+    if stacks then
+      for i = 1, #self.weapons do
+        if self.weapons[i].name == weapon.name then
+          self.weapons[i].stacks = self.weapons[i].stacks + stacks
+          return true
+        end
       end
     end
-  end
-  if #self.weapons < 2 then
-    table.insert(self.weapons, weapon)
-    weapon.index = #self.weapons
-    if not self.selected then self:select(#self.weapons) end
-    return true
+    if #self.weapons < 2 then
+      table.insert(self.weapons, weapon)
+      weapon.index = #self.weapons
+      if not self.selected then self:select(#self.weapons) end
+      return true
+    end
   end
   return false
 end

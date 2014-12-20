@@ -113,7 +113,6 @@ function Weapon:melee()
         ovw.particles:add(MeleeFlash(meleeRange, p.angle, {x = p.x, y = p.y}, meleeArcW))
       else
         --not enough energy
-        ovw.hud.fader:add('I am... so tired...')
       end
     end
   end

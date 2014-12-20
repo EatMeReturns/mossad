@@ -4,6 +4,8 @@ Boss.tag = 'enemy'
 Boss.collision = {}
 Boss.collision.with = {}
 
+Boss.title = 'Nameless Boss is a Bug'
+
 function Boss.collision.with.wall(self, other, dx, dy)
   self:setPosition(self.x + dx, self.y + dy)
 end
@@ -25,7 +27,7 @@ end
 
 function Boss:init()
   self.x = ovw.house:pos(ovw.player.room.x + ovw.player.room.width / 2)
-  self.y = ovw.house:pos(ovw.player.room.y + ovw.player.room.height / 2)
+  self.y = ovw.house:pos(ovw.player.room.y + ovw.player.room.height / 2) - 100
 
   self.exp = 50
   self.lootSpawnTable = WeightedRandom({{3, 0.7}, {4, 0.25}, {5, 0.05}}, 1)
@@ -33,6 +35,9 @@ function Boss:init()
   ovw.view:register(self)
   ovw.collision:register(self)
 end
+
+Boss.update = f.empty
+Boss.draw = f.empty
 
 function Boss:destroy()
   ovw.house:openRoom(ovw.player.room)

@@ -59,7 +59,7 @@ end
 
 function House:draw()
   local x1, x2, y1, y2 = self:cell(ovw.view.x, ovw.view.x + ovw.view.w, ovw.view.y, ovw.view.y + ovw.view.h)
-  
+
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
@@ -167,7 +167,8 @@ function House:regenerate(pRoom)
 
   table.each(self.rooms, function(room, index)
     if math.distance(self:pos(pRoom.x + pRoom.width / 2, pRoom.y + pRoom.height / 2, room.x + room.width / 2, room.y + room.height / 2)) > self.spawnRange then
-      if self.biome == 'Main' or room.biome ~= self.biome then room:destroy() end
+      --if self.biome == 'Main' or room.biome ~= self.biome then room:destroy() end
+      room:destroy()
     end
   end)
 
@@ -288,21 +289,21 @@ function House:computeTiles()
           local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
           local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
           local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
-          if w and e and not n then
+          if w and e and not n and sw and se then
             self.tiles[x][y].tile = 'n'
-          elseif w and e and not s then
+          elseif w and e and not s and nw and ne then
             self.tiles[x][y].tile = 's'
-          elseif n and s and not e then
+          elseif n and s and not e and nw and sw then
             self.tiles[x][y].tile = 'e'
-          elseif n and s and not w then
+          elseif n and s and not w and ne and se then
             self.tiles[x][y].tile = 'w'
-          elseif e and s and not w and not n then
+          elseif e and s and se and ((not w and not n) or (w and nw and not sw and not n) or (n and nw and not ne and not w)) then--e and s and not w and not n then
             self.tiles[x][y].tile = 'nw'
-          elseif w and s and not e and not n then
+          elseif w and s and sw and ((not e and not n) or (e and ne and not se and not n) or (n and ne and not nw and not e)) then--w and s and not e and not n then
             self.tiles[x][y].tile = 'ne'
-          elseif e and n and not w and not s then
+          elseif e and n and ne and ((not w and not s) or (w and sw and not nw and not s) or (s and sw and not se and not w)) then--e and n and not w and not s then
             self.tiles[x][y].tile = 'sw'
-          elseif w and n and not e and not s then
+          elseif w and n and nw and ((not e and not s) or (e and se and not ne and not s) or (s and se and not sw and not e)) then--w and n and not e and not s then
             self.tiles[x][y].tile = 'se'
           elseif w and n and not nw then
             self.tiles[x][y].tile = 'inw'
@@ -502,18 +503,20 @@ function House:spawnNPCsInRoom(npc, room)
 end
 
 function House:spawnEnemiesInRoom(amt, room)
-  local types = {Spiderling, Shade, InkRaven}
+  --local types = {Spiderling, Shade, InkRaven}
   for i = 1, amt do
     local x, y = self:pos(room.x, room.y)
     x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
     y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
-    local enemyType = randomFrom(types)
+    local enemyType = randomFrom(room.enemyTypes)
     if enemyType == Spiderling then
-      for i = 1, 1 + math.ceil(love.math.random() * 2) do
-        ovw.enemies:add(randomFrom(types)(x, y, room))
+      for i = 1, 2 + math.ceil(love.math.random() * 2) do
+        ovw.enemies:add(Spiderling(x, y, room))
+        x = x + love.math.random() * self.cellSize - self.cellSize / 2
+        y = y + love.math.random() * self.cellSize - self.cellSize / 2
       end
     else
-      ovw.enemies:add(randomFrom(types)(x, y, room))
+      ovw.enemies:add(enemyType(x, y, room))
     end
   end
 end

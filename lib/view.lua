@@ -44,29 +44,31 @@ function View:draw()
   love.graphics.push()
   love.graphics.translate(0, self.margin)
 
-  love.graphics.push()
-  local x, y = math.lerp(self.prevx, self.x, tickDelta / tickRate), math.lerp(self.prevy, self.y, tickDelta / tickRate)
-  love.graphics.scale(math.lerp(self.prevscale, self.scale, tickDelta / tickRate))
-  love.graphics.translate(-x, -y)
+  if not paused then
+    love.graphics.push()
+    local x, y = math.lerp(self.prevx, self.x, tickDelta / tickRate), math.lerp(self.prevy, self.y, tickDelta / tickRate)
+    love.graphics.scale(math.lerp(self.prevscale, self.scale, tickDelta / tickRate))
+    love.graphics.translate(-x, -y)
 
-  table.sort(self.toDraw, function(a, b)
-    return a.depth > b.depth
-  end)
+    table.sort(self.toDraw, function(a, b)
+      return a.depth > b.depth
+    end)
 
-  for _, v in ipairs(self.toDraw) do f.exe(v.draw, v) end
-  
-  if devMode then
-    local xx, yy = ovw.house:snap(x, y)
-    love.graphics.setColor(255, 255, 255, 20)
-    for i = xx - ovw.house.cellSize, xx + self.w + ovw.house.cellSize, ovw.house.cellSize do
-      love.graphics.line(i, y, i, y + self.h)
+    for _, v in ipairs(self.toDraw) do f.exe(v.draw, v) end
+    
+    if devMode then
+      local xx, yy = ovw.house:snap(x, y)
+      love.graphics.setColor(255, 255, 255, 20)
+      for i = xx - ovw.house.cellSize, xx + self.w + ovw.house.cellSize, ovw.house.cellSize do
+        love.graphics.line(i, y, i, y + self.h)
+      end
+      for i = yy - ovw.house.cellSize, yy + self.h + ovw.house.cellSize, ovw.house.cellSize do
+        love.graphics.line(x, i, x + self.w, i)
+      end
     end
-    for i = yy - ovw.house.cellSize, yy + self.h + ovw.house.cellSize, ovw.house.cellSize do
-      love.graphics.line(x, i, x + self.w, i)
-    end
+
+    love.graphics.pop()
   end
-
-  love.graphics.pop()
 
   for _, v in ipairs(self.toDraw) do f.exe(v.gui, v) end
   

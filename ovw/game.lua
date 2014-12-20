@@ -2,6 +2,7 @@ Game = class()
 
 function Game:load()
   devMode = false
+  paused = false
 
   ----------------------------------------------------------------------------------
 
@@ -28,7 +29,7 @@ function Game:load()
   WeightedLootSizes = {}
 
   WeightedLootSizes.Common = WeightedRandom(
-  {{1, .6}, {2, .25}, {3, .12}, {4, .03}}, 1)
+  {{0, 1}, {1, .6}, {2, .25}, {3, .12}, {4, .03}}, 2)
 
   WeightedLootSizes.Rare = WeightedRandom(
   {{1, 1}}, 1)
@@ -68,23 +69,22 @@ function Game:load()
   self.house = House()
   self.player = Player()
   self.boss = nil
-
-  --self.house:spawnEnemies()
-  --self.house:spawnPickups()
 end
 
 function Game:update()
-  self.house:update()
-  self.player:update()
-  self.spells:update()
-  self.particles:update()
-  self.enemies:update()
-  self.npcs:update()
-  self.pickups:update()
-  if self.boss then self.boss:update() end
-  self.collision:resolve()
-  self.view:update()
-  self.hud.fader:update()
+  if not paused then
+    self.house:update()
+    self.player:update()
+    self.spells:update()
+    self.particles:update()
+    self.enemies:update()
+    self.npcs:update()
+    self.pickups:update()
+    if self.boss then self.boss:update() end
+    self.collision:resolve()
+    self.view:update()
+    self.hud.fader:update()
+  end
 end
 
 function Game:draw()
@@ -98,14 +98,27 @@ function Game:restart()
   Overwatch:add(Game)
 end
 
+function Game:focus(focus)
+  if not focus then self:pause(true) end
+end
+
+function Game:pause(v)
+  paused = v and v or not paused
+  if not paused then graphicsPaused = false end
+end
+
 function Game:keypressed(key)
-  if key == 'escape' then love.event.quit()
-  elseif key == '`' then devMode = not devMode end
-  self.player:keypressed(key)
+  if key == 'escape' then self:pause() end
+  if not paused then
+    if key == '`' then devMode = not devMode end
+    self.player:keypressed(key)
+  end
 end
 
 function Game:mousepressed(...)
-  self.view:mousepressed(...)
-  self.player:mousepressed(...)
-  self.hud:mousepressed(...)
+  if not paused then
+    self.view:mousepressed(...)
+    self.player:mousepressed(...)
+    self.hud:mousepressed(...)
+  end
 end

@@ -65,6 +65,7 @@ end
 
 Enemy.update = f.empty --perform movement, etc. calculations
 Enemy.draw = f.empty --hurr durr
+Enemy.alert = f.empty --don't poke the sleeping bear
 
 function Enemy:hurt(amount)
   self.health = self.health - amount
@@ -77,6 +78,8 @@ function Enemy:hurt(amount)
       i = i - 1
     end
     self:remove()
+  else
+    self:alert()
   end
 end
 

@@ -2,12 +2,26 @@ require 'app/house/room'
 require 'app/house/bossroom'
 require 'app/shop'
 
+require 'app/enemy'
+require 'app/spiderling'
+require 'app/shade'
+require 'app/inkraven'
+require 'app/rubymoth'
+
+require 'app/boss'
+require 'app/avian'
+
+local allEnemies = {Spiderling, Shade, InkRaven, RubyMoth}
+local extraBirds = {Spiderling, Shade, InkRaven, InkRaven}
+onlyMoths = {RubyMoth}
+
 --------------------------------------------------------------------------------------
 ---MAIN-------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------
 
 MainRectangle = extend(Room)
 MainRectangle.doorsToSpawn = 3
+MainRectangle.enemyTypes = allEnemies
 MainRectangle.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
 MainRectangle.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
 MainRectangle.floorType = 'Main'
@@ -65,6 +79,7 @@ end
 
 MainCorridor = extend(Room)
 MainCorridor.doorsToSpawn = 1
+MainCorridor.enemyTypes = allEnemies
 MainCorridor.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
 MainCorridor.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
 MainCorridor.floorType = 'Main'
@@ -127,6 +142,7 @@ end
 
 MainBossRectangle = extend(BossRoom)
 MainBossRectangle.doorsToSpawn = 6
+MainBossRectangle.enemyTypes = onlyMoths
 MainBossRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
 MainBossRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 MainBossRectangle.floorType = 'Main'
@@ -182,6 +198,7 @@ end
 
 MainShopRectangle = extend(Room)
 MainShopRectangle.doorsToSpawn = 0
+MainCorridor.enemyTypes = onlyMoths
 MainShopRectangle.npcSpawnTable = WeightedRandom({{Shop, 1}}, 1)
 MainShopRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
 MainShopRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
@@ -235,6 +252,7 @@ end
 
 GrayChallengeRectangle = extend(MainRectangle)
 GrayChallengeRectangle.doorsToSpawn = 6
+GrayChallengeRectangle.enemyTypes = extraBirds
 GrayChallengeRectangle.enemySpawnTable = WeightedRandom({{5, 0.5}, {6, 0.25}, {7, 0.25}, {8, 0.1}, {9, 0.01}}, 1.11)
 GrayChallengeRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 GrayChallengeRectangle.floorType = 'Gray'
@@ -256,6 +274,7 @@ end
 
 GrayCorridor = extend(MainCorridor)
 GrayCorridor.doorsToSpawn = 1
+GrayCorridor.enemyTypes = extraBirds
 GrayCorridor.enemySpawnTable = WeightedRandom({{2, 0.5}, {3, 0.25}, {4, 0.25}, {5, 0.1}, {6, 0.01}}, 1.11)
 GrayCorridor.pickupSpawnTable = WeightedRandom({{0, 0.25}, {1, 0.625}, {2, 0.125}}, 1)
 GrayCorridor.floorType = 'Gray'
@@ -277,6 +296,7 @@ end
 
 GrayTreasureRectangle = extend(MainRectangle)
 GrayTreasureRectangle.doorsToSpawn = 0
+GrayTreasureRectangle.enemyTypes = onlyMoths
 GrayTreasureRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
 GrayTreasureRectangle.pickupSpawnTable = WeightedRandom({{3, 0.5}, {4, 0.5}}, 1)
 GrayTreasureRectangle.floorType = 'Gray'
@@ -298,6 +318,7 @@ end
 
 GrayExitRectangle = extend(MainBossRectangle)
 GrayExitRectangle.doorsToSpawn = 6
+GrayExitRectangle.enemyTypes = onlyMoths
 GrayExitRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
 GrayExitRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 GrayExitRectangle.floorType = 'Gray'

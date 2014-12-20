@@ -28,10 +28,10 @@ function love.run()
       
       love.update()
     end
-    
-    love.graphics.clear()
-    love.draw()
-    love.graphics.present()
+
+	love.graphics.clear()
+	love.draw()
+	love.graphics.present()
     
     love.timer.sleep(.001)
   end

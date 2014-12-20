@@ -13,7 +13,7 @@ Enemies
 
 **The Emerald Widow** is a boss with a web for an arena. She surrounds the arena with thick webbings that cannot be penetrated. She hangs from a single ropy strand in the top middle or she drops to the arena floor. She attacks by producing splats of slowing web and by attempting to stab or bite the player with her legs and fangs. Her fangs contain a venom that does damage over time and that greatly reduces the player's sanity. Her movements produce a loud rustling and her spinneret sounds like a shrieking violin.
 
-**My Shadow's Reflection** is a boss with no arena. Instead, it endlessly chases the player around. It is extremely difficult to hit, often fading in to the darkness to avoid attacks. It attacks with quick, short jabbing leaps that buffet the player away. They do little damage, as if they were hits from a small child, but they can occur in rapid succession. A constant chattering and multitudinous laughter are produced by this boss. (See: Majora's Mask)
+**My Shadow's Reflection** is a boss with no arena. Instead, it endlessly chases the player around. It is extremely difficult to hit, often fading in to the darkness to avoid attacks. It attacks with quick, short jabbing leaps that buffet the player away. They do little damage, as if they were hits from a small child, but they can occur in rapid succession. A constant chattering and multitudinous laughter are produced by this boss. It spawns when the player accumulates enough Ruby Moth followers. (See: Majora's Mask)
 
 A **Shade** is a small creature characterized more as an absence of light than as a physical being. As a Minor, it looks like a wisp of inky smoke culminating in a large, bald, skeletal head atop two arms and shoulders rippling with muscle and sinew. It crawls quickly after prey, leaping and gnashing at anything in reach. The Major Shades are four to five times larger and possess a torso and legs, looking simian in form and movement. While both forms are fast, the Minors are weak and multitudinous while the Majors are almost always alone with their Minor spawn. Their movements produce a crackling sound. (See: Bullymog-Borderlands 2, Shadowling-Diablo 3)
 
@@ -24,6 +24,8 @@ A **Gloomrat** is a large, festering creature that cripples with the bacteria in
 An **Ink Raven** is a black, fast bird that swoops out from the shadows like some fucking bat or some shit.
 
 A **Spiderling** is a little spider that likes to swarm.
+
+A **Ruby Moth** is a small flying insect that glows red, providing some light. It deals no damage and will follow around the player as a light source. It can be accidentally killed.
 
 Items
 ---

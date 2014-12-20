@@ -17,13 +17,14 @@ function Shade:init(...)
   self.target = nil
   self.scanTimer = 0
   
-  self.runSpeed = 110
+  self.chaseSpeed = 110
+  self.runSpeed = 80
   self.walkSpeed = 50
 
   self.damage = 5
   self.exp = 9 + math.ceil(love.math.random() * 10)
 
-  self.windupTime = .3 -- Time it takes to deal damage
+  self.windupTime = .7 -- Time it takes to deal damage
   self.windupTimer = 0
   self.windupRange = 140
 
@@ -31,7 +32,7 @@ function Shade:init(...)
   self.attackTimer = 0
   self.attackRange = 35 -- Damage is dealt if player is this close after lunging
 
-  self.fatigueTime = .5 -- Time it stands still after attacking
+  self.fatigueTime = .3 -- Time it stands still after attacking
   self.fatigueTimer = 0
 
   self.health = love.math.random(21, 30)
@@ -89,6 +90,11 @@ function Shade:scan()
   self.scanTimer = 1
 end
 
+function Shade:alert()
+  self.target = ovw.player
+  self.state = 'chase'
+end
+
 ----------------
 -- States
 ----------------
@@ -114,8 +120,8 @@ function Shade:chase()
     local dis, dir = math.vector(self.x, self.y, self.target.x, self.target.y)
     local minDis = math.max(dis - (self.radius + self.target.radius), 0)
     self.targetAngle = dir
-    self.x = self.x + math.dx(math.min(self.runSpeed * tickRate, minDis), self.angle)
-    self.y = self.y + math.dy(math.min(self.runSpeed * tickRate, minDis), self.angle)
+    self.x = self.x + math.dx(math.min(self.chaseSpeed * tickRate, minDis), self.angle)
+    self.y = self.y + math.dy(math.min(self.chaseSpeed * tickRate, minDis), self.angle)
 
     if dis < self.windupRange and self.attackTimer == 0 and self.windupTimer == 0 and self.fatigueTimer == 0 then
       self.state = 'windup'
@@ -128,6 +134,8 @@ end
 
 function Shade:windup()
   self.targetAngle = math.direction(self.x, self.y, self.target.x, self.target.y)
+  self.x = self.x + math.dx(self.runSpeed * tickRate, self.angle)
+  self.y = self.y + math.dy(self.runSpeed * tickRate, self.angle)
   self.windupTimer = timer.rot(self.windupTimer, function()
     self.state = 'attack'
     self.attackTimer = self.attackTime
@@ -140,24 +148,31 @@ function Shade:attack()
   speed = math.min(speed, math.max(dis - (self.radius + self.target.radius), 0))
   self.x = self.x + math.dx(speed, self.angle)
   self.y = self.y + math.dy(speed, self.angle)
+
+  -- Let it change its direction slightly while lunging
+  self.targetAngle = math.anglerp(self.targetAngle, dir, 4 * tickRate)
+
+  if math.distance(self.x, self.y, ovw.player.x, ovw.player.y) < self.attackRange then
+    ovw.player:hurt(self.damage)
+    self.attackTimer = 0
+    self.state = 'fatigue'
+    self.fatigueTimer = self.fatigueTime
+    return
+  end
   
   self.attackTimer = timer.rot(self.attackTimer, function()
-    if math.distance(self.x, self.y, ovw.player.x, ovw.player.y) < self.attackRange then
-      ovw.player:hurt(self.damage)
-    end
     self.state = 'fatigue'
     self.fatigueTimer = self.fatigueTime
   end)
 
-  -- Let it change its direction slightly while lunging
-  self.targetAngle = math.anglerp(self.targetAngle, dir, 4 * tickRate)
 end
 
 function Shade:fatigue()
-
   -- Turn slower
   local dir = math.direction(self.x, self.y, self.target.x, self.target.y)
   self.targetAngle = math.anglerp(self.targetAngle, dir, 2 * tickRate)
+  self.x = self.x - math.dx(self.runSpeed * 2 * tickRate, self.angle)
+  self.y = self.y - math.dy(self.runSpeed * 2 * tickRate, self.angle)
 
   self.fatigueTimer = timer.rot(self.fatigueTimer, function()
     self.state = 'chase'

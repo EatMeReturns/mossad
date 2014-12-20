@@ -18,7 +18,11 @@ end
 
 function Hud:gui()
   g.setFont(self.font)
-  self:blood()
+  if not paused then
+    self:mouse()
+    self.fader:gui()
+    self:blood()
+  end
   self:title()
   if ovw.player.npc then self:npc() end
   self:flashlight()
@@ -29,8 +33,6 @@ function Hud:gui()
   self:arsenal()
   self:firstaid()
   self:buffs()
-  self:mouse()
-  self.fader:gui()
   self:debug()
 end
 
@@ -45,7 +47,7 @@ end
 function Hud:title()
   --info
   local text = 'Mossad\'s Labyrinth'
-  local subtext = 'The ' .. ovw.house.biome .. ' Floor'
+  local subtext = paused and '[Game Paused]' or 'The ' .. ovw.house.biome .. ' Floor'
   local color = {255, 255, 255, 255}
 
   --flags
@@ -53,10 +55,12 @@ function Hud:title()
   local npc = p.npc
 
   --calculate text
-  if npc then
+  if paused then
+    text = 'The House is in Limbo'
+  elseif npc then
     text = npc.name
-  elseif false then --boss?
-    --
+  elseif p.room and p.room.boss then 
+    text = 'The ' .. p.room.boss.title
   elseif p.kits <= 0 then
     text = 'Not A Hospital'
   elseif p.batteries <= 0 and p.battery <= 0 then
@@ -302,7 +306,7 @@ function Hud:mouse()
 
   self.mouseText = ''
 
-  if love.keyboard.isDown('e') then
+  if love.keyboard.isDownPausing('e') then
 
     --highlight shop slots
     if ovw.player.npc then
@@ -372,7 +376,7 @@ function Hud:mouse()
   else
     if self.grabbed.item then self:returnGrabbedItem() end
 
-    if love.keyboard.isDown('tab') then
+    if love.keyboard.isDownPausing('tab') then
       --highlight firstaid slots
       for i = 1, 4 do
         local bodyPart = ovw.player.firstAid.bodyParts[i]
@@ -403,7 +407,7 @@ end
 function Hud:mousepressed(x, y, button)
   local size = 40
 
-  if love.keyboard.isDown('e') then
+  if love.keyboard.isDownPausing('e') then
 
     --interact with npc slots
     if button == 'l' or button == 'r' then
@@ -585,7 +589,7 @@ function Hud:mousepressed(x, y, button)
         --drop one from stack
       end
     end
-  elseif love.keyboard.isDown('tab') then
+  elseif love.keyboard.isDownPausing('tab') then
     if button == 'l' or button == 'r' then
       for i = 1, 4 do
         local bodyPart = ovw.player.firstAid.bodyParts[i]
@@ -698,11 +702,11 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
       notMod = string.lower(notMod)
       if notMod == 'alt' then notMod = 'lalt' end
       if notMod == 'shift' then notMod = 'lshift' end
-      if love.keyboard.isDown(notMod) then testNotMod = true end
+      if love.keyboard.isDownPausing(notMod) then testNotMod = true end
     end)
 
-  if love.keyboard.isDown('' .. hkey) then
-    if not testKeyMod or love.keyboard.isDown(testKeyMod) then
+  if love.keyboard.isDownPausing('' .. hkey) then
+    if not testKeyMod or love.keyboard.isDownPausing(testKeyMod) then
       if not testNotMod then
         color[3] = 0
         color[4] = math.min(255, alpha + 50)
@@ -777,11 +781,11 @@ function love.graphics.mouseTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMods
       notMod = string.lower(notMod)
       if notMod == 'alt' then notMod = 'lalt' end
       if notMod == 'shift' then notMod = 'lshift' end
-      if love.keyboard.isDown(notMod) then testNotMod = true end
+      if love.keyboard.isDownPausing(notMod) then testNotMod = true end
     end)
 
-  if love.mouse.isDown('' .. hkey) then
-    if not testKeyMod or love.keyboard.isDown(testKeyMod) then
+  if love.mouse.isDownPausing('' .. hkey) then
+    if not testKeyMod or love.keyboard.isDownPausing(testKeyMod) then
       if not testNotMod then
         color[3] = 0
         color[4] = math.min(255, alpha + 50)

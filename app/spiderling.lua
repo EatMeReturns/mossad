@@ -11,11 +11,10 @@ Spiderling.collision.with = {
 		self.skitterTargetY = ovw.player.y + math.dy(100, self.targetAngle)
 		self:setPosition(self.x + dx, self.y + dy)
 	end,
-	enemy = Enemy.collision.with.enemy,
 	player = function(self, player, dx, dy)
 		if self.state == 'bite' then
 			player:hurt(self.damage)
-			self.state = 'fatigue'
+			self:startSkitter()
 		end
 		return Enemy.collision.with.player(self, player, dx, dy)
 	end
@@ -97,12 +96,11 @@ end
 
 function Spiderling:startSkitter()
 	if self.state ~= 'skitter' then
-	self.skitterTimer = 1 + love.math.random() * 1
-	self.scanTimer = 2
+		self.skitterTimer = 1 + love.math.random() * 1
+		self.scanTimer = 2
+		self.state = 'skitter'
 	end
-	self.state = 'skitter'
-	--local d = love.math.random() * 2 * math.pi - .5 + love.math.random() * 1
-	self.targetAngle = self.targetAngle + 180 + (love.math.random() * 90 - 45)
+	self.targetAngle = self.targetAngle + 180 + (love.math.random() * 60 - 30)
 	self.skitterTargetX = ovw.player.x + math.dx(100, self.targetAngle)
 	self.skitterTargetY = ovw.player.y + math.dy(100, self.targetAngle)
 end
@@ -134,18 +132,14 @@ function Spiderling:skitter()
 
 	self.skitterTimer = self.skitterTimer - tickRate
 	local d = math.distance(self.x, self.y, self.skitterTargetX, self.skitterTargetY)
-	if self.skitterTimer <= 0 then
-		if not ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall') then
+	if self.skitterTimer <= 0 or d < 5 then
+		if not ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall') and love.math.random() < .7 then
 			self.targetAngle = math.direction(self.x, self.y, ovw.player.x, ovw.player.y)
 			self.state = 'bite'
 			self.biteTimer = .8
 		else
 			self.state = 'fatigue'
 		end
-	elseif d < 10 then
-		self.targetAngle = self.targetAngle + 180 + (love.math.random() * 90 - 45)
-		self.skitterTargetX = ovw.player.x + math.dx(100, self.targetAngle)
-		self.skitterTargetY = ovw.player.y + math.dy(100, self.targetAngle)
 	end
 end
 
@@ -154,17 +148,14 @@ function Spiderling:bite()
 	local speed = self.biteSpeed * tickRate
 	self.x = self.x + math.dx(speed, self.angle)
 	self.y = self.y + math.dy(speed, self.angle)
+	self.targetAngle = dir
 
 	self.biteTimer = timer.rot(self.biteTimer, function()
 		self:startSkitter()
 	end)
-
-	-- Let it change its direction slightly while swooping
-	self.targetAngle = dir--math.anglerp(self.targetAngle, dir, 50 * tickRate)
 end
 
 function Spiderling:fatigue()
-  --self.x = math.lerp(self.x, self.skitterTargetX, 4 * tickRate)
-  --self.y = math.lerp(self.y, self.skitterTargetY, 4 * tickRate)
-  self:startSkitter()
+  self.scanTimer = .3
+  self.state = 'lurk'
 end

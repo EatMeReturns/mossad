@@ -1,0 +1,112 @@
+require 'app/enemy'
+
+RubyMoth = extend(Enemy)
+
+RubyMoth.collision = setmetatable({}, {__index = Enemy.collision})
+RubyMoth.collision.shape = 'circle'
+RubyMoth.radius = 10
+
+function RubyMoth:init(...)
+	Enemy.init(self, ...)
+
+	self.state = 'roam'
+
+	self.sight = 150
+	self.target = nil
+	self.scanTimer = 0
+
+	self.walkSpeed = 50
+	self.followSpeed = 0
+	self.speed = self.walkSpeed
+
+	self.damage = 0
+	self.exp = 0
+
+	self.light = {
+		minDis = 0,
+		maxDis = 300,
+		shape = 'circle',
+		intensity = 0.7,
+		falloff = .95,
+		posterization = 1,
+		flicker = .9,
+		color = {255, 50, 50, 5}
+	}
+
+	self.health = 1
+	self.targetAngle = love.math.random() * 2 * math.pi
+	self.target = nil
+end
+
+function RubyMoth:update()
+	self.prevX = self.x
+	self.prevY = self.y
+
+	self[self.state](self)
+
+	self.light.x, self.light.y = self.x, self.y
+	ovw.house:applyLight(self.light, 'ambient')
+
+	self:setPosition(self.x, self.y)
+	self.speed = math.lerp(self.speed, self.followSpeed, math.clamp(tickRate, 0, 1))
+	self.angle = math.anglerp(self.angle, self.targetAngle, math.clamp(6 * tickRate, 0, 1))
+end
+
+function RubyMoth:draw()
+	local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
+	local tx, ty = ovw.house:cell(self.x, self.y)
+	local v = ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
+	if self.state == 'follow' then
+		love.graphics.setColor(255, 255, 0, v)
+	else
+		love.graphics.setColor(255, 255, 255, v)
+	end
+	self.shape:draw('line')
+end
+
+function RubyMoth:scan()
+	local dis, dir = math.vector(self.x, self.y, ovw.player.x, ovw.player.y)
+
+	self.scanTimer = .3
+
+	if dis < self.sight then
+		local blocked = ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall')
+    	if not blocked then
+			self.target = ovw.player
+			self.state = 'follow'
+		end
+	end
+
+	if not self.target then
+    	self.targetAngle = self.targetAngle + (love.math.random() * 360 - 180)
+		self.state = 'roam'
+	end
+end
+
+----------------
+-- States
+----------------
+function RubyMoth:roam()
+	self.scanTimer = self.scanTimer - tickRate
+
+	if self.scanTimer <= 0 then
+		self:scan()
+	end
+
+	self.x = self.x + math.dx(self.walkSpeed * tickRate, self.angle)
+	self.y = self.y + math.dy(self.walkSpeed * tickRate, self.angle)
+end
+
+function RubyMoth:follow()
+	local dis = 0
+	dis, self.targetAngle = math.vector(self.x, self.y, self.target.x, self.target.y)
+	self.followSpeed = dis
+	if dis > 75 then
+		self.x = self.x + math.dx(self.followSpeed * tickRate, self.angle)
+		self.y = self.y + math.dy(self.followSpeed * tickRate, self.angle)
+	else
+		local angle = love.math.random() * 2 * math.pi
+		self.x = self.x + math.dx(self.followSpeed * tickRate, angle)
+		self.y = self.y + math.dy(self.followSpeed * tickRate, angle)
+	end
+end

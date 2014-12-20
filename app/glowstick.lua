@@ -8,7 +8,7 @@ function Glowstick:init()
   Item.init(self)
 
   self.type = 'Consumable'
-  self.stacks = self.stacks or math.round(math.clamp(love.math.randomNormal(2, 1.25), 1, 5))
+  self.stacks = self.stacks or math.round(math.clamp(love.math.randomNormal(1, .75), 1, 2))
 end
 
 function Glowstick:activate(alt)

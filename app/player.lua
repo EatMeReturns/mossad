@@ -34,7 +34,7 @@ function Player:init()
   self.rolling = false
   self.rollTimer = 0
   self.rollTimerMax = 0.34
-  self.rollSpeed = 275
+  self.rollSpeed = 350
   self.rollDir = 0
   
   self.speed = 0
@@ -137,7 +137,9 @@ function Player:update()
   end
   self.firstAid:update()
 
-  self.rotation = math.direction(400, 300, love.mouse.getX(), love.mouse.getY())
+  self.rotation = math.anglerp(self.rotation, math.direction(400, 300, love.mouse.getX(), love.mouse.getY()), math.clamp(tickRate * 12, 0, 1))
+  if self.rotation > math.pi then self.rotation = self.rotation - math.pi * 2 end
+  if self.rotation < -math.pi then self.rotation = self.rotation + math.pi * 2 end
 
   self.light.x, self.light.y = self.x, self.y
   ovw.house:applyLight(self.light, 'ambient')

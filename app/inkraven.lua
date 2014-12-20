@@ -87,7 +87,7 @@ function InkRaven:scan()
     self.targetAngle = math.direction(self.x, self.y, ovw.player.x, ovw.player.y)
     self.swoopTargetX, self.swoopTargetY = ovw.player.x, ovw.player.y
     self.state = 'swoop'
-    self.swoopTimer = .5
+    self.swoopTimer = .8
   end
 
   if not target then
@@ -104,6 +104,14 @@ function InkRaven:startGlide()
   local d = math.direction(self.x, self.y, ovw.player.x, ovw.player.y) + math.pi - .5 + love.math.random() * 1
   self.glideTargetX = ovw.player.x + math.dx(100, d)
   self.glideTargetY = ovw.player.y + math.dy(100, d)
+end
+
+function InkRaven:alert()
+  target = ovw.player
+  self.targetAngle = math.direction(self.x, self.y, ovw.player.x, ovw.player.y)
+  self.swoopTargetX, self.swoopTargetY = ovw.player.x, ovw.player.y
+  self.state = 'swoop'
+  self.swoopTimer = .8
 end
 
 ----------------
