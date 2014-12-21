@@ -5,6 +5,13 @@ Avian = extend(Boss)
 Avian.radius = 20
 Avian.collision.shape = 'circle'
 
+function Avian.collision.with.player(self, other, dx, dy)
+  if self.state == 'swoop' then
+    other:hurt(self.damage)
+    self.state = 'derp'
+  end
+end
+
 Avian.title = 'Avian Flies'
 
 -- States:
@@ -21,6 +28,7 @@ function Avian:init()
   self.title = 'Avian Flies'
 
   self.state = 'derp' --derp, gust, swoop?
+  self.stateTable = WeightedRandom({{'derp', .5}, {'swoop', .1}, {'gust', .15}, {'summon', .25}}, 1)
 
   self.health = 200
   self.maxHealth = self.health
@@ -50,7 +58,6 @@ function Avian:update()
   self[self.state](self)
 
   self:setPosition(self.x, self.y)
-  print(self.state)
 end
 
 function Avian:draw()
@@ -76,7 +83,9 @@ function Avian:draw()
 end
 
 function Avian:summon()
-  --summon some inkravens yo
+  local x, y = self.x + love.math.random() * 100 - 50, self.y + love.math.random() * 100 - 50
+  ovw.enemies:add(InkRaven(x, y, self.room))
+  self.state = 'derp'
 end
 
 ----------------
@@ -84,23 +93,24 @@ end
 ----------------
 function Avian:derp()
   self.targetAngle = math.direction(self.x, self.y, ovw.player.x, ovw.player.y)
-  self.x = self.x + math.dx(self.walkSpeed * tickRate, self.direction)
-  self.y = self.y + math.dy(self.walkSpeed * tickRate, self.direction)
-  self.derpTimer = timer.rot(self.derpTimer, function()
-    local s = love.math.random()
-    if s < .2 then
-      self.state = 'gust'
+  self.x = self.x + math.dx(self.walkSpeed * tickRate, self.targetAngle * -1)
+  self.y = self.y + math.dy(self.walkSpeed * tickRate, self.targetAngle * -1)
+  self.derpTimer = self.derpTimer - tickRate
+  if self.derpTimer <= 0 then
+    self.state = self.stateTable:pick()[1]
+    if self.state == 'gust' then
       self.gustTimer = .5
-    elseif s < .4 then
-      self.state = 'swoop'
+    elseif self.state == 'swoop' then
       self.swoopTargetX = ovw.player.x
       self.swoopTargetY = ovw.player.y
       self.swoopTimer = .8
-    elseif s < .8 then
+    elseif self.state == 'summon' then
+      self:summon()
       self.derpTimer = 1
+    else
+      self.derpTimer = .34
     end
-      self.derpTimer = 1
-  end)
+  end
   
   self.angle = math.anglerp(self.angle, self.targetAngle, math.clamp(3 * tickRate, 0, 1))
 end
@@ -117,7 +127,7 @@ function Avian:gust()
 
   self.gustTimer = timer.rot(self.gustTimer, function()
     self.state = 'derp'
-    self.derpTimer = 1 + love.math.random()
+    self.derpTimer = 1.25
     self.direction = dir + math.pi + love.math.randomNormal(math.pi / 2, 0)
   end)
 end
@@ -131,11 +141,11 @@ function Avian:swoop()
 
   self.swoopTimer = timer.rot(self.swoopTimer, function()
     self.state = 'derp'
-    self.derpTimer = 1 + love.math.random()
+    self.derpTimer = 2
     self.direction = dir + math.pi + love.math.randomNormal(math.pi / 2, 0)
   end)
 
-  self.angle = math.anglerp(self.angle, self.targetAngle, math.clamp(10 * tickRate, 0, 1))
+  self.angle = math.anglerp(self.angle, self.targetAngle, math.clamp(4 * tickRate, 0, 1))
 end
 
 function Avian:val()

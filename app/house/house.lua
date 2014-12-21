@@ -22,6 +22,9 @@ function House:init()
   self.lightMap = {}
 
   self.biome = 'Main'
+
+  self.doorsToConnect = {}
+  self.roomsToDestroy = {}
   
   self:generate()
 
@@ -45,6 +48,18 @@ function House:update()
         self.tiles[x][y]:updateLight(x, y)
       end
     end
+  end
+
+  if #self.doorsToConnect > 0 then
+    self.doorsToConnect[1]:connect()
+    table.remove(self.doorsToConnect, 1)
+    self:computeTiles()
+    self:computeShapes()
+  elseif #self.roomsToDestroy > 0 then
+    self.roomsToDestroy[1]:destroy()
+    table.remove(self.roomsToDestroy, 1)
+    self:computeTiles()
+    self:computeShapes()
   end
 
   local crippled = false
@@ -145,22 +160,23 @@ function House:generate()
   local room = MainRectangle()
   room.x, room.y = 100, 100
   self:addRoom(room, 0, 0)
-
-  --local furthestRoom = room
-  --local furthestDis = 0
+  ovw.pickups:add(Pickup({x = (room.x + room.width / 2) * self.cellSize + love.math.random() * 300 - 150, y = (room.y + room.height / 2) * self.cellSize + love.math.random() * 300 - 150, itemType = Pistol, room = room}))
 
   for i = 1, self.roomCount do
     -- Pick a source room
     local oldRoom = randomFrom(self.rooms)
     self:createRoom(oldRoom)
   end
+
+  self:computeTiles()
+  self:computeShapes()
 end
 
 function House:regenerate(pRoom)
   table.each(self.rooms, function(room, index)
     if math.distance(self:pos(pRoom.x + pRoom.width / 2, pRoom.y + pRoom.height / 2, room.x + room.width / 2, room.y + room.height / 2)) <= self.spawnRange / 2 then
       table.each(room.doors, function(door, index)
-        if not door.connected then door:connect() end
+        if not door.connected then table.insert(self.doorsToConnect, door) end--door:connect() end
       end)
     end
   end)
@@ -168,12 +184,12 @@ function House:regenerate(pRoom)
   table.each(self.rooms, function(room, index)
     if math.distance(self:pos(pRoom.x + pRoom.width / 2, pRoom.y + pRoom.height / 2, room.x + room.width / 2, room.y + room.height / 2)) > self.spawnRange then
       --if self.biome == 'Main' or room.biome ~= self.biome then room:destroy() end
-      room:destroy()
+      table.insert(self.roomsToDestroy, room)--room:destroy()
     end
   end)
 
-  self:computeTiles()
-  self:computeShapes()
+  --self:computeTiles()
+  --self:computeShapes()
 end
 
 function House:createRoom(oldRoom, oldDirection)

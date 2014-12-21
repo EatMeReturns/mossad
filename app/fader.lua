@@ -4,22 +4,23 @@ local g = love.graphics
 local w, h = g.width, g.height
 
 function Fader:init()
+  self.font = g.newFont('media/fonts/pixel.ttf', 10)
   self.texts = {}
-  self.texts[1] = 'mossad is coming'
-  self.texts[2] = 'no really...he is'
   self.opacity = -255
+  self.fadeTimer = 0
 end
 
 function Fader:add(text) --USE ME TO ADD A NEW MESSAGE TO THE FADER
-  table.insert(self.texts, text)
+  if text then table.insert(self.texts, text) end
 end
 
 function Fader:fade()
-  self.opacity = math.min(self.opacity + tickRate * 255, 255)
+  self.opacity = math.min(self.opacity + tickRate * 255 / self.fadeTimer, 255)
 end
 
 function Fader:update()
   if self.texts[1] then
+    self.fadeTimer = math.max(string.len(self.texts[1]) / 15, .8)
     if self.opacity < 255 then
       self:fade()
     else
@@ -32,6 +33,8 @@ end
 function Fader:gui()
   if self.texts[1] then
     g.setColor(255, 255, 255, 255 - math.abs(self.opacity))
-    g.printf(self.texts[1], w(0.5) - 150, h(0.5), 300, 'center')
+    g.setFont(self.font)
+    g.printf(self.texts[1], w(0.5) - 150, h(0.5) - 150, 300, 'center')
+    g.setFont(ovw.hud.font)
   end
 end

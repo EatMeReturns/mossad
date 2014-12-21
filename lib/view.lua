@@ -12,10 +12,12 @@ function View:init()
   self.prevx = 0
   self.prevy = 0
   self.prevscale = self.scale
+  self.followMargin = .8
 
   self.shake = 0
 
   self.targetScale = self.scale
+  self.targetFollowMargin = self.followMargin
 end
 
 function View:update()
@@ -23,11 +25,15 @@ function View:update()
   self.prevy = self.y
   self.prevscale = self.scale
 
-  if not devMode then self.targetScale = 1.3 end
+  if not devMode then
+    self.targetScale =  1.3
+    if love.keyboard.isDown('e') then self.targetScale = 3.25 end
+    if love.keyboard.isDown('tab') then self.targetScale = 3.25 end
+  end
   
   local prevw, prevh = self.w, self.h
   local xf, yf = love.mouse.getX() / love.graphics.getWidth(), love.mouse.getY() / love.graphics.getHeight()
-  self.scale = math.round(math.lerp(self.scale, self.targetScale, 10 * tickRate) / .01) * .01
+  self.scale = math.round(math.lerp(self.scale, self.targetScale, 5 * tickRate) / .01) * .01
   self.w = love.graphics.getWidth() / self.scale
   self.h = love.graphics.getHeight() / self.scale
   self.x = self.x + (prevw - self.w) * xf
@@ -44,7 +50,7 @@ function View:draw()
   love.graphics.push()
   love.graphics.translate(0, self.margin)
 
-  if not paused then
+  if started and not paused then
     love.graphics.push()
     local x, y = math.lerp(self.prevx, self.x, tickDelta / tickRate), math.lerp(self.prevy, self.y, tickDelta / tickRate)
     love.graphics.scale(math.lerp(self.prevscale, self.scale, tickDelta / tickRate))
@@ -112,15 +118,16 @@ function View:follow()
   if not self.target then return end
 
   local dis, dir = math.vector(self.target.x, self.target.y, self:mouseX(), self:mouseY())
-  local margin = ((love.keyboard.isDown('tab') or love.keyboard.isDown('e')) and 0.5) or 0.8
+  self.targetFollowMargin = ((love.keyboard.isDown('tab') or love.keyboard.isDown('e')) and 0.5) or 0.8
+  self.followMargin = math.lerp(self.followMargin, self.targetFollowMargin, 8 * tickRate)
 
   dis = dis / 5
  
   self.x = self.target.x + math.dx(dis, dir) - (self.w / 2)
   self.y = self.target.y + math.dy(dis, dir) - (self.h / 2)
 
-  self.x = math.clamp(self.x, self.target.x - (self.w * margin), self.target.x + (self.w * margin) - self.w)
-  self.y = math.clamp(self.y, self.target.y - (self.h * margin), self.target.y + (self.h * margin) - self.h)
+  self.x = math.clamp(self.x, self.target.x - (self.w * self.followMargin), self.target.x + (self.w * self.followMargin) - self.w)
+  self.y = math.clamp(self.y, self.target.y - (self.h * self.followMargin), self.target.y + (self.h * self.followMargin) - self.h)
 end
 
 function View:mousepressed(x, y, button)

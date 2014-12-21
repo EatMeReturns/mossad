@@ -3,6 +3,7 @@ require 'app/weapon'
 Rifle = extend(Weapon)
 
 Rifle.name = 'Rifle'
+Rifle.pickupMessage = 'Ratta-tatta-tatta!'
 
 Rifle.damage = 8
 Rifle.fireMode = 'Automatic'

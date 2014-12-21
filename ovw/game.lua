@@ -2,7 +2,8 @@ Game = class()
 
 function Game:load()
   devMode = false
-  paused = false
+  paused = true
+  started = false
 
   ----------------------------------------------------------------------------------
 
@@ -60,6 +61,11 @@ function Game:load()
 
   self.view = View()
   self.collision = Collision()
+  self.menu = Menu()
+  self.tutorial = Tutorial()
+end
+
+function Game:start(agility, armor, stamina)
   self.hud = Hud()
   self.spells = Manager()
   self.particles = Manager()
@@ -67,23 +73,30 @@ function Game:load()
   self.npcs = Manager()
   self.pickups = Manager()
   self.house = House()
-  self.player = Player()
+  self.player = Player(agility, armor, stamina)
   self.boss = nil
+
+  started = true
+  paused = false
+  self.menu.state = 'Paused'
 end
 
+
 function Game:update()
-  if not paused then
-    self.house:update()
-    self.player:update()
-    self.spells:update()
-    self.particles:update()
-    self.enemies:update()
-    self.npcs:update()
-    self.pickups:update()
-    if self.boss then self.boss:update() end
-    self.collision:resolve()
-    self.view:update()
-    self.hud.fader:update()
+  if started then
+    if not paused then
+      self.house:update()
+      self.player:update()
+      self.spells:update()
+      self.particles:update()
+      self.enemies:update()
+      self.npcs:update()
+      self.pickups:update()
+      if self.boss then self.boss:update() end
+      self.collision:resolve()
+      self.view:update()
+      self.hud.fader:update()
+    end
   end
 end
 
@@ -92,14 +105,29 @@ function Game:draw()
 end
 
 function Game:restart()
-  print('restarted.')
-  ovw.house:destroy()
-  Overwatch:remove(ovw)
-  Overwatch:add(Game)
+  love.event.clear()
+  self.view = View()
+  self.collision = Collision()
+  self.menu = Menu()
+  --self.tutorial = nil Don't restart the tutorial, they already did it.
+  self.hud = nil
+  self.spells = nil
+  self.particles = nil
+  self.enemies = nil
+  self.npcs = nil
+  self.pickups = nil
+  self.house = nil
+  self.player = nil
+  self.boss = nil
+
+  started = false
+  paused = true
+  --Overwatch:remove(ovw)
+  --Overwatch:add(Game)
 end
 
 function Game:focus(focus)
-  if not focus then self:pause(true) end
+  if started and not focus then self:pause(true) end
 end
 
 function Game:pause(v)
@@ -108,17 +136,31 @@ function Game:pause(v)
 end
 
 function Game:keypressed(key)
-  if key == 'escape' then self:pause() end
-  if not paused then
-    if key == '`' then devMode = not devMode end
-    self.player:keypressed(key)
+  if started then
+    if key == 'return' then self.tutorial:next() end
+    if key == 'backspace' then self.tutorial:back() end
+    if key == 'escape' then self:pause() end
+    if paused then
+      self.menu:keypressed(key)
+    else
+      if key == '`' then devMode = not devMode end
+      self.player:keypressed(key)
+    end
+  else
+    self.menu:keypressed(key)
   end
 end
 
 function Game:mousepressed(...)
-  if not paused then
+  if started and not paused then
     self.view:mousepressed(...)
     self.player:mousepressed(...)
     self.hud:mousepressed(...)
+  end
+end
+
+function Game:mousereleased(...)
+  if not started or paused then
+    self.menu:mousereleased(...)
   end
 end

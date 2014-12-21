@@ -24,7 +24,7 @@ Player.collision = {
   }
 }
 
-function Player:init()
+function Player:init(agility, armor, stamina)
   self.name = 'player'
   self.x = ovw.house:pos(ovw.house.rooms[1].x + ovw.house.rooms[1].width / 2)
   self.y = ovw.house:pos(ovw.house.rooms[1].y + ovw.house.rooms[1].height / 2)
@@ -60,7 +60,6 @@ function Player:init()
   self.hotbar:add(Glowstick())
 
   self.arsenal = Arsenal()
-  self.arsenal:add(Pistol())
 
   self.firstAid = FirstAid()
 
@@ -92,15 +91,15 @@ function Player:init()
 
   self.ammo = 24
   self.kits = 2
-  self.energy = 2
+  self.energy = stamina
   self.batteries = 1
   self.battery = 0
   self.batteryMax = 120
   self.flashlightOn = true
 
-  self.agility = 1 --reload, heal, and loot faster
-  self.armor = 0 --take less damage
-  self.stamina = 2 --regenerate stamina faster and higher max stamina
+  self.agility = agility --reload, heal, and loot faster
+  self.armor = armor --take less damage
+  self.stamina = stamina --regenerate stamina faster and higher max stamina
 
   self.exp = 0
   self.drawExp = self.exp

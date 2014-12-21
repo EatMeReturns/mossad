@@ -1,6 +1,6 @@
 MuzzleFlash = class()
 
-function MuzzleFlash:init(dis, dir, pos)
+function MuzzleFlash:init(dis, dir, pos, size)
   self.light = {
     minDis = 0,
     maxDis = 64,
@@ -8,6 +8,8 @@ function MuzzleFlash:init(dis, dir, pos)
     falloff = 1,
     posterization = 1
   }
+
+  self.lineW = size / 5
 
   self.x, self.y = pos.x, pos.y
   self.endX, self.endY = self.x + math.dx(dis, dir), self.y + math.dy(dis, dir)
@@ -38,7 +40,7 @@ end
 function MuzzleFlash:draw()
   local v = self.health * 255
   love.graphics.setColor(255, 255, 255, v)
-  love.graphics.setLineWidth(2)
+  love.graphics.setLineWidth(self.lineW)
   love.graphics.line(self.x, self.y, self.endX, self.endY)
   love.graphics.setLineWidth(1)
 end

@@ -69,10 +69,13 @@ function Pickup:activate()
 
   self.item = self.item or new(self.itemType)
   if ovw.player.hotbar:add(self.item) then
+    ovw.hud.fader:add(self.item.pickupMessage)
     self:remove()
   elseif ovw.player.arsenal:add(self.item) then
+    ovw.hud.fader:add(self.item.pickupMessage)
     self:remove()
   elseif ovw.player.inventory:add(self.item) then
+    ovw.hud.fader:add(self.item.pickupMessage)
     self:remove()
   end
 end

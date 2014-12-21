@@ -3,6 +3,7 @@ require 'app/weapon'
 Flaregun = extend(Weapon)
 
 Flaregun.name = 'Flaregun'
+Flaregun.pickupMessage = '\"I love the smell of napalm in the morning.\"\n\nLieutenant Colonel Bill Kilgore'
 
 Flaregun.damage = 10
 Flaregun.fireMode = 'Semiautomatic'

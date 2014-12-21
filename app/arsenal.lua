@@ -2,7 +2,7 @@ Arsenal = class()
 
 function Arsenal:init()
   self.weapons = {}
-  self.selected = nil
+  self.selected = 1
 end
 
 function Arsenal:update()
@@ -15,7 +15,7 @@ end
 
 function Arsenal:mousepressed(x, y, b)
   if b == 'r' then
-    if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then self.weapons[self.selected]:melee() end
+    if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then if self.weapons[self.selected] then self.weapons[self.selected]:melee() end end
   elseif b == 'wu' and self.selected > 1 then
     self:select(self.selected - 1)
   elseif b == 'wd' and self.selected < #self.weapons then

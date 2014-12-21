@@ -11,7 +11,7 @@ function Boss.collision.with.wall(self, other, dx, dy)
 end
 
 function Boss.collision.with.player(self, other, dx, dy)
-  other:setPosition(other.x + dx, other.y + dy)
+  --other:setPosition(other.x + dx, other.y + dy)
 end
 
 function Boss.collision.with.room(self, other, dx, dy)
@@ -55,7 +55,7 @@ end
 function Boss:hurt(amount)
   self.health = self.health - amount
   if self.health <= 0 then
-    local function make(i) ovw.pickups:add(Pickup({x = self.x, y = self.y, itemType = i, room = self.room})) end
+    local function make(i) ovw.pickups:add(Pickup({x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10, itemType = i, room = self.room})) end
     ovw.player:learn(self.exp)
     local i = self.lootSpawnTable:pick()[1]
     while i > 0 do

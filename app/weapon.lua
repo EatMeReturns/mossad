@@ -1,6 +1,9 @@
 require 'app/item'
 
 Weapon = extend(Item)
+Weapon.pickupMessage = 'You\'ve found a bug! Congratulations! This weapon has no pickup message.'
+
+Weapon.MAX_RANGE = 550
 
 function Weapon:init()
   self.timers = {}
@@ -65,16 +68,16 @@ function Weapon:update()
           if self.name == 'Flaregun' then
             ovw.spells:add(FlareSpell(ovw.player.angle + dAngle, x, y, self.damage))
           else
-            local x2, y2 = x + math.dx(1200, ovw.player.angle + dAngle), y + math.dy(1200, ovw.player.angle + dAngle)
+            local x2, y2 = x + math.dx(Weapon.MAX_RANGE, ovw.player.angle + dAngle), y + math.dy(Weapon.MAX_RANGE, ovw.player.angle + dAngle)
             local wall, d = ovw.collision:lineTest(x, y, x2, y2, 'wall', false, true)
-            d = d == math.huge and 1200 or d
+            d = d == math.huge and Weapon.MAX_RANGE or d
 
             x2, y2 = x + math.dx(d, ovw.player.angle + dAngle), y + math.dy(d, ovw.player.angle + dAngle)
             local enemy, d2 = ovw.collision:lineTest(x, y, x2, y2, 'enemy', false, true)
             d = d2 == math.huge and d or d2
             
             if enemy then enemy:hurt(self.damage) end
-            ovw.particles:add(MuzzleFlash(d, ovw.player.angle + dAngle, {x = x, y = y}))
+            ovw.particles:add(MuzzleFlash(d, ovw.player.angle + dAngle, {x = x, y = y}, self.damage))
           end
         end
 

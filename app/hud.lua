@@ -7,20 +7,23 @@ function Hud:init()
   self.font = g.newFont('media/fonts/pixel.ttf', 8)
   self.titleFont = g.newFont('media/fonts/pixel.ttf', 24)
   self.subTitleFont = g.newFont('media/fonts/pixel.ttf', 16)
+
   self.fader = Fader()
   self.mouseText = 'Test!'
+
   self.grabbed = {}
   self.grabbed.item = nil
   self.grabbed.slotType = nil --arsenal, hotbar, or inventory?
   self.grabbed.index = 0
+
+  self.depth = 0
+
   ovw.view:register(self)
 end
 
 function Hud:gui()
   g.setFont(self.font)
   if not paused then
-    self:mouse()
-    self.fader:gui()
     self:blood()
   end
   self:title()
@@ -33,6 +36,10 @@ function Hud:gui()
   self:arsenal()
   self:firstaid()
   self:buffs()
+  if not paused then
+    self:mouse()
+    self.fader:gui()
+  end
   self:debug()
 end
 
@@ -119,7 +126,7 @@ function Hud:flashlight()
 
   if ovw.player.batteries == 0 then g.setColor(255, 0, 0)
   else g.setColor(255, 255, 255) end
-  g.print('batteries: ' .. ovw.player.batteries, 2, size * 2 - 28)
+  g.print('Batteries: ' .. ovw.player.batteries, 2, size * 2 - 28)
 end
 
 function Hud:stamina()
@@ -223,7 +230,7 @@ function Hud:arsenal()
   local size = 40
   for i = 1, 2 do
     local weapon = ovw.player.arsenal.weapons[i]
-    local alpha = not weapon and 10 or (ovw.player.arsenal.selected == i and 255 or 100)
+    local alpha = not weapon and 20 or (ovw.player.arsenal.selected == i and 255 or 100)
     g.setColor(255, 255, 255, alpha)
     if weapon then g.draw(weapon.image, 2 + .5, 2 + (size + 2) * (i + 1) + .5) end
     g.rectangle('line', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size, size)
@@ -251,7 +258,7 @@ function Hud:arsenal()
 
   if ovw.player.ammo == 0 then g.setColor(255, 0, 0)
   else g.setColor(255, 255, 255) end
-  g.print('ammo: ' .. ovw.player.ammo, 2, size * 2 - 8)
+  g.print('Ammo: ' .. ovw.player.ammo, 2, size * 2 - 8)
 end
 
 function Hud:firstaid()
@@ -273,7 +280,7 @@ function Hud:firstaid()
 
   if ovw.player.kits == 0 then g.setColor(255, 0, 0)
   else g.setColor(255, 255, 255) end
-  g.print('kits: ' .. ovw.player.kits, 2, size * 2 - 18)
+  g.print('Kits: ' .. ovw.player.kits, 2, size * 2 - 18)
   g.setColor(255, 255, 255, ovw.player.firstAid.timers.fadeOut * 255)
   g.printf('First Aid', 320 + .5 - 50, 205 + .5, 100, 'center')
 end

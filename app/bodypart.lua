@@ -32,7 +32,7 @@ function BodyPart:update()
 
 		if self.wounded then --if killing then
 			self.timers.kill = timer.rot(self.timers.kill, function()
-				ovw.restart() --self is kill
+				ovw:restart() --self is kill
 			end)
 		else
 			self.timers.kill = self.killSpeed

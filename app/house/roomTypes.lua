@@ -325,7 +325,7 @@ GrayExitRectangle.floorType = 'Gray'
 GrayExitRectangle.biome = 'Gray'
 
 function GrayExitRectangle:init(dir)
-  MainBossRectangle.init(self, dir, 20, 20, Avian)
+  MainBossRectangle.init(self, dir, 15, 15, Avian)
 end
 
 function GrayExitRectangle:spawnDoors(dir)

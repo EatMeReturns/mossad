@@ -3,6 +3,8 @@ require 'app/enemy'
 RubyMoth = extend(Enemy)
 
 RubyMoth.collision = setmetatable({}, {__index = Enemy.collision})
+RubyMoth.collision.with.enemy = nil
+
 RubyMoth.collision.shape = 'circle'
 RubyMoth.radius = 10
 
@@ -17,7 +19,9 @@ function RubyMoth:init(...)
 
 	self.walkSpeed = 50
 	self.followSpeed = 0
+	self.circleSpeed = love.math.random() * 30 + 20
 	self.speed = self.walkSpeed
+	if love.math.random() < .5 then self.circleDir = -1 else self.circleDir = 1 end
 
 	self.damage = 0
 	self.exp = 0
@@ -105,8 +109,9 @@ function RubyMoth:follow()
 		self.x = self.x + math.dx(self.followSpeed * tickRate, self.angle)
 		self.y = self.y + math.dy(self.followSpeed * tickRate, self.angle)
 	else
-		local angle = love.math.random() * 2 * math.pi
-		self.x = self.x + math.dx(self.followSpeed * tickRate, angle)
-		self.y = self.y + math.dy(self.followSpeed * tickRate, angle)
+		self.followSpeed = self.circleSpeed
+		self.angle = self.angle + self.circleDir * love.math.random() * math.pi / 6
+		self.x = self.x + math.dx(self.followSpeed * tickRate, self.angle)
+		self.y = self.y + math.dy(self.followSpeed * tickRate, self.angle)
 	end
 end

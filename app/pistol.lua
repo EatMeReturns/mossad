@@ -3,6 +3,7 @@ require 'app/weapon'
 Pistol = extend(Weapon)
 
 Pistol.name = 'Pistol'
+Pistol.pickupMessage = 'How fortunate, a pistol.'
 
 Pistol.damage = 10
 Pistol.fireMode = 'Semiautomatic'

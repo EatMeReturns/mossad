@@ -3,6 +3,7 @@ require 'app/weapon'
 Shotgun = extend(Weapon)
 
 Shotgun.name = 'Shotgun'
+Shotgun.pickupMessage = 'Pull!'
 
 Shotgun.damage = 2
 Shotgun.fireMode = 'Single'
