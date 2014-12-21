@@ -1,6 +1,7 @@
 Menu = class()
 
 local g = love.graphics
+local gw, gh = 800, 600
 
 function Menu:init()
 	self.font = g.newFont('media/fonts/pixel.ttf', 8)
@@ -69,8 +70,8 @@ function Menu:gui()
 		local count = #menu.buttons
 
 		table.each(menu.buttons, function(button, index)
-			local x = g.width() / 2 - 100
-			local y = g.height() / 2 + ((h + 10) * (index - (count / 2) - 1))
+			local x = gw / 2 - 100
+			local y = gh / 2 + ((h + 10) * (index - (count / 2) - 1))
 
 			g.setColor(button.color[1], button.color[2], button.color[3], button.color[4])
 			g.rectangle('fill', x, y, w, h)
@@ -91,7 +92,7 @@ function Menu:gui()
 			end
 
 			g.setColor(255, 255, 255, 255)
-			g.printf(text, g.width() / 2 - menu.textWidth / 2, menu.textY, menu.textWidth, 'center')
+			g.printf(text, gw / 2 - menu.textWidth / 2, menu.textY, menu.textWidth, 'center')
 		end
 	end
 	self.ready = true
@@ -104,16 +105,19 @@ function Menu:mouse()
 	local v = love.mouse.isDown('l') and 255 or 150
 
 	table.each(self.menus[self.state].buttons, function(button, index)
-		local x = g.width() / 2 - 100
-		local y = g.height() / 2 + ((h + 10) * (index - (count / 2) - 1))
+		local x = gw / 2 - 100
+		local y = gh / 2 + ((h + 10) * (index - (count / 2) - 1))
 
-		if love.mouse.inBox(x, y, w, h) then
+		if self:mouseOverButton(x, y, w, h) then
 			--mouse is in the button
 			button.color[4] = v
 		else
 			button.color[4] = 50
 		end
 	end)
+end
+function Menu:mouseOverButton(x, y, w, h)
+  return love.mouse.inBox(x * love.graphics.getWidth() / gw, y * love.graphics.getHeight() / gh, w * love.graphics.getWidth() / gw, h * love.graphics.getHeight() / gh)
 end
 
 function Menu:mousereleased(x, y, button)
@@ -123,10 +127,10 @@ function Menu:mousereleased(x, y, button)
 	local v = love.mouse.isDown('l') and 255 or 150
 
 	table.each(self.menus[self.state].buttons, function(button, index)
-		local x = g.width() / 2 - 100
-		local y = g.height() / 2 + ((h + 10) * (index - (count / 2) - 1))
+		local x = gw / 2 - 100
+		local y = gh / 2 + ((h + 10) * (index - (count / 2) - 1))
 
-		if love.mouse.inBox(x, y, w, h) and self.ready then
+		if self:mouseOverButton(x, y, w, h) and self.ready then
 			self.ready = false
 			button.activate(button)
 		end

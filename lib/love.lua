@@ -130,7 +130,6 @@ function love.graphics.rectangleCenter(style, x, y, w, h, pix)
   if pix then ox = ox + .5 oy = oy + .5 end
   love.graphics.rectangle(style, ox, oy, w, h)
 end
-
 function love.graphics.printCenter(str, x, y, h, v)
   local xx = x - ((h or (h == nil)) and (love.graphics.getFont():getWidth(str) / 2) or 0)
   local yy = y - ((v or (v == nil)) and (love.graphics.getFont():getHeight() / 2) or 0)
@@ -143,3 +142,6 @@ timer.rot = function(val, fn) if not val or val == 0 then return val end if val 
 function love.graphics.width(x) x = x or 1 return love.window.getWidth() * x end
 function love.graphics.height(x) x = x or 1 return love.window.getHeight() * x end
 function love.graphics.minUnit(x) return math.min(love.graphics.width(x), love.graphics.height(x)) end
+
+function love.mouse.scaleX() return love.mouse.getX() / (love.graphics.getWidth() / 800) end
+function love.mouse.scaleY() return love.mouse.getY() / (love.graphics.getHeight() / 600) end

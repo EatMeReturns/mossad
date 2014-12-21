@@ -42,11 +42,16 @@ function Tile:init(type, x, y, room)
   self.tile = nil
   self.x = x
   self.y = y
+  self.posX = self.x * 32 --self.x * ovw.house.cellSize
+  self.posY = self.y * 32 --self.y * ovw.house.cellSize
+  self.sc = 32 / 32 --ovw.house.cellSize / 32
   self.ambient = 0
   self.dynamic = 0
+  self.Brightness = 0
   self.colors = {{255, 255, 255, 1}}
   self.drawColor = {255, 255, 255}
   self.lastColor = {255, 255, 255}
+  self.color = {255, 255, 255, 255}
   self.lastTouched = tick
 
   if room then
@@ -77,16 +82,18 @@ function Tile:update()
     self.lastColor[i] = self.drawColor[i]
   end
   self.colors = {{255, 255, 255, 1}}
+  self.Brightness = self:brightness()
+  for i = 1, 3 do
+    self.color[i] = self.Brightness * (House.ambientColor[i] / 255 * self.drawColor[i]) / 255
+  end
 end
 
 function Tile:draw()
-  local v = self:brightness()
-  if v > .01 then
+  if self.Brightness > .01 then
     local a = House.ambientColor
-    love.graphics.setColor(v * (a[1] / 255 * self.drawColor[1]) / 255, v * (a[2] / 255 * self.drawColor[2]) / 255, v * (a[3] / 255 * self.drawColor[3]) / 255)
+    love.graphics.setColor(self.color[1], self.color[2], self.color[3])
     local quad = House.tilemap[self.type][self.tile]
-    local sc = ovw.house.cellSize / 32
-    love.graphics.draw(House.tileImage, quad, self.x * ovw.house.cellSize, self.y * ovw.house.cellSize, 0, sc, sc)
+    love.graphics.draw(House.tileImage, quad, self.posX, self.posY, 0, self.sc, self.sc)
   end
 end
 

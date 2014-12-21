@@ -136,7 +136,7 @@ function Player:update()
   end
   self.firstAid:update()
 
-  self.rotation = math.anglerp(self.rotation, math.direction(400, 300, love.mouse.getX(), love.mouse.getY()), math.clamp(tickRate * 12, 0, 1))
+  self.rotation = math.anglerp(self.rotation, math.direction(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.mouse.getX(), love.mouse.getY()), math.clamp(tickRate * 12, 0, 1))
   if self.rotation > math.pi then self.rotation = self.rotation - math.pi * 2 end
   if self.rotation < -math.pi then self.rotation = self.rotation + math.pi * 2 end
 
@@ -297,7 +297,7 @@ function Player:move()
 end
 
 function Player:turn()
-  self.angle = math.direction(400, 300, love.mouse.getX(), love.mouse.getY())
+  self.angle = math.direction(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.mouse.getX(), love.mouse.getY())
 end
 
 function Player:roll()

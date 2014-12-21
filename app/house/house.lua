@@ -25,6 +25,7 @@ function House:init()
 
   self.doorsToConnect = {}
   self.roomsToDestroy = {}
+  self.needComputing = false
   
   self:generate()
 
@@ -51,15 +52,21 @@ function House:update()
   end
 
   if #self.doorsToConnect > 0 then
-    self.doorsToConnect[1]:connect()
+    local room = self.doorsToConnect[1]:connect()
     table.remove(self.doorsToConnect, 1)
-    self:computeTiles()
-    self:computeShapes()
+    if room then self:computeTilesInRoom(room) end
+    --self:computeShapes()
+    self.needComputing = true
   elseif #self.roomsToDestroy > 0 then
     self.roomsToDestroy[1]:destroy()
     table.remove(self.roomsToDestroy, 1)
+    --self:computeTiles()
+    --self:computeShapes()
+    self.needComputing = true
+  elseif self.needComputing then
     self:computeTiles()
     self:computeShapes()
+    self.needComputing = false
   end
 
   local crippled = false
@@ -173,16 +180,16 @@ function House:generate()
 end
 
 function House:regenerate(pRoom)
+  local pRoomX = self:pos(pRoom.x + pRoom.width / 2)
+  local pRoomY = self:pos(pRoom.y + pRoom.height / 2)
+
   table.each(self.rooms, function(room, index)
-    if math.distance(self:pos(pRoom.x + pRoom.width / 2, pRoom.y + pRoom.height / 2, room.x + room.width / 2, room.y + room.height / 2)) <= self.spawnRange / 2 then
+    local dis = math.distance(pRoomX, pRoomY, self:pos(room.x + room.width / 2, room.y + room.height / 2))
+    if dis <= self.spawnRange / 2 then
       table.each(room.doors, function(door, index)
         if not door.connected then table.insert(self.doorsToConnect, door) end--door:connect() end
       end)
-    end
-  end)
-
-  table.each(self.rooms, function(room, index)
-    if math.distance(self:pos(pRoom.x + pRoom.width / 2, pRoom.y + pRoom.height / 2, room.x + room.width / 2, room.y + room.height / 2)) > self.spawnRange then
+    elseif dis > self.spawnRange then
       --if self.biome == 'Main' or room.biome ~= self.biome then room:destroy() end
       table.insert(self.roomsToDestroy, room)--room:destroy()
     end
@@ -226,7 +233,7 @@ function House:createRoom(oldRoom, oldDirection)
     self:addRoom(newRoom, newRoom.enemySpawnTable:pick()[1], newRoom.pickupSpawnTable:pick()[1])
     self:carveDoor(oldRoom.x + oldWall.x, oldRoom.y + oldWall.y, newRoom.x + newWall.x, newRoom.y + newWall.y, newRoom)
 
-    return true
+    return true, newRoom
   else
     return false
   end
@@ -299,41 +306,45 @@ function House:computeTiles()
   end
 
   for x in pairs(self.tiles) do
-    for y in pairs(self.tiles[x]) do
-      if get(x, y) then
-        if self.rooms[self.tiles[x][y].roomID] then
-          local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
-          local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
-          local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
-          if w and e and not n and sw and se then
-            self.tiles[x][y].tile = 'n'
-          elseif w and e and not s and nw and ne then
-            self.tiles[x][y].tile = 's'
-          elseif n and s and not e and nw and sw then
-            self.tiles[x][y].tile = 'e'
-          elseif n and s and not w and ne and se then
-            self.tiles[x][y].tile = 'w'
-          elseif e and s and se and ((not w and not n) or (w and nw and not sw and not n) or (n and nw and not ne and not w)) then--e and s and not w and not n then
-            self.tiles[x][y].tile = 'nw'
-          elseif w and s and sw and ((not e and not n) or (e and ne and not se and not n) or (n and ne and not nw and not e)) then--w and s and not e and not n then
-            self.tiles[x][y].tile = 'ne'
-          elseif e and n and ne and ((not w and not s) or (w and sw and not nw and not s) or (s and sw and not se and not w)) then--e and n and not w and not s then
-            self.tiles[x][y].tile = 'sw'
-          elseif w and n and nw and ((not e and not s) or (e and se and not ne and not s) or (s and se and not sw and not e)) then--w and n and not e and not s then
-            self.tiles[x][y].tile = 'se'
-          elseif w and n and not nw then
-            self.tiles[x][y].tile = 'inw'
-          elseif n and e and not ne then
-            self.tiles[x][y].tile = 'ine'
-          elseif s and w and not sw then
-            self.tiles[x][y].tile = 'isw'
-          elseif s and e and not se then
-            self.tiles[x][y].tile = 'ise'
-          elseif get(x, y) then
-            self.tiles[x][y].tile = 'c'
+    if table.count(self.tiles[x]) == 0 then 
+      self.tiles[x] = nil
+    else
+      for y in pairs(self.tiles[x]) do
+        if get(x, y) then
+          if self.rooms[self.tiles[x][y].roomID] then
+            local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
+            local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
+            local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
+            if w and e and not n and sw and se then
+              self.tiles[x][y].tile = 'n'
+            elseif w and e and not s and nw and ne then
+              self.tiles[x][y].tile = 's'
+            elseif n and s and not e and nw and sw then
+              self.tiles[x][y].tile = 'e'
+            elseif n and s and not w and ne and se then
+              self.tiles[x][y].tile = 'w'
+            elseif e and s and se and ((not w and not n) or (w and nw and not sw and not n) or (n and nw and not ne and not w)) then--e and s and not w and not n then
+              self.tiles[x][y].tile = 'nw'
+            elseif w and s and sw and ((not e and not n) or (e and ne and not se and not n) or (n and ne and not nw and not e)) then--w and s and not e and not n then
+              self.tiles[x][y].tile = 'ne'
+            elseif e and n and ne and ((not w and not s) or (w and sw and not nw and not s) or (s and sw and not se and not w)) then--e and n and not w and not s then
+              self.tiles[x][y].tile = 'sw'
+            elseif w and n and nw and ((not e and not s) or (e and se and not ne and not s) or (s and se and not sw and not e)) then--w and n and not e and not s then
+              self.tiles[x][y].tile = 'se'
+            elseif w and n and not nw then
+              self.tiles[x][y].tile = 'inw'
+            elseif n and e and not ne then
+              self.tiles[x][y].tile = 'ine'
+            elseif s and w and not sw then
+              self.tiles[x][y].tile = 'isw'
+            elseif s and e and not se then
+              self.tiles[x][y].tile = 'ise'
+            elseif get(x, y) then
+              self.tiles[x][y].tile = 'c'
+            end
+          else
+            self.tiles[x][y] = nil
           end
-        else
-          self.tiles[x][y] = nil
         end
       end
     end
@@ -345,38 +356,46 @@ function House:computeTilesInRoom(room)
     return self.tiles[x] and self.tiles[x][y]
   end
 
-  for x = room.x, room.x + room.width do
-    for y = room.y, room.y + room.height do
-      if get(x, y) then
-        local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
-        local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
-        local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
-        if w and e and not n then
-          self.tiles[x][y].tile = 'n'
-        elseif w and e and not s then
-          self.tiles[x][y].tile = 's'
-        elseif n and s and not e then
-          self.tiles[x][y].tile = 'e'
-        elseif n and s and not w then
-          self.tiles[x][y].tile = 'w'
-        elseif e and s and not w and not n then
-          self.tiles[x][y].tile = 'nw'
-        elseif w and s and not e and not n then
-          self.tiles[x][y].tile = 'ne'
-        elseif e and n and not w and not s then
-          self.tiles[x][y].tile = 'sw'
-        elseif w and n and not e and not s then
-          self.tiles[x][y].tile = 'se'
-        elseif w and n and not nw then
-          self.tiles[x][y].tile = 'inw'
-        elseif n and e and not ne then
-          self.tiles[x][y].tile = 'ine'
-        elseif s and w and not sw then
-          self.tiles[x][y].tile = 'isw'
-        elseif s and e and not se then
-          self.tiles[x][y].tile = 'ise'
-        elseif get(x, y) then
-          self.tiles[x][y].tile = 'c'
+  for x = room.x - 5, room.x + room.width + 5 do
+    if table.count(self.tiles[x]) == 0 then 
+      self.tiles[x] = nil
+    else
+      for y = room.y - 5, room.y + room.height + 5 do
+        if get(x, y) then
+          if self.rooms[self.tiles[x][y].roomID] then
+            local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
+            local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
+            local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
+            if w and e and not n then
+              self.tiles[x][y].tile = 'n'
+            elseif w and e and not s then
+              self.tiles[x][y].tile = 's'
+            elseif n and s and not e then
+              self.tiles[x][y].tile = 'e'
+            elseif n and s and not w then
+              self.tiles[x][y].tile = 'w'
+            elseif e and s and se and ((not w and not n) or (w and nw and not sw and not n) or (n and nw and not ne and not w)) then
+              self.tiles[x][y].tile = 'nw'
+            elseif w and s and sw and ((not e and not n) or (e and ne and not se and not n) or (n and ne and not nw and not e)) then
+              self.tiles[x][y].tile = 'ne'
+            elseif e and n and ne and ((not w and not s) or (w and sw and not nw and not s) or (s and sw and not se and not w)) then
+              self.tiles[x][y].tile = 'sw'
+            elseif w and n and nw and ((not e and not s) or (e and se and not ne and not s) or (s and se and not sw and not e)) then
+              self.tiles[x][y].tile = 'se'
+            elseif w and n and not nw then
+              self.tiles[x][y].tile = 'inw'
+            elseif n and e and not ne then
+              self.tiles[x][y].tile = 'ine'
+            elseif s and w and not sw then
+              self.tiles[x][y].tile = 'isw'
+            elseif s and e and not se then
+              self.tiles[x][y].tile = 'ise'
+            elseif get(x, y) then
+              self.tiles[x][y].tile = 'c'
+            end
+          else
+            self.tiles[x][y] = nil
+          end
         end
       end
     end

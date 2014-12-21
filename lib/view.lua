@@ -32,10 +32,10 @@ function View:update()
   end
   
   local prevw, prevh = self.w, self.h
-  local xf, yf = love.mouse.getX() / love.graphics.getWidth(), love.mouse.getY() / love.graphics.getHeight()
+  local xf, yf = love.mouse.scaleX() / love.graphics.getWidth(), love.mouse.scaleY() / love.graphics.getHeight()
   self.scale = math.round(math.lerp(self.scale, self.targetScale, 5 * tickRate) / .01) * .01
-  self.w = love.graphics.getWidth() / self.scale
-  self.h = love.graphics.getHeight() / self.scale
+  self.w = 800 / self.scale--love.graphics.getWidth() / self.scale
+  self.h = 600 / self.scale--love.graphics.getHeight() / self.scale
   self.x = self.x + (prevw - self.w) * xf
   self.y = self.y + (prevh - self.h) * yf
 
@@ -47,6 +47,8 @@ function View:update()
 end
 
 function View:draw()
+  love.graphics.push()
+  love.graphics.scale(love.graphics.getWidth() / 800, love.graphics.getHeight() / 600)
   love.graphics.push()
   love.graphics.translate(0, self.margin)
 
@@ -80,14 +82,15 @@ function View:draw()
   
   local w, h = love.graphics.getDimensions()
   love.graphics.pop()
+  love.graphics.pop()
   love.graphics.setColor(0, 0, 0, 255)
   love.graphics.rectangle('fill', 0, 0, w, self.margin)
   love.graphics.rectangle('fill', 0, h - self.margin, w, self.margin)
 end
 
 function View:resize()
-  self.scale = love.graphics.getWidth() / self.w
-  self.margin = math.max(math.round(((love.graphics.getHeight() - love.graphics.getWidth() * (self.h / self.w)) / 2)), 0)
+  self.scale = 0--love.graphics.getWidth() / 800 + 1.3
+  self.margin = 0--math.max(math.round(((love.graphics.getHeight() - love.graphics.getWidth() * (self.h / self.w)) / 2)), 0)
 end
 
 function View:register(x)
@@ -103,6 +106,8 @@ end
 
 function View:setTarget(obj)
   self.target = obj
+  self.x = obj.x
+  self.y = obj.y
 end
 
 function View:convertZ(z)
@@ -139,9 +144,9 @@ function View:mousepressed(x, y, button)
 end
 
 function View:mouseX()
-  return math.round((love.mouse.getX() / self.scale) + self.x)
+  return math.round((love.mouse.scaleX() / self.scale) + self.x)
 end
 
 function View:mouseY()
-  return math.round(((love.mouse.getY() - self.margin) / self.scale) + self.y)
+  return math.round(((love.mouse.scaleY() - self.margin) / self.scale) + self.y)
 end

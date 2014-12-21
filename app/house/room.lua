@@ -95,19 +95,17 @@ end
 
 function Door:connect()
   assert(not self.connected)
-  if table.count(ovw.house.rooms) < 5 then
-    if self.rooms.west and not self.rooms.east then
-      self.connected = ovw.house:createRoom(self.rooms.west, 'west')
-    elseif self.rooms.east and not self.rooms.west then
-      self.connected = ovw.house:createRoom(self.rooms.east, 'east')
-    elseif self.rooms.north and not self.rooms.south then
-      self.connected = ovw.house:createRoom(self.rooms.north, 'north')
-    elseif self.rooms.south and not self.rooms.north then
-      self.connected = ovw.house:createRoom(self.rooms.south, 'south')
-    else
-      self.connected = false
-    end
+  local room = nil
+  if self.rooms.west and not self.rooms.east then
+    self.connected, room = ovw.house:createRoom(self.rooms.west, 'west')
+  elseif self.rooms.east and not self.rooms.west then
+    self.connected, room = ovw.house:createRoom(self.rooms.east, 'east')
+  elseif self.rooms.north and not self.rooms.south then
+    self.connected, room = ovw.house:createRoom(self.rooms.north, 'north')
+  elseif self.rooms.south and not self.rooms.north then
+    self.connected, room = ovw.house:createRoom(self.rooms.south, 'south')
   else
-    --possible lag?
+    self.connected = false
   end
+  return room
 end

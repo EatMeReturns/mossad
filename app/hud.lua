@@ -1,7 +1,7 @@
 Hud = class()
 
 local g = love.graphics
-local w, h = g.width, g.height
+local w, h = 800, 600
 
 function Hud:init()
   self.font = g.newFont('media/fonts/pixel.ttf', 8)
@@ -48,7 +48,7 @@ function Hud:blood() -- Yo sach a hudblood, haarry
   local alpha = math.max(1 - (tick - p.lastHit) * tickRate, 0) / 4
   alpha = math.min(alpha * 100, 100)
   g.setColor(80, 0, 0, alpha)
-  g.rectangle('fill', 0, 0, w(), h())
+  g.rectangle('fill', 0, 0, w, h)
 end
 
 function Hud:title()
@@ -372,13 +372,13 @@ function Hud:mouse()
     g.setColor(255, 255, 255, 255)
     local item = self.grabbed.item
     if item then
-      g.draw(item.image, love.mouse.getX() + 15 + .5, love.mouse.getY() + 15 + .5)
-      g.rectangle('line', love.mouse.getX() + 15 + .5, love.mouse.getY() + 15 + .5, size, size)
+      g.draw(item.image, love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5)
+      g.rectangle('line', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5, size, size)
       if item.stacks then
-        g.print(item.stacks, love.mouse.getX() + 15 + .5 + 4, love.mouse.getY() + 15 + .5 + 1)
+        g.print(item.stacks, love.mouse.scaleX() + 15 + .5 + 4, love.mouse.scaleY() + 15 + .5 + 1)
       end
       local val = item.val and item:val() or 0
-      g.rectangle('fill', love.mouse.getX() + 15 + .5, love.mouse.getY() + 15 + .5 + size - 3, size * val, 3)
+      g.rectangle('fill', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5 + size - 3, size * val, 3)
     end
   else
     if self.grabbed.item then self:returnGrabbedItem() end
@@ -408,7 +408,7 @@ function Hud:mouse()
 
   --print the mouse text
   g.setColor(255, 255, 255, 255)
-  g.print(self.mouseText or '', love.mouse.getX() + 15, love.mouse.getY())
+  g.print(self.mouseText or '', love.mouse.scaleX() + 15, love.mouse.scaleY())
 end
 
 function Hud:mousepressed(x, y, button)
@@ -671,17 +671,17 @@ function Hud:returnGrabbedItem()
     end
   else
     return false
-  end
+  end 
 end
 
 function Hud:debug()
   if not debug then return end
   g.setColor(255, 255, 255)
-  g.print(love.timer.getFPS() .. 'fps ' .. (ovw.view.scale * 100) .. '%', 1, h() - g.getFont():getHeight())
+  g.print(love.timer.getFPS() .. 'fps ' .. (ovw.view.scale * 100) .. '%', 1, h - g.getFont():getHeight())
 end
 
 function Hud:mouseOverSlot(x, y, size)
-  return love.mouse.inBox(x, y, size, size)
+  return love.mouse.inBox(x * love.graphics.getWidth() / w, y * love.graphics.getHeight() / h, size * love.graphics.getWidth() / w, size * love.graphics.getHeight() / h)
 end
 
 function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMods)

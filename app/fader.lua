@@ -1,7 +1,7 @@
 Fader = class()
 
 local g = love.graphics
-local w, h = g.width, g.height
+local w, h = 800, 600
 
 function Fader:init()
   self.font = g.newFont('media/fonts/pixel.ttf', 10)
@@ -34,7 +34,7 @@ function Fader:gui()
   if self.texts[1] then
     g.setColor(255, 255, 255, 255 - math.abs(self.opacity))
     g.setFont(self.font)
-    g.printf(self.texts[1], w(0.5) - 150, h(0.5) - 150, 300, 'center')
+    g.printf(self.texts[1], w / 2 - 150, h / 2 - 150, 300, 'center')
     g.setFont(ovw.hud.font)
   end
 end

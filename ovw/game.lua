@@ -135,7 +135,15 @@ function Game:pause(v)
   if not paused then graphicsPaused = false end
 end
 
+function Game:fullscreen()
+  local x, y = love.mouse.scaleX(), love.mouse.scaleY()
+  love.window.setFullscreen(not love.window.getFullscreen())
+  love.mouse.setPosition(x * (love.graphics.getWidth() / 800), y * (love.graphics.getHeight() / 600))
+end
+
 function Game:keypressed(key)
+  if key == 'f11' then self:fullscreen() end
+
   if started then
     if key == 'return' then self.tutorial:next() end
     if key == 'backspace' then self.tutorial:back() end
