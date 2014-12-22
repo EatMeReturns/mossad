@@ -92,9 +92,9 @@ function Hud:npc()
   for i = 1, 5 do
     local item = npc.items[i] and npc.items[i][1] or nil
     local note = npc.items[i] and npc.items[i][2] or nil
-    local alpha = ovw.player.inventory.timers.fadeOut * (not item and 20 or (npc.items[i].focus and 255 or 100))
+    local alpha = ovw.player.inventory.timers.fadeOut * (not item and 20 or (npc.items[i].focus and 255 or 200))
     g.setColor(255, 255, 255, alpha)
-    if item then g.draw(item.image, 520 + .5, 100 + (size + 2) * (i - 1) + .5) end
+    if item then g.draw(item.image, 520, 100 + (size + 2) * (i - 1)) end
     g.rectangle('line', 520 + .5, 100 + (size + 2) * (i - 1) + .5, size, size)
     if item then
       if item.stacks then
@@ -173,7 +173,7 @@ function Hud:experience()
   for i = 1, 3 do
     g.hotkeyTab(alpha, hotkeys[i], 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5 + size + 2, size, 10, 'bottom', 'Tab')
     g.setColor(255, 255, 255, alpha)
-    g.draw(itemImage, 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5)
+    g.draw(Item.image, 400 - 70 + (size + 10) * (i - 1), 600 - 56)
     g.rectangle('line', 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5, size, size)
     g.print(labels[i], 400 - 70 + (size + 10) * (i - 1) + .5 + 4, 600 - 56 + .5 + 1)
   end
@@ -189,9 +189,9 @@ function Hud:inventory()
   for i = 1, 3 do
     for j = 1, 8 do
       local item = ovw.player.inventory.items[i][j]
-      local alpha = ovw.player.inventory.timers.fadeOut * (not item and 20 or (ovw.player.inventory.items[i][j].focus and 255 or 100))
+      local alpha = ovw.player.inventory.timers.fadeOut * (not item and 20 or (ovw.player.inventory.items[i][j].focus and 255 or 200))
       g.setColor(255, 255, 255, alpha)
-      if item then g.draw(item.image, 650 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5) end
+      if item then g.draw(item.image, 650 + (size + 2) * (i - 1), 100 + (size + 2) * (j - 1)) end
       g.rectangle('line', 650 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5, size, size)
       if item then
         if item.stacks then
@@ -210,10 +210,10 @@ function Hud:hotbar()
   local size = 40
   for i = 1, 5 do
     local item = ovw.player.hotbar.items[i]
-    local alpha = not item and 20 or (ovw.player.hotbar.items[i].active and 255 or 100)
+    local alpha = not item and 20 or (ovw.player.hotbar.items[i].active and 255 or 200)
     g.hotkeyTab(alpha, i, 2 + (size + 2) * (i - 1) + .5, 2 + .5 + size + 2, size, 10, 'bottom', nil, {'tab', 'e'})
     g.setColor(255, 255, 255, alpha)
-    if item then g.draw(item.image, 2 + (size + 2) * (i - 1) + .5, 2 + .5) end
+    if item then g.draw(item.image, 2 + (size + 2) * (i - 1), 2) end
     g.rectangle('line', 2 + (size + 2) * (i - 1) + .5, 2 + .5, size, size)
     if item then
       if item.stacks then
@@ -230,9 +230,9 @@ function Hud:arsenal()
   local size = 40
   for i = 1, 2 do
     local weapon = ovw.player.arsenal.weapons[i]
-    local alpha = not weapon and 20 or (ovw.player.arsenal.selected == i and 255 or 100)
+    local alpha = not weapon and 20 or (ovw.player.arsenal.selected == i and 255 or 200)
     g.setColor(255, 255, 255, alpha)
-    if weapon then g.draw(weapon.image, 2 + .5, 2 + (size + 2) * (i + 1) + .5) end
+    if weapon then g.draw(weapon.image, 2, 2 + (size + 2) * (i + 1)) end
     g.rectangle('line', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size, size)
     if weapon then
       if weapon.stacks then
@@ -267,12 +267,12 @@ function Hud:firstaid()
   for i = 1, 4 do
     local bodyPart = ovw.player.firstAid.bodyParts[i]
     local green, blue = 255, 255
-    local alpha = ovw.player.firstAid.timers.fadeOut * (bodyPart.wounded and 255 or (bodyPart.crippled and 255 or 100))
+    local alpha = ovw.player.firstAid.timers.fadeOut * (bodyPart.wounded and 255 or (bodyPart.crippled and 255 or 200))
     if bodyPart.crippled then blue = 0 end
     if bodyPart.wounded then green = 0 end
     g.hotkeyTab(alpha, i, 300 + .5 - 2, 220 + (size + 2) * (i - 1) + .5, 10, size, 'left', 'Tab')
     g.setColor(255, green, blue, alpha)
-    g.draw(bodyPart.image, 300 + .5, 220 + (size + 2) * (i - 1) + .5)
+    g.draw(bodyPart.image, 300, 220 + (size + 2) * (i - 1))
     g.rectangle('line', 300 + .5, 220 + (size + 2) * (i - 1) + .5, size, size)
     local val = bodyPart.val and bodyPart:val() or 0
     g.rectangle('fill', 300 + .5, 220 + (size + 2) * (i - 1) + size - 3 + .5, size * val, 3)
@@ -372,7 +372,7 @@ function Hud:mouse()
     g.setColor(255, 255, 255, 255)
     local item = self.grabbed.item
     if item then
-      g.draw(item.image, love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5)
+      g.draw(item.image, love.mouse.scaleX() + 15, love.mouse.scaleY() + 15)
       g.rectangle('line', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5, size, size)
       if item.stacks then
         g.print(item.stacks, love.mouse.scaleX() + 15 + .5 + 4, love.mouse.scaleY() + 15 + .5 + 1)

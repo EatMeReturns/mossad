@@ -1,10 +1,9 @@
 Item = class()
 
-itemImage = love.graphics.newImage('media/graphics/icon.png')
+Item.image = love.graphics.newImage('media/graphics/icons/icon.png')
 
 function Item:init()
   self.active = false
-  self.image = itemImage
   self.type = 'Passive' --Passive, Consumable, Active, Weapon
 end
 

@@ -17,6 +17,17 @@ Spiderling.collision.with = {
 			self:startSkitter()
 		end
 		return Enemy.collision.with.player(self, player, dx, dy)
+	end,
+
+	room = function(self, other, dx, dy)
+		if self.room then
+			if self.room ~= other then
+			self.room:removeObject(self)
+			other:addObject(self)
+			end
+		else
+			other:addObject(self)
+		end
 	end
 }
 Spiderling.radius = 10

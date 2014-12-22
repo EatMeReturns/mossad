@@ -31,7 +31,9 @@ function FirstAid:update()
     self.timers.fadeIn = 1 - self.timers.fadeOut
   end
 
-  table.with(self.bodyParts, 'update')
+  for i = 1, 4 do 
+    if started then self.bodyParts[i]:update() else break end
+  end
 end
 
 function FirstAid:setHeal(index)

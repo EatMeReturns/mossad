@@ -16,7 +16,7 @@ function BodyPart:init(name, index)
 	self.currentHealth = 15
 	self.maxHealth = 15
 
-	self.image = itemImage
+	self.image = Item.image
 end
 
 function BodyPart:update()

@@ -38,6 +38,7 @@ function Room:init()
 
   self.x, self.y = 0, 0
   self.width, self.height = 0, 0
+  self.radius = 0
 end
 
 function Room:destroy()
@@ -48,8 +49,9 @@ function Room:destroy()
   table.with(self.tiles, 'destroy')
   table.each(self.doors, function(door, side)
     door.rooms[side] = nil
-    door.connected = false
+    door:disconnect()
   end)
+  table.insert(ovw.house.roomsToCompute, self)
 end
 
 function Room:randomWall(dir)
@@ -76,10 +78,16 @@ function Room:removeObject(obj)
   self.objects[obj.id] = nil
 end
 
-function Room:computeCollision(x, y, w, h)
-  self.shape = ovw.collision.hc:addRectangle(x, y, w, h)
-  ovw.collision.hc:setPassive(self.shape)
-  self.shape.owner = self
+function Room:computeCollision()
+  if self.buildShape == 'circle' then
+    self.shape = ovw.collision.hc:addCircle(House.pos(nil, self.x + self.radius, self.y + self.radius, self.radius))
+    ovw.collision.hc:setPassive(self.shape)
+    self.shape.owner = self
+  else
+    self.shape = ovw.collision.hc:addRectangle(House.pos(nil, self.x, self.y, self.width, self.height))
+    ovw.collision.hc:setPassive(self.shape)
+    self.shape.owner = self
+  end
 end
 
 function Room:addDoor(door, side)
@@ -91,6 +99,7 @@ Door = class()
 function Door:init(rooms)
   self.connected = #rooms > 1
   self.rooms = rooms
+  self.tiles = {}
 end
 
 function Door:connect()
@@ -108,4 +117,12 @@ function Door:connect()
     self.connected = false
   end
   return room
+end
+
+function Door:disconnect()
+  table.each(self.tiles, function(tile, key)
+    table.with(self.tiles, 'destroy')
+  end)
+  table.each(self.rooms, function(room, key) ovw.house:computeTilesInRoom(room) end)
+  self.connected = false
 end

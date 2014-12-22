@@ -11,8 +11,9 @@ require 'app/rubymoth'
 require 'app/boss'
 require 'app/avian'
 
+
 local allEnemies = {Spiderling, Shade, InkRaven, RubyMoth}
-local extraBirds = {Spiderling, Shade, InkRaven, InkRaven}
+local extraBirds = {Spiderling, Shade, InkRaven, InkRaven, InkRaven, RubyMoth}
 onlyMoths = {RubyMoth}
 
 --------------------------------------------------------------------------------------
@@ -26,6 +27,8 @@ MainRectangle.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, 
 MainRectangle.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
 MainRectangle.floorType = 'Main'
 MainRectangle.biome = 'Main'
+
+MainRectangle.buildShape = 'rectangle'
 
 function MainRectangle:init(dir, w, h)
   Room.init(self)
@@ -58,12 +61,13 @@ end
 
 function MainRectangle:carveRoom(tileMap)
   --spawn tiles
-  for x = self.x, self.x + self.width do
-    for y = self.y, self.y + self.height do
-      tileMap[x] = tileMap[x] or {}
-      tileMap[x][y] = Tile(self.floorType, x, y, self)
-    end
-  end
+  --for x = self.x, self.x + self.width do
+  --  for y = self.y, self.y + self.height do
+  --    tileMap[x] = tileMap[x] or {}
+  --    tileMap[x][y] = Tile(self.floorType, x, y, self)
+  --  end
+  --end
+  House.carveRect(self.x, self.y, self.x + self.width, self.y + self.height, self, tileMap)
 
   --spawn walls
   for _, dir in pairs({'north', 'south', 'east', 'west'}) do
@@ -77,6 +81,59 @@ end
 
 --------------------------------------------------------------------------------------
 
+MainCircle = extend(Room)
+MainCircle.doorsToSpawn = 3
+MainCircle.enemyTypes = allEnemies
+MainCircle.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
+MainCircle.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
+MainCircle.floorType = 'Main'
+MainCircle.biome = 'Main'
+
+MainCircle.buildShape = 'circle'
+
+function MainCircle:init(dir, r)
+  Room.init(self)
+  
+  self.radius = r or love.math.randomNormal(1, 6)
+  self.radius = math.round(math.clamp(self.radius, 4, 8))
+  self.angle = 0
+  self.width = self.radius * 2
+  self.height = self.radius * 2
+
+  for i = -1, self.width do
+    self.walls.north[#self.walls.north + 1] = {x = i, y = -1, direction = 'north'}
+    self.walls.south[#self.walls.south + 1] = {x = i, y = self.height, direction = 'south'}
+  end
+
+  for i = -1, self.height do
+    self.walls.west[#self.walls.west + 1] = {x = -1, y = i, direction = 'west'}
+    self.walls.east[#self.walls.east + 1] = {x = self.width, y = i, direction = 'east'}
+  end
+end
+
+function MainCircle:spawnDoors(dir)
+  for i = 1, self.doorsToSpawn do
+    local spawnDir = table.random(directions)
+    local spawnDoorMap = {}
+    spawnDoorMap[spawnDir] = self
+    local spawnDoor = Door(spawnDoorMap)
+    self:addDoor(spawnDoor, spawnDir)
+  end
+end
+
+function MainCircle:carveRoom(tileMap)
+  --spawn tiles
+  --for x = self.x, self.x + self.width do
+  --  for y = self.y, self.y + self.height do
+  --    tileMap[x] = tileMap[x] or {}
+  --    tileMap[x][y] = Tile(self.floorType, x, y, self)
+  --  end
+  --end
+  House.carveRound(self.x + self.width / 2, self.y + self.height / 2, self.width / 2, self.height / 2, self, tileMap)
+end
+
+--------------------------------------------------------------------------------------
+
 MainCorridor = extend(Room)
 MainCorridor.doorsToSpawn = 1
 MainCorridor.enemyTypes = allEnemies
@@ -84,6 +141,8 @@ MainCorridor.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {
 MainCorridor.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
 MainCorridor.floorType = 'Main'
 MainCorridor.biome = 'Main'
+
+MainCorridor.buildShape = 'rectangle'
 
 function MainCorridor:init(dir)
   Room.init(self)
@@ -148,6 +207,8 @@ MainBossRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 MainBossRectangle.floorType = 'Main'
 MainBossRectangle.biome = 'Main'
 
+MainBossRectangle.buildShape = 'rectangle'
+
 function MainBossRectangle:init(dir, w, h, boss)
   BossRoom.init(self, boss)
 
@@ -204,6 +265,8 @@ MainShopRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
 MainShopRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 MainShopRectangle.floorType = 'Main'
 MainShopRectangle.biome = 'Main'
+
+MainShopRectangle.buildShape = 'rectangle'
 
 function MainShopRectangle:init(dir, w, h)
   Room.init(self)
@@ -342,7 +405,8 @@ roomSpawnTables =
 {
   Main = WeightedRandom(
     {
-      {MainRectangle, 0.75},
+      {MainCircle, 0.5},
+      {MainRectangle, 0.25},
       {MainShopRectangle, 0.1},
       {MainCorridor, 0.1},
       {GrayCorridor, 0.05}

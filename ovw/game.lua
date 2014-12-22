@@ -63,6 +63,9 @@ function Game:load()
   self.collision = Collision()
   self.menu = Menu()
   self.tutorial = Tutorial()
+  self.fileManager = FileManager()
+
+  self.toUpdate = {}
 end
 
 function Game:start(agility, armor, stamina)
@@ -81,22 +84,31 @@ function Game:start(agility, armor, stamina)
   self.menu.state = 'Paused'
 end
 
+function Game:quit()
+  self.fileManager:saveOptions()
+  love.event.quit()
+end
 
 function Game:update()
   if started then
     if not paused then
-      self.house:update()
-      self.player:update()
-      self.spells:update()
-      self.particles:update()
-      self.enemies:update()
-      self.npcs:update()
-      self.pickups:update()
-      if self.boss then self.boss:update() end
-      self.collision:resolve()
-      self.view:update()
-      self.hud.fader:update()
+      table.insert(self.toUpdate, self.house)
+      table.insert(self.toUpdate, self.player)
+      table.insert(self.toUpdate, self.spells)
+      table.insert(self.toUpdate, self.particles)
+      table.insert(self.toUpdate, self.enemies)
+      table.insert(self.toUpdate, self.npcs)
+      table.insert(self.toUpdate, self.pickups)
+      table.insert(self.toUpdate, self.boss)
+      table.insert(self.toUpdate, self.collision)
+      table.insert(self.toUpdate, self.view)
+      table.insert(self.toUpdate, self.hud.fader)
     end
+  end
+
+  for i = 1, #self.toUpdate do
+    if self.toUpdate[i] then self.toUpdate[i]:update() end
+    self.toUpdate[i] = nil
   end
 end
 
@@ -106,10 +118,10 @@ end
 
 function Game:restart()
   love.event.clear()
+  self.toUpdate = {}
   self.view = View()
   self.collision = Collision()
   self.menu = Menu()
-  --self.tutorial = nil Don't restart the tutorial, they already did it.
   self.hud = nil
   self.spells = nil
   self.particles = nil
@@ -122,6 +134,8 @@ function Game:restart()
 
   started = false
   paused = true
+
+  self.fileManager:loadOptions()
   --Overwatch:remove(ovw)
   --Overwatch:add(Game)
 end
@@ -139,6 +153,8 @@ function Game:fullscreen()
   local x, y = love.mouse.scaleX(), love.mouse.scaleY()
   love.window.setFullscreen(not love.window.getFullscreen())
   love.mouse.setPosition(x * (love.graphics.getWidth() / 800), y * (love.graphics.getHeight() / 600))
+
+  ovw.fileManager.optionsData.fullscreen = love.window.getFullscreen()
 end
 
 function Game:keypressed(key)

@@ -2,6 +2,8 @@ require 'app/item'
 
 BeholdEye = extend(Item)
 
+BeholdEye.image = love.graphics.newImage('media/graphics/icons/beholdeye.png')
+
 BeholdEye.name = 'Behold of the Eye'
 BeholdEye.pickupMessage = '\"The humans say that beauty is in the eye of the beholder, you know, but as usual they\'ve got it arse-about\"\n\nThe Behold of the Eye by Hal Duncan'
 

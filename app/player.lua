@@ -55,6 +55,7 @@ function Player:init(agility, armor, stamina)
   self.depth = -1
 
   self.inventory = Inventory()
+  self.inventory:add(BeholdEye())
 
   self.hotbar = Hotbar()
   self.hotbar:add(Glowstick())
@@ -134,7 +135,6 @@ function Player:update()
   if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then
     self.arsenal:update()
   end
-  self.firstAid:update()
 
   self.rotation = math.anglerp(self.rotation, math.direction(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.mouse.getX(), love.mouse.getY()), math.clamp(tickRate * 12, 0, 1))
   if self.rotation > math.pi then self.rotation = self.rotation - math.pi * 2 end
@@ -179,6 +179,8 @@ function Player:update()
       ovw.boss = Avian()
     end
   end
+  
+  self.firstAid:update()
 end
 
 function Player:draw()

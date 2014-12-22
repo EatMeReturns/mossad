@@ -36,6 +36,10 @@ function Collision:resolve()
   self.hc:update(tickRate)
 end
 
+function Collision:update() --just a naming scenario
+  self:resolve()
+end
+
 function Collision:register(obj)
   local shape
   if obj.collision.shape == 'rectangle' then

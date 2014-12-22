@@ -32,6 +32,9 @@ House.tilemap.Gray.ine = t(4, 0)
 House.tilemap.Gray.isw = t(3, 1)
 House.tilemap.Gray.ise = t(4, 1)
 
+House.tilemap.Main.none = t(0, 7)
+House.tilemap.Gray.none = t(0, 7)
+
 House.ambientColor = {255, 255, 255}
 House.targetAmbient = {255, 255, 255}
 
@@ -39,7 +42,7 @@ Tile = class()
 
 function Tile:init(type, x, y, room)
   self.type = type
-  self.tile = nil
+  self.tile = 'none'
   self.x = x
   self.y = y
   self.posX = self.x * 32 --self.x * ovw.house.cellSize
@@ -64,7 +67,9 @@ function Tile:init(type, x, y, room)
 end
 
 function Tile:destroy()
-  ovw.house.tiles[self.x][self.y] = nil
+  if ovw.house.tiles[self.x] then
+    ovw.house.tiles[self.x][self.y] = nil
+  end
 end
 
 function Tile:update()
@@ -93,6 +98,8 @@ function Tile:draw()
     local a = House.ambientColor
     love.graphics.setColor(self.color[1], self.color[2], self.color[3])
     local quad = House.tilemap[self.type][self.tile]
+    --if not quad then print('No quad! tile stats:', self.x, self.y, self.type, self.tile) end
+    --if self.tile == 'none' then print('Broken quad! tile stats:', self.x, self.y, self.type, self.tile) end
     love.graphics.draw(House.tileImage, quad, self.posX, self.posY, 0, self.sc, self.sc)
   end
 end

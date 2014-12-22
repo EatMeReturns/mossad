@@ -8,6 +8,10 @@ RubyMoth.collision.with.enemy = nil
 RubyMoth.collision.shape = 'circle'
 RubyMoth.radius = 10
 
+RubyMoth.image = love.graphics.newImage('media/graphics/enemies/rubyMoth.png')
+RubyMoth.image:setFilter('nearest')
+RubyMoth.anim = newAnimation(RubyMoth.image, 40, 40, 1)
+
 function RubyMoth:init(...)
 	Enemy.init(self, ...)
 
@@ -54,18 +58,22 @@ function RubyMoth:update()
 	self:setPosition(self.x, self.y)
 	self.speed = math.lerp(self.speed, self.followSpeed, math.clamp(tickRate, 0, 1))
 	self.angle = math.anglerp(self.angle, self.targetAngle, math.clamp(6 * tickRate, 0, 1))
+
+	self.anim:update(tickRate)
 end
 
 function RubyMoth:draw()
 	local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
 	local tx, ty = ovw.house:cell(self.x, self.y)
 	local v = ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
+	local brightness = 150
 	if self.state == 'follow' then
-		love.graphics.setColor(255, 255, 0, v)
+		love.graphics.setColor(brightness, brightness, brightness - 20, v)
 	else
-		love.graphics.setColor(255, 255, 255, v)
+		love.graphics.setColor(brightness, brightness, brightness, v)
 	end
-	self.shape:draw('line')
+	--self.shape:draw('line')
+	self.anim:draw(x, y)
 end
 
 function RubyMoth:scan()
