@@ -28,6 +28,10 @@ Enemy.collision.with = {
   end
 }
 
+Enemy.name = {}
+Enemy.name.singular = {'Enemy'}
+Enemy.name.pluralized = {'Enemies'}
+
 function Enemy:init(x, y, room)
   self.x = x
   self.y = y
@@ -68,6 +72,7 @@ Enemy.draw = f.empty --hurr durr
 Enemy.alert = f.empty --don't poke the sleeping bear
 
 function Enemy:hurt(amount)
+  table.each(ovw.buffs.objects, function(buff, key) if buff.enemyName and buff.enemyName == self.name.pluralized then amount = amount * buff.damageMultiplier end end)
   self.health = self.health - amount
   if self.health <= 0 then
     local function make(i) ovw.pickups:add(Pickup({x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10, itemType = i, room = self.room})) end

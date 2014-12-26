@@ -8,6 +8,10 @@ Shade.radius = 16
 
 Shade.image = love.graphics.newImage('media/graphics/wraith.png')
 
+Shade.name = {}
+Shade.name.singular = 'Shade'
+Shade.name.pluralized = 'Shades'
+
 function Shade:init(...)
   Enemy.init(self, ...)
 
@@ -17,8 +21,8 @@ function Shade:init(...)
   self.target = nil
   self.scanTimer = 0
   
-  self.chaseSpeed = 110
-  self.runSpeed = 80
+  self.chaseSpeed = 140
+  self.runSpeed = 140
   self.walkSpeed = 50
 
   self.damage = 5
@@ -51,7 +55,7 @@ end
 function Shade:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
-  local v = (ovw.house.tiles[tx] and ovw.house.tiles[tx][ty]) and ovw.house.tiles[tx][ty]:brightness() or 1
+  local v = ovw.house.tiles[tx] and ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
   if self.attackTimer > 0 then
     local a = .4
     local d = self.angle
@@ -123,7 +127,7 @@ function Shade:chase()
     self.x = self.x + math.dx(math.min(self.chaseSpeed * tickRate, minDis), self.angle)
     self.y = self.y + math.dy(math.min(self.chaseSpeed * tickRate, minDis), self.angle)
 
-    if dis < self.windupRange and self.attackTimer == 0 and self.windupTimer == 0 and self.fatigueTimer == 0 then
+    if dis < self.windupRange then
       self.state = 'windup'
       self.windupTimer = self.windupTime
     end
@@ -136,10 +140,11 @@ function Shade:windup()
   self.targetAngle = math.direction(self.x, self.y, self.target.x, self.target.y)
   self.x = self.x + math.dx(self.runSpeed * tickRate, self.angle)
   self.y = self.y + math.dy(self.runSpeed * tickRate, self.angle)
-  self.windupTimer = timer.rot(self.windupTimer, function()
+  self.windupTimer = self.windupTimer - tickRate
+  if self.windupTimer <= 0 then
     self.state = 'attack'
     self.attackTimer = self.attackTime
-  end)
+  end
 end
 
 function Shade:attack()
@@ -160,11 +165,11 @@ function Shade:attack()
     return
   end
   
-  self.attackTimer = timer.rot(self.attackTimer, function()
+  self.attackTimer = self.attackTimer - tickRate
+  if self.attackTimer <= 0 then
     self.state = 'fatigue'
     self.fatigueTimer = self.fatigueTime
-  end)
-
+  end
 end
 
 function Shade:fatigue()
@@ -174,7 +179,9 @@ function Shade:fatigue()
   self.x = self.x - math.dx(self.runSpeed * 2 * tickRate, self.angle)
   self.y = self.y - math.dy(self.runSpeed * 2 * tickRate, self.angle)
 
-  self.fatigueTimer = timer.rot(self.fatigueTimer, function()
+  self.fatigueTimer = self.fatigueTimer - tickRate
+  if self.fatigueTimer <= 0 then
     self.state = 'chase'
-  end)
+    --self.scanTimer = 1
+  end
 end

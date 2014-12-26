@@ -12,6 +12,10 @@ RubyMoth.image = love.graphics.newImage('media/graphics/enemies/rubyMoth.png')
 RubyMoth.image:setFilter('nearest')
 RubyMoth.anim = newAnimation(RubyMoth.image, 40, 40, 1)
 
+RubyMoth.name = {}
+RubyMoth.name.singular = 'Ruby Moth'
+RubyMoth.name.pluralized = 'Ruby Moths'
+
 function RubyMoth:init(...)
 	Enemy.init(self, ...)
 
@@ -65,7 +69,7 @@ end
 function RubyMoth:draw()
 	local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
 	local tx, ty = ovw.house:cell(self.x, self.y)
-	local v = ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
+	local v = ovw.house.tiles[tx] and ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
 	local brightness = 150
 	if self.state == 'follow' then
 		love.graphics.setColor(brightness, brightness, brightness - 20, v)
@@ -73,7 +77,7 @@ function RubyMoth:draw()
 		love.graphics.setColor(brightness, brightness, brightness, v)
 	end
 	--self.shape:draw('line')
-	self.anim:draw(x, y)
+	self.anim:draw(x - self.anim:getWidth() / 2, y - self.anim:getHeight() / 2)
 end
 
 function RubyMoth:scan()

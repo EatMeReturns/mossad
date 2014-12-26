@@ -34,6 +34,7 @@ end
 
 function FileManager:loadOptions()
 	love.window.setFullscreen(self.optionsData.fullscreen)
+	Tile.lightingShader:send('windowScale', {love.window.getWidth() / 800, love.window.getHeight() / 600})
 	ovw.tutorial.state = self.optionsData.tutorial and 'Begin' or 'Done'
 end
 

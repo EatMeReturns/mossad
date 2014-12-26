@@ -32,6 +32,10 @@ Spiderling.collision.with = {
 }
 Spiderling.radius = 10
 
+Spiderling.name = {}
+Spiderling.name.singular = 'Spiderling'
+Spiderling.name.pluralized = 'Spiderlings'
+
 -- States:
 --   lurk - scanning for the player
 --   skitter - roaming, waiting to attack
@@ -74,7 +78,7 @@ end
 function Spiderling:draw()
 	local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
 	local tx, ty = ovw.house:cell(self.x, self.y)
-	local v = ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
+	local v = ovw.house.tiles[tx] and ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
 	if self.state == 'bite' then
 		love.graphics.setColor(255, 0, 0, v)
 	elseif self.state ~= 'lurk' then

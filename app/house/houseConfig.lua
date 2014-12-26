@@ -36,3 +36,7 @@ House.increaseDifficulty = function()
   House.difficulty = House.difficulty + 1
   House.difficultyMult = House.difficultyMult + 0.1
 end
+
+House.getDifficulty = function(multiplier)
+  return multiplier and House.difficultyMult * (math.abs(ovw.house.currentFloor) + 1) or House.difficulty * (math.abs(ovw.house.currentFloor) + 1)
+end

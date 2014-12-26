@@ -1,6 +1,16 @@
 Player = class()
 Player.tag = 'player' --for collision
 
+Player.damageShader = love.graphics.newShader(
+  [[extern vec2 chroma;
+
+  vec4 effect(vec4 color, Image tex, vec2 tc, vec2 pc)
+  {
+     vec2 shift = chroma / 60;
+     vec2 inverseShift = vec2(shift.y, shift.x);
+     return vec4(Texel(tex,tc+shift).r, Texel(tex,tc+inverseShift).g, Texel(tex,tc-shift).b, Texel(tex,tc).a);
+  }]])
+
 Player.collision = {
   shape = 'circle',
   static = false,
@@ -11,15 +21,16 @@ Player.collision = {
 
     room = function(self, other)
       if self.room ~= other then
+        self.lastRoom = self.room
         self.room = other
-        if self.room.boss and self.room.biome ~= 'Main' then
-          ovw.house.biome = 'Main'
-          self.room.biome = 'Main'
-          ovw.house:sealRoom(self.room)
-          self.room:spawnBoss()
-        elseif ovw.house.biome ~= self.room.biome then if self.room.biome == 'Gray' then ovw.hud.fader:add('Fear is the mind killer...') end ovw.house.biome = self.room.biome end
+        self.room.event:triggerEvent()
+        if ovw.house.biome ~= self.room.biome then if self.room.biome == 'Gray' then ovw.hud.fader:add('Fear is the mind killer...') elseif self.room.biome == 'Great_Hall' then ovw.hud.fader:add('In this room, I am trivial.') end ovw.house.biome = self.room.biome end
         ovw.house:regenerate(self.room)
       end
+    end,
+
+    staircase = function(self, staircase)
+      ovw.house:changeFloor(staircase)
     end
   }
 }
@@ -55,16 +66,18 @@ function Player:init(agility, armor, stamina)
   self.depth = -1
 
   self.inventory = Inventory()
-  self.inventory:add(BeholdEye())
 
   self.hotbar = Hotbar()
-  self.hotbar:add(Glowstick())
+  self.hotbar:add(Glowstick(1))
 
   self.arsenal = Arsenal()
+  self.arsenal:add(Camera())
 
   self.firstAid = FirstAid()
 
   self.npc = nil
+
+  self.events = {}
 
   self.light = {
     minDis = 0,
@@ -111,6 +124,9 @@ function Player:init(agility, armor, stamina)
   self.healthRegen = 0
   self.staminaRegen = 0.1
 
+  --Inventory Flags
+  self.hasLasersight = false
+
   self.firstAid.debuffs = {
   {val = self.light.maxDis, modifier = 100},
   {val = self.agility, modifier = 1},
@@ -130,6 +146,10 @@ function Player:update()
   self:regen()
   self:move()
   self:turn()
+
+  --inventory-based flags get refreshed before inventory update
+  self.hasLaserSight = false
+
   self.inventory:update()
   self.hotbar:update()
   if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then
@@ -148,7 +168,7 @@ function Player:update()
     local head = self.firstAid.bodyParts[1]
     if self.battery > 0 then
       self.battery = self.battery - tickRate
-      if self.battery < self.batteryMax / 10 then self.flashlight.flicker = 0.75 * (self.battery / (self.batteryMax / 10)) else self.flashlight.flicker = 0.95 end
+      if self.battery < self.batteryMax / 10 then Tile.lightingShader:send('range', 10000 * self.battery / self.batteryMax) self.flashlight.flicker = 0.75 * (self.battery / (self.batteryMax / 10)) else Tile.lightingShader:send('range', 1000) self.flashlight.flicker = 0.95 end
       ovw.house:applyLight(self.flashlight, 'dynamic')
     elseif self.batteries > 0 then
       self.battery = self.batteryMax
@@ -179,8 +199,12 @@ function Player:update()
       ovw.boss = Avian()
     end
   end
-  
+
   self.firstAid:update()
+
+  table.with(self.events, 'updateEvent')
+
+  Player.damageShader:send('chroma', {ovw.view.shake, 0})
 end
 
 function Player:draw()
@@ -189,10 +213,30 @@ function Player:draw()
   local v = 255--math.clamp((ovw.house.tiles[tx] and ovw.house.tiles[tx][ty]) and ovw.house.tiles[tx][ty]:brightness() or 0 + 50, 0, 255)
   local a = ovw.house.ambientColor
   love.graphics.setColor(v * a[1] / 255, v * a[2] / 255, v * a[3] / 255)
-  love.graphics.draw(self.image, x, y + 12, self.angle - math.pi / 2, 1, 1, self.image:getWidth() / 2, self.image:getHeight() / 4)
+  love.graphics.setShader(Player.damageShader)
+  love.graphics.draw(self.image, x, y, self.angle - math.pi / 2, 1, 1, self.image:getWidth() / 2, self.image:getHeight() / 4)
+  --love.graphics.push()
+  --love.graphics.scale(1, -1)
+  --love.graphics.translate(0, -y * 2 - 50)
+  --love.graphics.draw(self.image, x, y, self.angle - math.pi / 2, 1, 1, self.image:getWidth() / 2, self.image:getHeight() / 4)
+  --love.graphics.pop()
+  love.graphics.setShader()
+
+  local weapon = self.arsenal.weapons[self.arsenal.selected]
+  if weapon and not self.hasLaserSight then
+    local x, y = self.x + weapon.tipOffset.getX(), self.y + weapon.tipOffset.getY()
+    local dis = math.distance(x, y, ovw.view:mouseX(), ovw.view:mouseY())
+    local x2, y2 = x + math.dx(dis, self.angle), y + math.dy(dis, self.angle)
+    --x, y = x + math.dx(dis, self.angle), y + math.dy(dis, self.angle)
+    love.graphics.setColor(150, 0, 0, 255)
+    love.graphics.circle('fill', x2, y2, 2)
+  end
+
+  self.inventory:draw()
 end
 
 function Player:keypressed(key)
+  if key == 'u' then Tile.useShader = not Tile.useShader end
   if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then
     local x = tonumber(key)
     if x and x >= 1 and x <= #self.hotbar.items then
@@ -299,7 +343,20 @@ function Player:move()
 end
 
 function Player:turn()
-  self.angle = math.direction(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.mouse.getX(), love.mouse.getY())
+  local weapon = self.arsenal.weapons[self.arsenal.selected]
+  local tipDirection = love.mouse.scaleDirection()
+  if weapon then
+    local distance = 2.5 * math.distance(love.graphics.unscaleX(self.x), love.graphics.unscaleY(self.y), love.graphics.unscaleX(self.x + weapon.tipOffset.getX()), love.graphics.unscaleY(self.y + weapon.tipOffset.getY()))
+    if distance < love.mouse.distance() then
+      tipDirection = math.direction(800 / 2 + weapon.tipOffset.getX(), 600 / 2 + weapon.tipOffset.getY(), love.mouse.scaleX(), love.mouse.scaleY())
+    else
+      tipDirection = tipDirection - math.pi / 60
+    end
+  end
+  --local tipDirection = weapon and math.direction(800 / 2 + weapon.tipOffset.getX(), 600 / 2 + weapon.tipOffset.getY(), love.mouse.scaleX(), love.mouse.scaleY()) or direction
+  self.angle = tipDirection--love.mouse.distance() > 75 and tipDirection or direction - math.pi / 60
+  --self.angle = math.pi * (math.sin(direction * 2) / 20 - 2 / math.distance(self.x, self.y, ovw.view:mouseX(), ovw.view:mouseY())) + direction
+  --Player.mirrorShader:send('rotation', self.angle)
 end
 
 function Player:roll()
@@ -315,7 +372,9 @@ function Player:roll()
 end
 
 function Player:hurt(amount)
-  amount = amount * ovw.house.difficultyMult
+  ovw.view.shake = ovw.view.shake + math.sqrt(amount) ^ 3
+  
+  amount = amount * ovw.house.getDifficulty(true)
 
   --smack a random body part
   local x = love.math.random() * 4
@@ -323,7 +382,6 @@ function Player:hurt(amount)
   self.firstAid.bodyParts[x]:damage(amount)
 
   self.lastHit = tick
-  ovw.view.shake = ovw.view.shake + math.sqrt(amount) ^ 3
 end
 
 function Player:learn(amount)

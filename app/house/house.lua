@@ -9,17 +9,17 @@ require 'app/house/roomTypes'
 
 local function randomFrom(t)
   if #t == 0 then return end
-  return table.random(t) --t[love.math.random(1, #t)]
+  return table.random(t)
 end
 
 function House:init()
-  --self.roomTypes = {RoomRectangle}
   self.rooms = {}
   self.idCounter = 1
 
+  self.floors = {}
+  self.currentFloor = 0 --0 is ground, negatives for underground
+  self:createFloor(self.currentFloor, true)
   self.tiles = {}
-
-  self.lightMap = {}
 
   self.biome = 'Main'
 
@@ -29,6 +29,10 @@ function House:init()
   self.roomsToCompute = {}
   self.roomsToShape = {}
   self.needShaping = false
+  self.floorReady = false
+
+  self.staircaseTimer = 3
+  self.staircaseReady = false
 
   self.shapes = {}
   self.newShapes = {}
@@ -57,40 +61,53 @@ function House:update()
     end
   end
 
+  if not self.staircaseReady then
+    self.staircaseTimer = self.staircaseTimer - tickRate
+    if self.staircaseTimer <= 0 then
+      self.staircaseReady = true
+      self.staircaseTimer = 3
+    end
+  end
+
   self.algorithmTimer = self.algorithmTimer - tickRate
   if self.algorithmTimer <= 0 then
-    if #self.doorsToConnect > 0 then
+    self.floorReady = false
+    if #self.doorsToConnect > 0 then --print('connecting')
       local room = self.doorsToConnect[1]:connect()
       table.remove(self.doorsToConnect, 1)
       if room then
         table.insert(self.roomsToCompute, room)
-        --self:computeTilesInRoom(room)
-        --self:computeShapesInRoom(room)
       end
       self.needShaping = true
-    elseif #self.roomsToDestroy > 0 then
+
+    elseif #self.roomsToDestroy > 0 then --print('destroying')
       self.roomsToDestroy[1]:destroy()
       table.remove(self.roomsToDestroy, 1)
       self.needShaping = true
-    elseif #self.roomsToCompute > 0 then
+
+    elseif #self.roomsToCompute > 0 then --print('computing')
       local room = self.roomsToCompute[1]
       if self.roomsToCompute[1] then
         self:computeTilesInRoom(room)
-        --self:computeShapesInRoom(room)
       end
       table.remove(self.roomsToCompute, 1)
       self.needShaping = true
-    elseif self.needShaping then
-      --self:computeTiles()
+
+    elseif self.needShaping then --print('start shaping')
       self.roomsToShape = {}
       table.each(self.rooms, function(room, key) table.insert(self.roomsToShape, room) end)
       self.needShaping = false
-    elseif #self.roomsToShape > 0 then
+
+    elseif #self.roomsToShape > 0 then --print('shaping')
       self:computeShapesInRoom(self.roomsToShape[1])
       table.remove(self.roomsToShape, 1)
-      if #self.roomsToShape == 0 then
+      if #self.roomsToShape == 0 then --print('done')
         self:computeShapes()
       end
+
+    else
+      self.floorReady = true
+
     end
     self.algorithmTimer = .06
   end
@@ -164,25 +181,21 @@ function House:sealRoom(room)
   ovw.collision.hc:setPassive(shape)
   shape.owner = self
   table.insert(room.sealShapes, shape)
-  --table.insert(self.shapes, shape)
   
   shape = ovw.collision.hc:addRectangle(x, y, border, h)
   ovw.collision.hc:setPassive(shape)
   shape.owner = self
   table.insert(room.sealShapes, shape)
-  --table.insert(self.shapes, shape)
 
   shape = ovw.collision.hc:addRectangle(x + w + border, y, border, h)
   ovw.collision.hc:setPassive(shape)
   shape.owner = self
   table.insert(room.sealShapes, shape)
-  --table.insert(self.shapes, shape)
 
   shape = ovw.collision.hc:addRectangle(x, y + h + border, w, border)
   ovw.collision.hc:setPassive(shape)
   shape.owner = self
   table.insert(room.sealShapes, shape)
-  --table.insert(self.shapes, shape)
 end
 
 function House:openRoom(room)
@@ -190,12 +203,8 @@ function House:openRoom(room)
 end
 
 function House:generate()
-  
-  local function get(x, y)
-    return self.tiles[x] and self.tiles[x][y]
-  end
-
   local room = MainRectangle()
+  room.event = Event()
   room.x, room.y = 100, 100
   self:addRoom(room, 0, 0)
   ovw.pickups:add(Pickup({x = (room.x + room.width / 2) * self.cellSize + love.math.random() * 300 - 150, y = (room.y + room.height / 2) * self.cellSize + love.math.random() * 300 - 150, itemType = Pistol, room = room}))
@@ -207,7 +216,7 @@ function House:generate()
   end
 
   self:computeTiles()
-  self:computeShapes()
+  self:forceComputeShapes()
 end
 
 function House:regenerate(pRoom)
@@ -216,18 +225,15 @@ function House:regenerate(pRoom)
 
   table.each(self.rooms, function(room, index)
     local dis = math.distance(pRoomX, pRoomY, self:pos(room.x + room.width / 2, room.y + room.height / 2))
+    if room.buildShape == 'circle' then dis = dis - self:pos(room.radius) end
     if dis <= self.spawnRange / 2 then
       table.each(room.doors, function(door, index)
-        if not door.connected then table.insert(self.doorsToConnect, door) end--door:connect() end
+        if not door.connected then table.insert(self.doorsToConnect, door) end
       end)
     elseif dis > self.spawnRange then
-      --if self.biome == 'Main' or room.biome ~= self.biome then room:destroy() end
-      table.insert(self.roomsToDestroy, room)--room:destroy()
+      table.insert(self.roomsToDestroy, room)
     end
   end)
-
-  --self:computeTiles()
-  --self:computeShapes()
 end
 
 function House:createRoom(oldRoom, oldDirection)
@@ -240,7 +246,7 @@ function House:createRoom(oldRoom, oldDirection)
   doorMap[oldDirection] = oldRoom
 
   -- Create a destination room
-  local newRoom = (roomSpawnTables[self.biome]:pick()[1])(oldDirection) --randomFrom(self.roomTypes)()
+  local newRoom = (roomSpawnTables[self.biome]:pick()[1])(oldDirection)
 
   -- Generate unconnected doors on spawn
   newRoom:spawnDoors(oldDirection)
@@ -299,9 +305,156 @@ function House:addRoom(room, enemyCount, pickupCount)
   if room.npcSpawnTable then self:spawnNPCsInRoom(room.npcSpawnTable:pick()[1], room) end
   self:spawnEnemiesInRoom(enemyCount, room)
   self:spawnPickupsInRoom(pickupCount, room)
+  room:spawnFurniture()
 
   --map collision pieces
   room:computeCollision()
+end
+
+function House:refreshRoom(room, id)
+  self.rooms[id] = room
+  room:carveRoom(self.tiles)
+  room:computeCollision()
+
+  table.each(room.doors, function(door, side) self:refreshDoor(room, door) end)
+end
+
+function House:refreshDoor(room, door)
+  if #door.tiles > 0 then
+    local x, y = door.tiles[1].x, door.tiles[1].y
+    local x1, y1, x2, y2 = x, y, x, y
+    for i = 2, #door.tiles do
+      x, y = door.tiles[i].x, door.tiles[i].y
+      x1 = math.min(x1, x)
+      y1 = math.min(y1, y)
+      x2 = math.max(x2, x)
+      y2 = math.max(y2, y)
+    end
+    House.carveRect(x1, y1, x2, y2, room, self.tiles)
+    self:computeTilesInDoor(x1, y1, x2, y2)
+    self:computeTilesInRoom(room)
+  end
+end
+
+function House:createFloor(i, override)
+  if not override and i == self.currentFloor then
+    --you're already on this floor?
+  else
+    self.floors[i] = {rooms = {}, spells = {}, particles = {}, enemies = {}, npcs = {}, pickups = {}, furniture = {}}
+  end
+end
+
+function House:setFloor(i)
+  if i == self.currentFloor then
+    --you're already on this floor?
+    print('already on this floor, how did you do that?')
+  else
+    --does the new floor exist yet?
+    if not self.floors[i] then
+      self:createFloor(i)
+    end
+
+    --store the currentFloor rooms
+    self:createFloor(self.currentFloor, true)
+    local currentFloorData = self.floors[self.currentFloor]
+    table.each(self.rooms, function(room, id) ovw.collision.hc:remove(room.shape) currentFloorData.rooms[id] = room end)
+    self:saveFloorDataBlock(self.currentFloor, 'spells')
+    self:saveFloorDataBlock(self.currentFloor, 'particles', true) --PARTICLES DON'T COLLIDE
+    self:saveFloorDataBlock(self.currentFloor, 'enemies')
+    self:saveFloorDataBlock(self.currentFloor, 'npcs')
+    self:saveFloorDataBlock(self.currentFloor, 'pickups')
+    self:saveFloorDataBlock(self.currentFloor, 'furniture')
+
+    --clear the floor structure
+    self.rooms = {}
+    self.tiles = {}
+    self:forceComputeShapes()
+    self:computeTiles()
+
+    --load the newFloor rooms
+    self.currentFloor = i
+    local newFloorData = self.floors[self.currentFloor]
+    table.each(newFloorData.rooms, function(room, id) self:refreshRoom(room, id) end)
+    self:loadFloorDataBlock(self.currentFloor, 'spells')
+    self:loadFloorDataBlock(self.currentFloor, 'particles', true) --PARTICLES DON'T COLLIDE
+    self:loadFloorDataBlock(self.currentFloor, 'enemies')
+    self:loadFloorDataBlock(self.currentFloor, 'npcs')
+    self:loadFloorDataBlock(self.currentFloor, 'pickups')
+    self:loadFloorDataBlock(self.currentFloor, 'furniture')
+
+    --build the floor, don't cross the streams!
+    ovw:clearStreams()
+    self:computeTiles()
+    self:forceComputeShapes()
+  end
+end
+
+function House:saveFloorDataBlock(floor, block, noCollision, noDrawing)
+  table.each(ovw[block].objects, function(object, id)
+    if not noCollision then ovw.collision:unregister(object) end
+    if not noDrawing then ovw.view:unregister(object) end
+    self.floors[floor][block][id] = object
+    ovw[block].objects[id] = nil
+  end)
+end
+
+function House:loadFloorDataBlock(floor, block, noCollision, noDrawing)
+  table.each(self.floors[floor][block], function(object, id)
+    if not noCollision then ovw.collision:register(object) end
+    if not noDrawing then ovw.view:register(object) end
+    ovw[block].objects[id] = object
+    self.floors[floor][block][id] = nil
+  end)
+end
+
+function House:changeFloor(staircase)
+  if self.floorReady and self.staircaseReady then
+    self.staircaseReady = false
+    local targetFloor = 0
+    local newDirection
+    if staircase.direction == 'up' then
+      targetFloor = self.currentFloor + 1
+      newDirection = 'down'
+    elseif staircase.direction == 'down' then
+      targetFloor = self.currentFloor - 1
+      newDirection = 'up'
+    else
+      --staircase.direction is the exact floor to change to, from like an elevator or something
+      targetFloor = staircase.direction
+      newDirection = self.currentFloor
+    end
+
+    staircase:remove()
+
+    local spawnX, spawnY = self:cell(ovw.player.x, ovw.player.y)
+    local needRoom = true
+    self:setFloor(targetFloor)
+    for id, room in pairs(self.rooms) do
+      if room:hasTile(spawnX, spawnY) then
+        needRoom = false
+        room:createStaircase(spawnX, spawnY, newDirection)
+      end
+      self:computeTilesInRoom(room)
+      self:computeShapesInRoom(room)
+    end
+    if needRoom then
+      local newRoom = MainRectangle()
+      newRoom.event = Event()
+      newRoom.x, newRoom.y = spawnX - math.round(newRoom.width / 2), spawnY - math.round(newRoom.height / 2)
+      self:addRoom(newRoom, 0, 0)
+
+      newRoom:createStaircase(spawnX, spawnY, newDirection)
+
+      for i = 1, self.roomCount do
+        -- Pick a source room
+        self:createRoom(newRoom)
+      end
+    end
+
+    --build the floor
+    self:computeTiles()
+    self:forceComputeShapes()
+  end
 end
 
 function House:carveDoor(x1, y1, x2, y2, room, door)
@@ -330,10 +483,12 @@ function House.carveRect(x1, y1, x2, y2, room, tileMap)
     for x = x1, x2, dx do
       tileMap[x] = tileMap[x] or {}
       if not tileMap[x][y] then
-       tileMap[x][y] = Tile(room.floorType, x, y, room)
+        tileMap[x][y] = Tile(room.floorType, x, y, room)
         table.insert(carvedTiles, tileMap[x][y])
       end
+      if dx == 0 then break end
     end
+    if dy == 0 then break end
   end
 
   return carvedTiles
@@ -527,9 +682,6 @@ function House:computeTilesInDoor(x1, y1, x2, y2)
 end
 
 function House:computeShapesInRoom(room)
-  --table.each(self.shapes, function(shape, key) ovw.collision.hc:remove(shape) end)
-  --self.shapes = {}
-
   local function coords(x, y, w, d)
     if d == 'n' then
       return ovw.collision.hc:addRectangle(self:pos(x, y, w, .5))
@@ -801,8 +953,8 @@ function House:spawnNPCsInRoom(npc, room)
   ovw.npcs:add((npc)({x = x, y = y, room = room}))
 end
 
-function House:spawnEnemiesInRoom(amt, room)
-  --local types = {Spiderling, Shade, InkRaven}
+function House:spawnEnemiesInRoom(amt, room, enemyType)
+  local enemies = {}
   for i = 1, amt do
     local x, y = self:pos(room.x, room.y)
     if room.buildShape == 'circle' then
@@ -814,20 +966,21 @@ function House:spawnEnemiesInRoom(amt, room)
       x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
       y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
     end
-    local enemyType = randomFrom(room.enemyTypes)
-    if enemyType == Spiderling then
+    local spawnEnemyType = enemyType and enemyType or randomFrom(room.enemyTypes)
+    if spawnEnemyType == Spiderling then
       for i = 1, 2 + math.ceil(love.math.random() * 2) do
-        ovw.enemies:add(Spiderling(x, y, room))
+        table.insert(enemies, ovw.enemies:add(Spiderling(x, y, room)))
         x = x + love.math.random() * self.cellSize - self.cellSize / 2
         y = y + love.math.random() * self.cellSize - self.cellSize / 2
       end
     else
-      ovw.enemies:add(enemyType(x, y, room))
+      table.insert(enemies, ovw.enemies:add(spawnEnemyType(x, y, room)))
     end
   end
+  return enemies
 end
 
-function House:spawnPickupsInRoom(amt, room)
+function House:spawnPickupsInRoom(amt, room, pickupType)
   local function make(i)
     local x, y = self:pos(room.x, room.y)
     if room.buildShape == 'circle' then
@@ -839,16 +992,28 @@ function House:spawnPickupsInRoom(amt, room)
       x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
       y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
     end
-    ovw.pickups:add(Pickup({x = x, y = y, itemType = i, room = room}))
-    return true
+    return ovw.pickups:add(Pickup({x = x, y = y, itemType = i, room = room}))
   end
 
-  if amt > 2 then
-    amt = amt - 2
-    make((makeLootTable('Rare'))[1])
+  local pickups = {}
+
+  if pickupType then
+    for i = 1, amt do
+      table.insert(pickups, make(pickupType))
+    end
+  else
+    if amt > 2 then
+      amt = amt - 2
+      table.insert(pickups, make((makeLootTable('Rare'))[1]))
+    end
+
+    for i = 1, amt do
+      local lootTable = makeLootTable('Common')
+      for j = 1, #lootTable do
+        table.insert(pickups, make(lootTable[j]))
+      end
+    end
   end
 
-  for i = 1, amt do
-    table.each(makeLootTable('Common'), function(v, k) make(v) end)
-  end
+  return pickups
 end

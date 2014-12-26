@@ -17,7 +17,10 @@ function Weapon:init()
   self.image = Item.image
   self.type = 'Weapon'
 
-  self.tipOffset = {getX = function() return math.sin(ovw.player.angle + math.pi * 37 / 72) * 40 end, getY = function() return 10 - math.cos(ovw.player.angle + math.pi * 37 / 72) * 40 end}
+  self.tipOffset = {
+    getX = function() return math.sin(love.mouse.scaleDirection() + math.pi * .54) * 43 end,
+    getY = function() return -math.cos(love.mouse.scaleDirection() + math.pi * .54) * 43 end
+  }
 
   self.currentClip = self.clip
 end
@@ -61,25 +64,7 @@ function Weapon:update()
       if self.timers.shoot == 0 and (self.timers.reload == 0 or self.fireMode == 'Single') and self.currentClip > 0 then
         self.state = 'Firing'
 
-        for i = 0, self.spread - 1 do 
-          local x, y = ovw.player.x + self.tipOffset.getX(), ovw.player.y + self.tipOffset.getY()
-          local dAngle = math.direction(x, y, ovw.view:mouseX(), ovw.view:mouseY()) + i * (love.math.random() * 0.075 - 0.0375)
-
-          if self.name == 'Flaregun' then
-            ovw.spells:add(FlareSpell(dAngle, x, y, self.damage))
-          else
-            local x2, y2 = x + math.dx(Weapon.MAX_RANGE, dAngle), y + math.dy(Weapon.MAX_RANGE, dAngle)
-            local wall, d = ovw.collision:lineTest(x, y, x2, y2, 'wall', false, true)
-            d = d == math.huge and Weapon.MAX_RANGE or d
-
-            x2, y2 = x + math.dx(d, dAngle), y + math.dy(d, dAngle)
-            local enemy, d2 = ovw.collision:lineTest(x, y, x2, y2, 'enemy', false, true)
-            d = d2 == math.huge and d or d2
-            
-            if enemy then enemy:hurt(self.damage) end
-            ovw.particles:add(MuzzleFlash(d, dAngle, {x = x, y = y}, self.damage))
-          end
-        end
+        self:fire()
 
         self.timers.shoot = self.fireSpeed
         self.currentClip = self.currentClip - 1
@@ -87,6 +72,24 @@ function Weapon:update()
         if self.currentClip == 0 then self.timers.reload = self.reloadSpeed * (10 / (10 + ovw.player.agility)) end
       end
     end
+  end
+end
+
+function Weapon:fire()
+  local x, y = ovw.player.x + self.tipOffset.getX(), ovw.player.y + self.tipOffset.getY()
+  for i = 0, self.spread - 1 do 
+    local dAngle = ovw.player.angle + i * (love.math.random() * 0.075 - 0.0375)
+
+    local x2, y2 = x + math.dx(Weapon.MAX_RANGE, dAngle), y + math.dy(Weapon.MAX_RANGE, dAngle)
+    local wall, d = ovw.collision:lineTest(x, y, x2, y2, 'wall', false, true)
+    d = d == math.huge and Weapon.MAX_RANGE or d
+
+    x2, y2 = x + math.dx(d, dAngle), y + math.dy(d, dAngle)
+    local enemy, d2 = ovw.collision:lineTest(x, y, x2, y2, 'enemy', false, true)
+    d = d2 == math.huge and d or d2
+    
+    if enemy then enemy:hurt(self.damage) end
+    ovw.particles:add(MuzzleFlash(d, dAngle, {x = x, y = y}, self.damage))
   end
 end
 

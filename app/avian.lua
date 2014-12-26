@@ -14,6 +14,10 @@ end
 
 Avian.title = 'Avian Flies'
 
+Avian.name = {}
+Avian.name.singular = 'the Avian'
+Avian.name.pluralized = 'the Avian'
+
 -- States:
 --   derp: just moving around/repositioning
 --   gust: blowing the player backwards

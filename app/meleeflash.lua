@@ -2,11 +2,8 @@ MeleeFlash = class()
 
 function MeleeFlash:init(dis, dir, pos, theta)
 	self.x, self.y = pos.x, pos.y
-	self.vertices = {
-		self.x + math.cos(dir - theta / 2) * dis, self.y + math.sin(dir - theta / 2) * dis,
-		self.x, self.y,
-		self.x + math.cos(dir + theta / 2) * dis, self.y + math.sin(dir + theta / 2) * dis
-	}
+	self.dis = dis
+	self.angles = {dir - theta / 2, dir + theta / 2}
 
 	self.health = .2
 	self.depth = -5
@@ -27,6 +24,6 @@ function MeleeFlash:draw()
 	local v = self.health * 255
 	love.graphics.setColor(255, 255, 255, v)
 	love.graphics.setLineWidth(2)
-	love.graphics.polygon('fill', self.vertices[1], self.vertices[2], self.vertices[3], self.vertices[4], self.vertices[5], self.vertices[6])
+	love.graphics.arc('fill', self.x, self.y, self.dis, self.angles[1], self.angles[2], 10)
 	love.graphics.setLineWidth(1)
 end

@@ -17,6 +17,10 @@ InkRaven.collision.with = {
 }
 InkRaven.radius = 16
 
+InkRaven.name = {}
+InkRaven.name.singular = 'Ink Raven'
+InkRaven.name.pluralized = 'Ink Ravens'
+
 -- States:
 --   lurk - waiting for the player to gets let in range
 --   glide - hovering around player, getting ready to attack
@@ -61,7 +65,7 @@ end
 function InkRaven:draw()
   local x, y = math.lerp(self.prevX, self.x, tickDelta / tickRate), math.lerp(self.prevY, self.y, tickDelta / tickRate)
   local tx, ty = ovw.house:cell(self.x, self.y)
-  local v = ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
+  local v = ovw.house.tiles[tx] and ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
   if self.state == 'swoop' then
     love.graphics.setColor(255, 0, 0, v)
   elseif self.state ~= 'lurk' then

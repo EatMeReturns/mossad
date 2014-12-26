@@ -35,7 +35,7 @@ end
 
 function Pickup:draw()
   local tx, ty = ovw.house:cell(self.x, self.y)
-  local v = (ovw.house.tiles[tx] and ovw.house.tiles[tx][ty]) and ovw.house.tiles[tx][ty]:brightness() or 1
+  local v = ovw.house.tiles[tx] and ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
   if self.state == 'Hot' then
     local val = self.timers.pickup / (self.pickupSpeed * (10 / (10 + ovw.player.agility)))
     love.graphics.setColor(255, 255, 0, 255)

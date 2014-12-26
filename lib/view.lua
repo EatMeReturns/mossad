@@ -6,6 +6,7 @@ function View:init()
   self.w = 800 / 1.3
   self.h = 600 / 1.3
   self.toDraw = {}
+  self.drawStream = {}
   self.target = nil
 
   self:resize()
@@ -34,8 +35,8 @@ function View:update()
   local prevw, prevh = self.w, self.h
   local xf, yf = love.mouse.scaleX() / love.graphics.getWidth(), love.mouse.scaleY() / love.graphics.getHeight()
   self.scale = math.round(math.lerp(self.scale, self.targetScale, 5 * tickRate) / .01) * .01
-  self.w = 800 / self.scale--love.graphics.getWidth() / self.scale
-  self.h = 600 / self.scale--love.graphics.getHeight() / self.scale
+  self.w = 800 / self.scale
+  self.h = 600 / self.scale
   self.x = self.x + (prevw - self.w) * xf
   self.y = self.y + (prevh - self.h) * yf
 
@@ -62,7 +63,12 @@ function View:draw()
       return a.depth > b.depth
     end)
 
-    for _, v in ipairs(self.toDraw) do f.exe(v.draw, v) end
+    for _, v in ipairs(self.toDraw) do table.insert(self.drawStream, v) end
+
+    for i = 1, #self.drawStream do
+      if self.drawStream[i] then f.exe(self.drawStream[i].draw, self.drawStream[i]) end
+      self.drawStream[i] = nil
+    end
     
     if devMode then
       local xx, yy = ovw.house:snap(x, y)
@@ -149,4 +155,8 @@ end
 
 function View:mouseY()
   return math.round(((love.mouse.scaleY() - self.margin) / self.scale) + self.y)
+end
+
+function View:playerPosOnScreen()
+  return {ovw.player.x - self.x, ovw.player.y - self.y}
 end

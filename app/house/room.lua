@@ -11,7 +11,7 @@ Room.collision.with = {
 Room.spawnDoors = 2
 Room.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
 Room.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
-Room.floorType = 'main'
+Room.floorType = 'main' --determines tileset data
 
 local function randomFrom(t)
   if #t == 0 then return end
@@ -21,6 +21,9 @@ end
 local dirs = {'north', 'south', 'east', 'west'}
 
 function Room:init()
+  local eventTable = self.eventSpawnTable:pick()[1]
+  self.event = eventTable[1](self, eventTable[2])
+  
   self.walls = {
     north = {},
     south = {},
@@ -41,16 +44,20 @@ function Room:init()
   self.radius = 0
 end
 
+Room.spawnDoors = f.empty
+Room.carveRoom = f.empty
+Room.spawnFurniture = f.empty
+
 function Room:destroy()
   ovw.house:removeRoom(self)
   if self.sealShapes then table.each(self.sealShapes, function(shape, key) ovw.collision.hc:remove(shape) end) self.sealShapes = nil end
   ovw.collision.hc:remove(self.shape)
   table.with(self.objects, 'remove')
-  table.with(self.tiles, 'destroy')
   table.each(self.doors, function(door, side)
     door.rooms[side] = nil
     door:disconnect()
   end)
+  table.with(self.tiles, 'destroy')
   table.insert(ovw.house.roomsToCompute, self)
 end
 
@@ -65,6 +72,15 @@ end
 
 function Room:moveTo(x, y)
   self.x, self.y = x, y
+end
+
+function Room:hasTile(x, y)
+  for i = 1, #self.tiles do
+    if self.tiles[i] then
+      if self.tiles[i].x == x and self.tiles[i].y == y then return true end
+    end
+  end
+  return false
 end
 
 function Room:addObject(obj)
@@ -94,6 +110,12 @@ function Room:addDoor(door, side)
   self.doors[side] = door
 end
 
+function Room:createStaircase(x, y, direction)
+  ovw.furniture:add(Staircase(self, x * House.cellSize, y * House.cellSize, direction))
+end
+
+-------------------------------------------------------------------------------------
+
 Door = class()
 
 function Door:init(rooms)
@@ -103,7 +125,6 @@ function Door:init(rooms)
 end
 
 function Door:connect()
-  assert(not self.connected)
   local room = nil
   if self.rooms.west and not self.rooms.east then
     self.connected, room = ovw.house:createRoom(self.rooms.west, 'west')
@@ -125,4 +146,46 @@ function Door:disconnect()
   end)
   table.each(self.rooms, function(room, key) ovw.house:computeTilesInRoom(room) end)
   self.connected = false
+end
+
+-------------------------------------------------------------------------------------
+
+Staircase = class()
+
+Staircase.tag = 'staircase'
+Staircase.collision = {
+  shape = 'rectangle',
+  with = {}
+}
+
+function Staircase:init(room, x, y, direction)
+  self.room = room
+  self.x = x
+  self.y = y
+  self.direction = direction --up, down, or an integer
+
+  self.width = 32
+  self.height = 32
+
+  self.room:addObject(self)
+  ovw.collision:register(self)
+  ovw.view:register(self)
+end
+
+function Staircase:destroy()
+  self.room:removeObject(self)
+  ovw.collision:unregister(self)
+  ovw.view:unregister(self)
+end
+
+function Staircase:remove()
+  ovw.furniture:remove(self)
+end
+
+function Staircase:draw()
+  local tx, ty = ovw.house:cell(self.x, self.y)
+  local v = ovw.house.tiles[tx] and ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
+  love.graphics.setColor(255, 255, 255, v)
+  self.shape:draw('line')
+  love.graphics.print(self.direction, self.x + 5, self.y + 5)
 end

@@ -11,7 +11,7 @@ Shop.radius = 20
 function Shop:init(data)
 	NPC.init(self, data)
 
-	self.name = 'Battle-Scarred Trader'
+	self.name = love.math.random() < .5 and 'Battle-Scarred Trader' or 'Orphaned Peddler'
 	self.noteTag = ' ammo'
 	self.items = {}
 	table.insert(self.items, table.copy(self.itemTables.Rare:pick()[1]))

@@ -23,7 +23,9 @@ function Game:load()
       {Crossbow, .2},
       {Flaregun, .2},
       {Rifle, .2},
-      {BeholdEye, .2}}, 1.2)
+      {BeholdEye, .2},
+      {LaserSight, .2},
+      {Camera, .2}}, 1.6)
 
   ----------------------------------------------------------------------------------
 
@@ -66,15 +68,19 @@ function Game:load()
   self.fileManager = FileManager()
 
   self.toUpdate = {}
+
+  love.mouse.setCursor(love.mouse.newCursor('media/graphics/cursors/green.png', 0, 0))
 end
 
 function Game:start(agility, armor, stamina)
   self.hud = Hud()
+  self.buffs = Manager()
   self.spells = Manager()
   self.particles = Manager()
   self.enemies = Manager()
   self.npcs = Manager()
   self.pickups = Manager()
+  self.furniture = Manager()
   self.house = House()
   self.player = Player(agility, armor, stamina)
   self.boss = nil
@@ -94,11 +100,13 @@ function Game:update()
     if not paused then
       table.insert(self.toUpdate, self.house)
       table.insert(self.toUpdate, self.player)
+      table.insert(self.toUpdate, self.buffs)
       table.insert(self.toUpdate, self.spells)
       table.insert(self.toUpdate, self.particles)
       table.insert(self.toUpdate, self.enemies)
       table.insert(self.toUpdate, self.npcs)
       table.insert(self.toUpdate, self.pickups)
+      table.insert(self.toUpdate, self.furniture)
       table.insert(self.toUpdate, self.boss)
       table.insert(self.toUpdate, self.collision)
       table.insert(self.toUpdate, self.view)
@@ -118,16 +126,18 @@ end
 
 function Game:restart()
   love.event.clear()
-  self.toUpdate = {}
+  self:clearStreams()
   self.view = View()
   self.collision = Collision()
   self.menu = Menu()
   self.hud = nil
+  self.buffs = nil
   self.spells = nil
   self.particles = nil
   self.enemies = nil
   self.npcs = nil
   self.pickups = nil
+  self.furniture = nil
   self.house = nil
   self.player = nil
   self.boss = nil
@@ -138,6 +148,11 @@ function Game:restart()
   self.fileManager:loadOptions()
   --Overwatch:remove(ovw)
   --Overwatch:add(Game)
+end
+
+function Game:clearStreams()
+  self.toUpdate = {}
+  self.view.drawStream = {}
 end
 
 function Game:focus(focus)
@@ -151,7 +166,8 @@ end
 
 function Game:fullscreen()
   local x, y = love.mouse.scaleX(), love.mouse.scaleY()
-  love.window.setFullscreen(not love.window.getFullscreen())
+  love.window.setFullscreen(not love.window.getFullscreen(), 'desktop')
+  Tile.lightingShader:send('windowScale', {love.window.getWidth() / 800, love.window.getHeight() / 600})
   love.mouse.setPosition(x * (love.graphics.getWidth() / 800), y * (love.graphics.getHeight() / 600))
 
   ovw.fileManager.optionsData.fullscreen = love.window.getFullscreen()

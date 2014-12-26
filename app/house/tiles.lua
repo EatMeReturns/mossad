@@ -1,53 +1,95 @@
-House.tileImage = love.graphics.newImage('media/graphics/newTiles.png')
+House.tileImage = love.graphics.newImage('media/graphics/newTiles2.png')
 local w, h = House.tileImage:getDimensions()
 local function t(x, y) return love.graphics.newQuad(1 + (x * 35), 1 + (y * 35), 32, 32, w, h) end
 House.tilemap = {}
+
+-------------------------------------------------------------------------------------
+
 House.tilemap.Main = {}
-House.tilemap.Main.c = t(1, 4)
-House.tilemap.Main.n = t(1, 3)
-House.tilemap.Main.s = t(1, 5)
-House.tilemap.Main.e = t(2, 4)
-House.tilemap.Main.w = t(0, 4)
-House.tilemap.Main.nw = t(0, 3)
-House.tilemap.Main.ne = t(2, 3)
-House.tilemap.Main.sw = t(0, 5)
-House.tilemap.Main.se = t(2, 5)
-House.tilemap.Main.inw = t(3, 3)
-House.tilemap.Main.ine = t(4, 3)
-House.tilemap.Main.isw = t(3, 4)
-House.tilemap.Main.ise = t(4, 4)
+House.tilemap.Main.rectangle = {}
+House.tilemap.Main.rectangle.c = t(1, 4)
+House.tilemap.Main.rectangle.n = t(1, 3)
+House.tilemap.Main.rectangle.s = t(1, 5)
+House.tilemap.Main.rectangle.e = t(2, 4)
+House.tilemap.Main.rectangle.w = t(0, 4)
+House.tilemap.Main.rectangle.nw = t(0, 3)
+House.tilemap.Main.rectangle.ne = t(2, 3)
+House.tilemap.Main.rectangle.sw = t(0, 5)
+House.tilemap.Main.rectangle.se = t(2, 5)
+House.tilemap.Main.rectangle.inw = t(3, 3)
+House.tilemap.Main.rectangle.ine = t(4, 3)
+House.tilemap.Main.rectangle.isw = t(3, 4)
+House.tilemap.Main.rectangle.ise = t(4, 4)
+
+House.tilemap.Main.circle = {}
+House.tilemap.Main.circle.c = t(1, 4)
+House.tilemap.Main.circle.n = t(1, 3)
+House.tilemap.Main.circle.s = t(1, 5)
+House.tilemap.Main.circle.e = t(2, 4)
+House.tilemap.Main.circle.w = t(0, 4)
+House.tilemap.Main.circle.nw = t(5, 3)
+House.tilemap.Main.circle.ne = t(6, 3)
+House.tilemap.Main.circle.sw = t(5, 4)
+House.tilemap.Main.circle.se = t(6, 4)
+House.tilemap.Main.circle.inw = t(3, 3)
+House.tilemap.Main.circle.ine = t(4, 3)
+House.tilemap.Main.circle.isw = t(3, 4)
+House.tilemap.Main.circle.ise = t(4, 4)
+
+-------------------------------------------------------------------------------------
 
 House.tilemap.Gray = {}
-House.tilemap.Gray.c = t(1, 1)
-House.tilemap.Gray.n = t(1, 0)
-House.tilemap.Gray.s = t(1, 2)
-House.tilemap.Gray.e = t(2, 1)
-House.tilemap.Gray.w = t(0, 1)
-House.tilemap.Gray.nw = t(0, 0)
-House.tilemap.Gray.ne = t(2, 0)
-House.tilemap.Gray.sw = t(0, 2)
-House.tilemap.Gray.se = t(2, 2)
-House.tilemap.Gray.inw = t(3, 0)
-House.tilemap.Gray.ine = t(4, 0)
-House.tilemap.Gray.isw = t(3, 1)
-House.tilemap.Gray.ise = t(4, 1)
+House.tilemap.Gray.rectangle = {}
+House.tilemap.Gray.rectangle.c = t(1, 1)
+House.tilemap.Gray.rectangle.n = t(1, 0)
+House.tilemap.Gray.rectangle.s = t(1, 2)
+House.tilemap.Gray.rectangle.e = t(2, 1)
+House.tilemap.Gray.rectangle.w = t(0, 1)
+House.tilemap.Gray.rectangle.nw = t(0, 0)
+House.tilemap.Gray.rectangle.ne = t(2, 0)
+House.tilemap.Gray.rectangle.sw = t(0, 2)
+House.tilemap.Gray.rectangle.se = t(2, 2)
+House.tilemap.Gray.rectangle.inw = t(3, 0)
+House.tilemap.Gray.rectangle.ine = t(4, 0)
+House.tilemap.Gray.rectangle.isw = t(3, 1)
+House.tilemap.Gray.rectangle.ise = t(4, 1)
 
-House.tilemap.Main.none = t(0, 7)
-House.tilemap.Gray.none = t(0, 7)
+-------------------------------------------------------------------------------------
+
+House.tilemap.Main.rectangle.none = t(0, 7)
+House.tilemap.Main.circle.none = t(0, 7)
+House.tilemap.Gray.rectangle.none = t(0, 7)
 
 House.ambientColor = {255, 255, 255}
 House.targetAmbient = {255, 255, 255}
 
 Tile = class()
 
+Tile.lightingShader = love.graphics.newShader(
+  [[extern number range;
+    extern vec2 playerPosOnScreen;
+    extern vec4 tileColor;
+    extern vec2 windowScale;
+
+  vec4 effect(vec4 color, Image tex, vec2 tc, vec2 pc)
+  {
+    number dis = distance(playerPosOnScreen, pc / windowScale);
+    dis = 1 - dis / max(600, range);
+    return tileColor / 255 * sqrt(vec4(dis, dis, dis, 1)) * Texel(tex, tc);
+  }]])
+
+Tile.lightingShader:send('range', 1000)
+Tile.lightingShader:send('windowScale', {love.window.getWidth() / 800, love.window.getHeight() / 600})
+Tile.useShader = true
+
 function Tile:init(type, x, y, room)
   self.type = type
   self.tile = 'none'
   self.x = x
   self.y = y
-  self.posX = self.x * 32 --self.x * ovw.house.cellSize
-  self.posY = self.y * 32 --self.y * ovw.house.cellSize
-  self.sc = 32 / 32 --ovw.house.cellSize / 32
+  self.posX = self.x * House.cellSize --self.x * ovw.house.cellSize
+  self.posY = self.y * House.cellSize --self.y * ovw.house.cellSize
+  self.sc = House.cellSize / 32 --ovw.house.cellSize / 32
   self.ambient = 0
   self.dynamic = 0
   self.Brightness = 0
@@ -60,6 +102,9 @@ function Tile:init(type, x, y, room)
   if room then
     table.insert(room.tiles, self)
     self.roomID = room.id
+    self.buildShape = room.buildShape
+  else
+    self.buildShape = 'rectangle'
   end
 
   self.visible = false
@@ -95,12 +140,15 @@ end
 
 function Tile:draw()
   if self.Brightness > .01 then
-    local a = House.ambientColor
+    if Tile.useShader then
+      Tile.lightingShader:send('tileColor', self.color)
+      Tile.lightingShader:send('playerPosOnScreen', ovw.view:playerPosOnScreen())
+      love.graphics.setShader(Tile.lightingShader)
+    end
     love.graphics.setColor(self.color[1], self.color[2], self.color[3])
-    local quad = House.tilemap[self.type][self.tile]
-    --if not quad then print('No quad! tile stats:', self.x, self.y, self.type, self.tile) end
-    --if self.tile == 'none' then print('Broken quad! tile stats:', self.x, self.y, self.type, self.tile) end
+    local quad = House.tilemap[self.type][self.buildShape][self.tile]
     love.graphics.draw(House.tileImage, quad, self.posX, self.posY, 0, self.sc, self.sc)
+    love.graphics.setShader()
   end
 end
 

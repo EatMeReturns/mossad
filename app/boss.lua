@@ -4,8 +4,6 @@ Boss.tag = 'enemy'
 Boss.collision = {}
 Boss.collision.with = {}
 
-Boss.title = 'Nameless Boss is a Bug'
-
 function Boss.collision.with.wall(self, other, dx, dy)
   self:setPosition(self.x + dx, self.y + dy)
 end
@@ -25,6 +23,12 @@ function Boss.collision.with.room(self, other, dx, dy)
   end
 end
 
+Boss.title = 'Nameless Boss is a Bug'
+
+Boss.name = {}
+Boss.name.singular = 'The Boss'
+Boss.name.pluralized = 'The Boss'
+
 function Boss:init()
   self.x = ovw.house:pos(ovw.player.room.x + ovw.player.room.width / 2)
   self.y = ovw.house:pos(ovw.player.room.y + ovw.player.room.height / 2) - 100
@@ -40,12 +44,11 @@ Boss.update = f.empty
 Boss.draw = f.empty
 
 function Boss:destroy()
-  ovw.house:openRoom(ovw.player.room)
-  ovw.house:increaseDifficulty()
+  self.room.event:endEvent()
   self.room:removeObject(self)
   ovw.collision:unregister(self)
   ovw.view:unregister(self)
-  ovw.hud.fader:add('an evil has been thwarted... for now')
+  ovw.hud.fader:add('An evil has been thwarted... for now.')
 end
 
 function Boss:remove()

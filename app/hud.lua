@@ -26,7 +26,9 @@ function Hud:gui()
   if not paused then
     self:blood()
   end
+  love.graphics.setShader(Player.damageShader)
   self:title()
+  love.graphics.setShader()
   if ovw.player.npc then self:npc() end
   self:flashlight()
   self:stamina()
@@ -54,7 +56,17 @@ end
 function Hud:title()
   --info
   local text = 'Mossad\'s Labyrinth'
-  local subtext = paused and '[Game Paused]' or 'The ' .. ovw.house.biome .. ' Floor'
+  local subtext = 'The ' .. ovw.house.biome .. ' Floor'
+  subtext = ovw.house.biome == 'Great_Hall' and 'A Very Large Space' or subtext
+  subtext = paused and '[Game Paused]' or subtext
+  local event = ovw.player.room.event
+  if event.triggered and event.showTimer and event.timer > 0 then
+    subtext = subtext .. ', ' .. math.ceil(event.timer * 10) / 10 .. ' seconds remain'
+  elseif ovw.house.currentFloor < 0 then
+    subtext = subtext .. ', Basement Level ' .. math.abs(ovw.house.currentFloor)
+  else
+    subtext = subtext .. ', Level ' .. ovw.house.currentFloor
+  end
   local color = {255, 255, 255, 255}
 
   --flags
@@ -289,14 +301,14 @@ function Hud:buffs()
   local buffs = {}
   local alpha = 100 + ovw.player.firstAid.timers.fadeOut * 155
 
-  ovw.spells:each(function(spell, key) 
-    if spell.type == 'Buff' then table.insert(buffs, spell) end
+  ovw.buffs:each(function(buff, key) 
+    table.insert(buffs, buff)
   end)
 
   table.each(buffs, function(buff, index)
     local val = buff:val()
     local maxVal = buff:maxVal() / 10
-    local name = buff.buffName
+    local name = buff.name
     local x, y = 2 + .5, 250 + 22 * (index - 1) + .5
     local ww, hh = 75, 3
     g.setColor(255, math.min(255, 255 * val * 2), math.max(0, 510 * (val - 0.5)), alpha)
@@ -685,7 +697,7 @@ function Hud:mouseOverSlot(x, y, size)
 end
 
 function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMods)
-  color = {255, 255, 255, alpha}
+  color = {175, 175, 175, alpha}
 
   local pkey = hkey
   if hkey == 'space' and not keyMod then

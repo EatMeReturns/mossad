@@ -142,6 +142,13 @@ timer.rot = function(val, fn) if not val or val == 0 then return val end if val 
 function love.graphics.width(x) x = x or 1 return love.window.getWidth() * x end
 function love.graphics.height(x) x = x or 1 return love.window.getHeight() * x end
 function love.graphics.minUnit(x) return math.min(love.graphics.width(x), love.graphics.height(x)) end
+function love.graphics.scaleX(x) return x / (love.graphics.getWidth() / 800) end
+function love.graphics.scaleY(y) return y / (love.graphics.getHeight() / 600) end
+function love.graphics.unscaleX(x) return x * (love.graphics.getWidth() / 800) end
+function love.graphics.unscaleY(y) return y * (love.graphics.getHeight() / 600) end
 
-function love.mouse.scaleX() return love.mouse.getX() / (love.graphics.getWidth() / 800) end
-function love.mouse.scaleY() return love.mouse.getY() / (love.graphics.getHeight() / 600) end
+function love.mouse.scaleX() return love.graphics.scaleX(love.mouse.getX()) end
+function love.mouse.scaleY() return love.graphics.scaleY(love.mouse.getY()) end
+function love.mouse.direction() return math.direction(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.mouse.getX(), love.mouse.getY()) end
+function love.mouse.scaleDirection() return math.direction(800 / 2, 600 / 2, love.mouse.scaleX(), love.mouse.scaleY()) end
+function love.mouse.distance() return math.distance(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.mouse.getX(), love.mouse.getY()) end
