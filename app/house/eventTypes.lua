@@ -1,17 +1,9 @@
 require 'app/house/room'
 require 'app/house/event'
 
-require 'app/npc'
-require 'app/shop'
-
-require 'app/enemy'
-require 'app/spiderling'
-require 'app/shade'
-require 'app/inkraven'
-require 'app/rubymoth'
-
-require 'app/boss'
-require 'app/avian'
+load 'app/npcs'
+load 'app/enemies'
+load 'app/bosses'
 
 ---------------------------------------------------------------------------------------
 ---BOSS--------------------------------------------------------------------------------
@@ -61,7 +53,7 @@ end
 function TrapEvent:triggerEvent()
 	if not self.triggered then
 		Event.triggerEvent(self)
-		local amt = House.getDifficulty() * 3
+		local amt = House.getDifficulty(true) * 3
 		self.enemies = ovw.house:spawnEnemiesInRoom(amt, self.room, self.enemyType)
 		self.timer = 10 + House.getDifficulty() * 2
 		ovw.house:sealRoom(self.room)
@@ -107,7 +99,8 @@ RejectEvent.dis, RejectEvent.dir, RejectEvent.maxDis, RejectEvent.source = 0, 0,
 function RejectEvent:init(room, direction)
 	Event.init(self, room)
 	self.direction = direction
-	self.timer = .3
+	self.timer = 1
+	self.time = 1
 end
 
 function RejectEvent:triggerEvent()
@@ -120,7 +113,6 @@ function RejectEvent:triggerEvent()
 			if ovw.player.y < House.cellSize * (self.room.y + self.room.height / 2) then self.direction = 'up'
 			else self.direction = 'down' end
 		end
-		self.timer = .3
 		ovw.hud.fader:add('What is this wind...?')
 	end
 end
@@ -166,12 +158,13 @@ function RejectEvent:updateEvent()
 					self:endEvent()
 				end
 
-				self.maxDis = math.min(self.maxDis * 2, 750)
-				self.timer = .1
+				self.maxDis = math.min(self.maxDis * 2, 500)
+				self.time = self.time ^ 2 * .8
+				self.timer = self.time
 				ovw.house:computeTilesInRoom(self.room)
 			end
 
-			local newMax = self.maxDis * (ovw.player.speed / ovw.player.maxSpeed)
+			local newMax = self.maxDis * (1 + ovw.player.speed / ovw.player.maxSpeed)
 			self.dis = math.distance(self.source.x, self.source.y, ovw.player.x, ovw.player.y)
 			self.dis = math.max(newMax - self.dis, 0) / newMax
 			self.dir = math.direction(self.source.x, self.source.y, ovw.player.x, ovw.player.y)
@@ -197,3 +190,42 @@ function RejectEvent:endEvent()
 		self.room:destroy()
 	end
 end
+
+---------------------------------------------------------------------------------------
+---ASSIST------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+
+--A crippled person approaches the player and begs for a first aid kit.
+--You can:
+--A) give him a kit, at which point he either thanks you, follows you, or gives you a
+--reward.
+--B) kill him, at which point he either drops great loot, becomes a miniboss, or nada
+--C) ignore him, at which point he either turns in to a miniboss or upon leaving the
+--room you hear him die.
+
+---------------------------------------------------------------------------------------
+---GLORY-------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+
+--A person is fighting a very large number of enemies. One of the following happens:
+--A) the enemies kill him and then you
+--B) you manage to fend off the swarm, and the person has died and dropped good loot
+--C) the person dies andbecomes a miniboss, and the room becomes incredibly challenging
+--D) the person runs through to another room, with the swarm following him
+
+---------------------------------------------------------------------------------------
+---STAIRS------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+
+--A hidden area opens up, revealing a staircase from which comes:
+--A) nothing.
+--B) a horde of enemies/a miniboss
+--C) an npc
+
+---------------------------------------------------------------------------------------
+---COLLAPSE----------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+
+--The floor collapses beneath you. you either:
+--A) fall down a floor and take damage.
+--B) use skills/speed/items to go back out the way you came in time

@@ -24,7 +24,7 @@ Player.collision = {
         self.lastRoom = self.room
         self.room = other
         self.room.event:triggerEvent()
-        if ovw.house.biome ~= self.room.biome then if self.room.biome == 'Gray' then ovw.hud.fader:add('Fear is the mind killer...') elseif self.room.biome == 'Great_Hall' then ovw.hud.fader:add('In this room, I am trivial.') end ovw.house.biome = self.room.biome end
+        if ovw.house.biome ~= self.room.biome then if biomeFaderMessages[self.room.biome].enter then ovw.hud.fader:add(biomeFaderMessages[self.room.biome].enter) end ovw.house.biome = self.room.biome end
         ovw.house:regenerate(self.room)
       end
     end,
@@ -49,10 +49,11 @@ function Player:init(agility, armor, stamina)
   self.rollDir = 0
   
   self.speed = 0
-  self.maxSpeed = 100
-  self.runModifier = 125
+  self.maxSpeed = 150
+  self.runModifier = 100
 
   self.lastHit = tick - (1 / tickRate)
+  self.mouseOverUI = false
 
   --self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
   --self.backImage = love.graphics.newImage('media/graphics/anImageBack.png')
@@ -71,13 +72,13 @@ function Player:init(agility, armor, stamina)
   self.hotbar:add(Glowstick(1))
 
   self.arsenal = Arsenal()
-  self.arsenal:add(Camera())
 
   self.firstAid = FirstAid()
 
   self.npc = nil
 
   self.events = {}
+  self.followers = {}
 
   self.light = {
     minDis = 0,
@@ -85,7 +86,6 @@ function Player:init(agility, armor, stamina)
     shape = 'circle',
     intensity = 0.5,
     falloff = 0.9,
-    posterization = 1,
     flicker = 1,
     color = {255, 255, 255, 0}
   }
@@ -98,7 +98,6 @@ function Player:init(agility, armor, stamina)
     angle = math.pi / 5,
     intensity = .7,
     falloff = 1,
-    posterization = 1,
     flicker = 0.95,
     color = {255, 175, 100, 0.75} --the fourth value is color intensity, not alpha
   }
@@ -121,17 +120,36 @@ function Player:init(agility, armor, stamina)
   self.drawLevel = self.level
   self.levelPoints = 0
 
-  self.healthRegen = 0
+  --Stats with Modifiers, Modifiers, Multipliers, and Flags that are reset on each update
+  self.healthRegen = .05
   self.staminaRegen = 0.1
+  --- Multipliers
+  self.damageMultiplier = 1
+  self.ammoMultiplier = 1
+  self.experienceMultiplier = 1
+  self.lifeStealMultiplier = 0
+  self.energyStealMultiplier = 0
+  --- Modifiers
+  self.speedModifier = 0
+  self.agilityModifier = 0
+  self.armorModifier = 0
+  self.staminaModifier = 0
+  self.lightMaxRangeModifier = 0
+  --- Flags
+  self.hasLaserSight = false
+  self.hasChargeMelee = false
+  self.hasFreeRun = false
 
-  --Inventory Flags
-  self.hasLasersight = false
+  --Orb Pools
+  self.orbs = {}
+  self.orbs.health = 0
+  self.orbs.stamina = 0
 
   self.firstAid.debuffs = {
-  {val = self.light.maxDis, modifier = 100},
-  {val = self.agility, modifier = 1},
-  {val = self.stamina, modifier = 1},
-  {val = self.maxSpeed, modifier = 50}
+    {val = 'lightMaxRangeModifier', modifier = 50},
+    {val = 'agilityModifier', modifier = 1},
+    {val = 'staminaModifier', modifier = 1},
+    {val = 'speedModifier', modifier = 50} 
   }
   
   ovw.collision:register(self)
@@ -139,27 +157,67 @@ function Player:init(agility, armor, stamina)
   ovw.view:setTarget(self)
 end
 
+function Player:getStat(stat, useModifier)
+  assert(stat == 'stamina' or stat == 'armor' or stat == 'agility')
+  return self[stat] + (useModifier and self[stat .. 'Modifier'] or 0)
+end
+
 function Player:update()
+  --STAT RESETS -------------------------
+  self.healthRegen = .05
+  self.staminaRegen = 0.1
+  --- Multipliers
+  self.damageMultiplier = 1
+  self.ammoMultiplier = 1
+  self.experienceMultiplier = 1
+  self.lifeStealMultiplier = 0
+  self.energyStealMultiplier = 0
+  --- Modifiers
+  self.speedModifier = 0
+  self.agilityModifier = 0
+  self.armorModifier = 0
+  self.staminaModifier = 0
+  self.lightMaxRangeModifier = 0
+  --- Flags
+  self.hasLaserSight = false
+  self.hasChargeMelee = false
+  self.hasFreeRun = false
+
+  --CRIPPLING DEBUFFS -------------------
+  for i = 1, 4 do
+    if self.firstAid.bodyParts[i].crippled then
+      local debuff = self.firstAid.debuffs[i]
+      self[debuff.val] = self[debuff.val] - debuff.modifier
+    end
+  end
+
+  --STAT MODS AND ITEMS -----------------
+  self.inventory:update()
+  self.hotbar:update()
+  if not love.keyboard.isDown('tab') then
+    self.arsenal:update()
+  end
+  self:regen()
+
+  --POSITIONING -------------------------
   self.prevX = self.x
   self.prevY = self.y
 
-  self:regen()
   self:move()
   self:turn()
-
-  --inventory-based flags get refreshed before inventory update
-  self.hasLaserSight = false
-
-  self.inventory:update()
-  self.hotbar:update()
-  if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then
-    self.arsenal:update()
-  end
 
   self.rotation = math.anglerp(self.rotation, math.direction(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.mouse.getX(), love.mouse.getY()), math.clamp(tickRate * 12, 0, 1))
   if self.rotation > math.pi then self.rotation = self.rotation - math.pi * 2 end
   if self.rotation < -math.pi then self.rotation = self.rotation + math.pi * 2 end
 
+  --CURSOR AND UI -----------------------
+  if self.mouseOverUI or paused or love.keyboard.isDown('tab') then
+    love.mouse.setCursor(cursors.pointer)
+  else
+    love.mouse.setCursor(cursors.target)
+  end
+
+  --LIGHTING ----------------------------
   self.light.x, self.light.y = self.x, self.y
   ovw.house:applyLight(self.light, 'ambient')
 
@@ -168,7 +226,7 @@ function Player:update()
     local head = self.firstAid.bodyParts[1]
     if self.battery > 0 then
       self.battery = self.battery - tickRate
-      if self.battery < self.batteryMax / 10 then Tile.lightingShader:send('range', 10000 * self.battery / self.batteryMax) self.flashlight.flicker = 0.75 * (self.battery / (self.batteryMax / 10)) else Tile.lightingShader:send('range', 1000) self.flashlight.flicker = 0.95 end
+      if self.battery < self.batteryMax / 10 then self.flashlight.flicker = 0.75 * (self.battery / (self.batteryMax / 10)) else self.flashlight.flicker = 0.95 end
       ovw.house:applyLight(self.flashlight, 'dynamic')
     elseif self.batteries > 0 then
       self.battery = self.batteryMax
@@ -182,29 +240,14 @@ function Player:update()
     end
   end
 
-  if not ovw.boss then
-    local tx, ty = ovw.house:cell(self.x, self.y)
-    local inside = true
-
-    for x = tx - 1, tx + 1 do
-      for y = ty - 1, ty + 1 do
-        local t = ovw.house.tiles[x] and ovw.house.tiles[x][y]
-        if not t or t.type ~= 'boss' or t.tile ~= 'c' then inside = false break end
-      end
-    end
-
-    if inside then
-      ovw.hud.fader:add('caw caw, motherfucker.')
-      ovw.house:sealBossRoom()
-      ovw.boss = Avian()
-    end
-  end
-
-  self.firstAid:update()
-
+  --ROOM AND EVENTS --------------------
   table.with(self.events, 'updateEvent')
 
+  --GRAPHICS ---------------------------
   Player.damageShader:send('chroma', {ovw.view.shake, 0})
+
+  --FIRST AID -------------------------- [CAN'T END THE GAME IN THE MIDDLE OF AN UPDATE]
+  self.firstAid:update()
 end
 
 function Player:draw()
@@ -213,7 +256,7 @@ function Player:draw()
   local v = 255--math.clamp((ovw.house.tiles[tx] and ovw.house.tiles[tx][ty]) and ovw.house.tiles[tx][ty]:brightness() or 0 + 50, 0, 255)
   local a = ovw.house.ambientColor
   love.graphics.setColor(v * a[1] / 255, v * a[2] / 255, v * a[3] / 255)
-  love.graphics.setShader(Player.damageShader)
+  if useShader then love.graphics.setShader(Player.damageShader) end
   love.graphics.draw(self.image, x, y, self.angle - math.pi / 2, 1, 1, self.image:getWidth() / 2, self.image:getHeight() / 4)
   --love.graphics.push()
   --love.graphics.scale(1, -1)
@@ -223,7 +266,7 @@ function Player:draw()
   love.graphics.setShader()
 
   local weapon = self.arsenal.weapons[self.arsenal.selected]
-  if weapon and not self.hasLaserSight then
+  if weapon and not self.hasLaserSight and not self.mouseOverUI and not love.keyboard.isDown('tab') then
     local x, y = self.x + weapon.tipOffset.getX(), self.y + weapon.tipOffset.getY()
     local dis = math.distance(x, y, ovw.view:mouseX(), ovw.view:mouseY())
     local x2, y2 = x + math.dx(dis, self.angle), y + math.dy(dis, self.angle)
@@ -236,23 +279,23 @@ function Player:draw()
 end
 
 function Player:keypressed(key)
-  if key == 'u' then Tile.useShader = not Tile.useShader end
-  if not (love.keyboard.isDown('e') or love.keyboard.isDown('tab')) then
+  if key == 'u' then useShader = not useShader end --move to options menu
+  if not love.keyboard.isDown('tab') then --just tab
     local x = tonumber(key)
-    if x and x >= 1 and x <= #self.hotbar.items then
-      self.hotbar:activate(x, love.keyboard.isDown('lalt'))
+    if x and x >= 1 and x <= 5 then
+      self.hotbar:activate(x, love.keyboard.isDown('lshift')) --shift uses?
     end
-    if love.keyboard.isDown('lalt') and key == 'f' then
+    if key == 'f' then --just f
       self.flashlightOn = not self.flashlightOn
     end
-    if key == 'q' then
+    if key == 'q' then --not implemented yet
       self.hotbar:drop()
     end
     if key == ' ' then
       self:roll()
     end
     self.arsenal:keypressed(key)
-  elseif love.keyboard.isDown('tab') then
+  else --include 'e' functionality if nec.
     local x = tonumber(key)
     if x and x >= 1 and x <= 4 then
       self.firstAid:setHeal(x)
@@ -283,10 +326,20 @@ function Player:setPosition(x, y)
 end
 
 function Player:regen()
+  --orbs
+  local orbHealthRegen = self.orbs.health * tickRate
+  self.orbs.health = self.orbs.health - orbHealthRegen
+  self.healthRegen = self.healthRegen + orbHealthRegen
+
+  local orbStaminaRegen = self.orbs.stamina * tickRate
+  self.orbs.stamina = self.orbs.stamina - orbStaminaRegen
+  self.staminaRegen = self.staminaRegen + orbStaminaRegen
+
+  --apply regeneration
   table.with(self.firstAid.bodyParts, 'regen')
-  if self.energy < self.stamina then
-    self.energy = self.energy + self.stamina * self.staminaRegen * tickRate
-    if self.energy > self.stamina then self.energy = self.stamina end
+  if self.energy < self:getStat('stamina', true) then
+    self.energy = self.energy + self:getStat('stamina', true) * self.staminaRegen * tickRate
+    if self.energy > self:getStat('stamina', true) then self.energy = self:getStat('stamina', true) end
   end
 end
 
@@ -300,7 +353,7 @@ function Player:move()
   local dx, dy = nil, nil
   local dir = 0
 
-  if moving then self.speed = self.maxSpeed
+  if moving then self.speed = self.maxSpeed + self.speedModifier
     if running then
       self.speed = self.speed + self.runModifier
       self.energy = self.energy - tickRate
@@ -385,6 +438,7 @@ function Player:hurt(amount)
 end
 
 function Player:learn(amount)
+  amount = amount * self.experienceMultiplier
   self.exp = self.exp + amount
   local reqExp = 50 + self.level * 20
   while self.exp >= reqExp do

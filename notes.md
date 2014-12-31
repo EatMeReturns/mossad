@@ -52,33 +52,32 @@ The **Pistol**, **Shotgun**, **Crossbow**, **Flare Gun**, and **Assault Rifle** 
 
 The **Eversack** is a passive item that allows the player to carry an unlimited amount of items and equipment. Furthermore, carry weight no longer incurs a movespeed penalty.
 
+The **Agate** is a base crafting item that is combined with elements to create passive stones that boost your core stats.
+
+**Elements** are modifier crafting items that can be crafted together to create interesting combinations.
+
 #### Categories:
 - **Passive**: Behold of the Eye, Scaled Shield, Eversack
 - **Utility**: Glowsticks, Fishing Line, Spinneret, Special Ammo?, Traps?
 - **Active**: Solar Flare, Blinkstone
 - **Weapon**: Scaled Shield, Inktalons, Pistol, Shotgun, Crossbow, Flare Gun, Assault Rifle
 - **Other**: Ammo, First Aid Supplies, Currency?, Upgrade Materials?
+- **Crafting**: Bases (Agate) and Modifiers (Elements) combine to create other item types
 
 Combat Rules
 ---
 
-- Taking damage occurs per-body section; the direction the player faces and the direction of the damage source determines whether it is a hit to the Head, L/R Arm, Torso, or L/R Leg.
--If a body section is hit hard enough, often enough, or enough times in a short period of time, it will become crippled.
-- A crippled body part will debuff the player; one arm slows melee attacks and makes projectiles less accurate, two arms disables the player's ability to attack, one leg slows the player, two legs almost immobilizes the player, the head reduces the player's vision, and the torso reduces carry capacity and turn rate.
-- If a crippled body section is hit hard enough, often enough, or enough times in a short period of time, it will become mortally wounded.
+- Taking damage occurs per-body section;  whether it is a hit to the Head, Arms, Torso, or Legs is determined randomly.
+-If a body section reaches 0 health, it will become crippled.
+- A crippled body part will debuff the player; the arms reduce thte player's agility, the legs slow the player down, the head reduces the player's vision, and the torso reduces the player's stamina.
+- If a crippled body section reaches 0 health, it will become mortally wounded.
 - A mortal wound will give the player a short amount of time to apply first aid before killing the player.
-
-#### Revised prototype/simpler/better combat rules:
-
-- Taking damage is no longer per-body.
-- Being hit hard enough, often enough, or enough times in a short period of time will cripple a random body part, applying a random debuff and desiring first aid.
-- Being hit hard enough, often enough, or enough times while the player has at least one crippled body part will result in a mortal wound, requiring first aid.
 
 Keyboard Commands
 ---
 
 - `1-5`: Press to activate hotbar items.
-- `LAlt+1-5`: Press to secondary-activate hotbar items.
+- `LAlt+1-5`: Press to secondary-activate hotbar items. [UNUSED]
 - `Spacebar`: Press to roll.
 - `M1`: Click to fire equipped weapon/melee attack/select in UI.
 - `M2`: Click to melee equipped weapon/heavy melee attack.
@@ -86,10 +85,9 @@ Keyboard Commands
 - `WASD`: Hold to walk.
 - `LShift+WASD`: Hold to run.
 - `R`: Press to reload.
-- `Tab`: Hold to open the first aid UI.
-- `E`: Hold to open the backpack UI/interact.
-- `F`: Hold to pick up loot.
-- `LAlt+F`: Press to toggle flashlight.
+- `Tab`: Hold to open the first aid and backpack UIs.
+- `E`: Hold to pick up loot and interact.
+- `F`: Press to toggle flashlight.
 - `Mouse`: Move to aim.
 
 Some Paragraphs Regarding Combat

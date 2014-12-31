@@ -20,10 +20,12 @@ function House:init()
   self.currentFloor = 0 --0 is ground, negatives for underground
   self:createFloor(self.currentFloor, true)
   self.tiles = {}
+  self.drawRanges = {xMin = 0, xMax = 0, yMin = 0, yMin = 0}
 
   self.biome = 'Main'
 
-  self.algorithmTimer = .06
+  self.algorithmTimer = .1
+  self.algorithmTimerMax = .1 --option to change this to reduce algorithm lag
   self.doorsToConnect = {}
   self.roomsToDestroy = {}
   self.roomsToCompute = {}
@@ -51,12 +53,13 @@ end
 
 function House:update()
   local x1, x2, y1, y2 = self:cell(ovw.view.x, ovw.view.x + ovw.view.w, ovw.view.y, ovw.view.y + ovw.view.h)
-  
+  self.drawRanges = {xMin = x1, xMax = x2, yMin = y1, yMax = y2}
+
   for x = x1, x2 do
     for y = y1, y2 do
       if self.tiles[x] and self.tiles[x][y] then
         self.tiles[x][y]:update()
-        self.tiles[x][y]:updateLight(x, y)
+        self.tiles[x][y]:updateLight()
       end
     end
   end
@@ -109,12 +112,14 @@ function House:update()
       self.floorReady = true
 
     end
-    self.algorithmTimer = .06
+    self.algorithmTimer = self.algorithmTimerMax
   end
 
   local crippled = false
   local wounded = false
-  table.each(ovw.player.firstAid.bodyParts, function(bodyPart, key) if bodyPart.wounded then wounded = true elseif bodyPart.crippled then crippled = true end end)
+  local bodyPart = ovw.player.firstAid.bodyParts[1]
+  if bodyPart.wounded then wounded = true
+  elseif bodyPart.crippled then crippled = true end
   if wounded then self.targetAmbient = {100, 0, 0} elseif crippled then self.targetAmbient = {255, 100, 100} else self.targetAmbient = {255, 255, 255} end
 
   self.ambientColor[1] = math.lerp(self.ambientColor[1], self.targetAmbient[1], .5 * tickRate)
@@ -147,6 +152,11 @@ end
 function House:pos(x, ...)
   if not x then return end
   return x * self.cellSize, self:pos(...)
+end
+
+function House.cell(self, x, ...)
+  if not x then return end
+  return math.round((x - House.halfCell) / House.cellSize), House.cell(self, ...)
 end
 
 function House.pos(self, x, ...)
@@ -208,24 +218,52 @@ function House:generate()
   room.x, room.y = 100, 100
   self:addRoom(room, 0, 0)
   ovw.pickups:add(Pickup({x = (room.x + room.width / 2) * self.cellSize + love.math.random() * 300 - 150, y = (room.y + room.height / 2) * self.cellSize + love.math.random() * 300 - 150, itemType = Pistol, room = room}))
+  self:sealRoom(room)
 
-  for i = 1, self.roomCount do
-    -- Pick a source room
-    local oldRoom = randomFrom(self.rooms)
-    self:createRoom(oldRoom)
-  end
-
-  self:computeTiles()
-  self:forceComputeShapes()
+  room:spawnDoors(room:randomWall())
+  self:computeTilesInRoom(room)
+  self:regenerate(room)
 end
 
 function House:regenerate(pRoom)
+  --calculate player room's center
   local pRoomX = self:pos(pRoom.x + pRoom.width / 2)
   local pRoomY = self:pos(pRoom.y + pRoom.height / 2)
 
+  --calculate player room's pseudo-radius
+  local pRoomRadius = 0
+  if pRoom.buildShape == 'circle' then pRoomRadius = self:pos(pRoom.radius)
+  elseif pRoom.buildShape == 'diamond' then pRoomRadius = self:pos((pRoom.width + pRoom.height) / 4)
+  else pRoomRadius = self:pos((pRoom.width > pRoom.height and pRoom.width or pRoom.height) / 2) end
+
   table.each(self.rooms, function(room, index)
-    local dis = math.distance(pRoomX, pRoomY, self:pos(room.x + room.width / 2, room.y + room.height / 2))
-    if room.buildShape == 'circle' then dis = dis - self:pos(room.radius) end
+    --always compute doors for the current room
+    local dis, dir = 0, 0
+
+    if room ~= pRoom then
+      --calculate distance
+      dis, dir = math.vector(pRoomX, pRoomY, self:pos(room.x + room.width / 2, room.y + room.height / 2))
+
+      --calculate other room's pseudo-radius
+      local roomRadius = 0
+      if room.buildShape == 'circle' then
+        roomRadius = self:pos(room.radius)
+      elseif room.buildShape == 'diamond' then
+        dir = math.abs(dir)
+        if dir < math.pi / 4 or dir > math.pi * 3 / 4 then dir = room.width / 2 else dir = room.height / 2 end
+        roomRadius = self:pos(dir / 2)
+      else --rectangle
+        dir = math.abs(dir)
+        if dir < math.pi / 4 or dir > math.pi * 3 / 4 then dir = room.width / 2 else dir = room.height / 2 end
+        roomRadius = self:pos(dir / 2)
+      end
+
+      --reduce distance by pseudo-radii
+      dis = dis - pRoomRadius
+      dis = dis - roomRadius
+    end
+
+    --compare distance to spawn/destroy ranges
     if dis <= self.spawnRange / 2 then
       table.each(room.doors, function(door, index)
         if not door.connected then table.insert(self.doorsToConnect, door) end
@@ -434,22 +472,26 @@ function House:changeFloor(staircase)
         needRoom = false
         room:createStaircase(spawnX, spawnY, newDirection)
       end
-      self:computeTilesInRoom(room)
-      self:computeShapesInRoom(room)
+
+      --self:computeTilesInRoom(room)
+      --self:computeShapesInRoom(room)
     end
+
     if needRoom then
-      local newRoom = MainRectangle()
+      local newRoom = biomeStaircaseExitRooms[self.biome]()
       newRoom.event = Event()
       newRoom.x, newRoom.y = spawnX - math.round(newRoom.width / 2), spawnY - math.round(newRoom.height / 2)
       self:addRoom(newRoom, 0, 0)
 
       newRoom:createStaircase(spawnX, spawnY, newDirection)
 
-      for i = 1, self.roomCount do
-        -- Pick a source room
-        self:createRoom(newRoom)
-      end
+      newRoom:spawnDoors(newRoom:randomWall())
+      self:computeTilesInRoom(newRoom)
+      self:regenerate(newRoom)
     end
+
+    --place the followers
+    table.each(ovw.player.followers, function(follower, key) follower.x, follower.y = ovw.player.x, ovw.player.y ovw.enemies:add(follower) end)
 
     --build the floor
     self:computeTiles()
@@ -503,6 +545,17 @@ function House.carveRound(cx, cy, xradius, yradius, room, tileMap)
         tileMap[x] = tileMap[x] or {}
         tileMap[x][y] = tileMap[x][y] or Tile(room.floorType, x, y, room)
       end
+    end
+  end
+end
+
+function House.carveDiamond(rx, ry, rw, rh, room, tileMap)
+  local dimensionsRatio = (rh / rw)
+  for x = rx, rx + rw do
+    local tx = math.round(rw / 2 + .5) - math.abs(x - rx - math.round(rw / 2 - .5))
+    for y = ry + math.round(rh / 2 - .5) - tx * dimensionsRatio, ry + math.round(rh / 2 - .5) + tx * dimensionsRatio do
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = tileMap[x][y] or Tile(room.floorType, x, y, room)
     end
   end
 end
@@ -946,11 +999,17 @@ function House:spawnNPCsInRoom(npc, room)
     local dis = love.math.random() * (room.radius - 2)
     x = self:pos(room.x + room.width / 2) + self:pos(math.cos(dir) * dis)
     y = self:pos(room.y + room.height / 2) + self:pos(math.sin(dir) * dis)
+  elseif room.buildShape == 'diamond' then
+    local dimensionsRatio = (room.height / room.width)
+    x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
+    local tx = math.round(room.width / 2 + .5) * self.cellSize - math.abs(x - room.x * self.cellSize - math.round(room.width / 2 + .5) * self.cellSize)
+    tx = tx * .6
+    y = y + self.halfCell + self:pos(room.height / 2) - dimensionsRatio * tx + love.math.random() * tx * dimensionsRatio * 2
   else
-    x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
-    y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
+    x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
+    y = y + self.halfCell + love.math.random() * ((room.height - 2) * self.cellSize)
   end
-  ovw.npcs:add((npc)({x = x, y = y, room = room}))
+  ovw.npcs:add(npc({x = x, y = y, room = room}))
 end
 
 function House:spawnEnemiesInRoom(amt, room, enemyType)
@@ -962,16 +1021,22 @@ function House:spawnEnemiesInRoom(amt, room, enemyType)
       local dis = love.math.random() * (room.radius - 2)
       x = self:pos(room.x + room.width / 2) + self:pos(math.cos(dir) * dis)
       y = self:pos(room.y + room.height / 2) + self:pos(math.sin(dir) * dis)
+    elseif room.buildShape == 'diamond' then
+      local dimensionsRatio = (room.height / room.width)
+      x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
+      local tx = math.round(room.width / 2 + .5) * self.cellSize - math.abs(x - room.x * self.cellSize - math.round(room.width / 2 + .5) * self.cellSize)
+      tx = tx * .6
+      y = y + self.halfCell + self:pos(room.height / 2) - dimensionsRatio * tx + love.math.random() * tx * dimensionsRatio * 2
     else
-      x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
-      y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
+      x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
+      y = y + self.halfCell + love.math.random() * ((room.height - 2) * self.cellSize)
     end
     local spawnEnemyType = enemyType and enemyType or randomFrom(room.enemyTypes)
     if spawnEnemyType == Spiderling then
       for i = 1, 2 + math.ceil(love.math.random() * 2) do
         table.insert(enemies, ovw.enemies:add(Spiderling(x, y, room)))
-        x = x + love.math.random() * self.cellSize - self.cellSize / 2
-        y = y + love.math.random() * self.cellSize - self.cellSize / 2
+        x = x + love.math.random() * self.cellSize - self.halfCell
+        y = y + love.math.random() * self.cellSize - self.halfCell
       end
     else
       table.insert(enemies, ovw.enemies:add(spawnEnemyType(x, y, room)))
@@ -980,26 +1045,42 @@ function House:spawnEnemiesInRoom(amt, room, enemyType)
   return enemies
 end
 
-function House:spawnPickupsInRoom(amt, room, pickupType)
-  local function make(i)
+function House:spawnPickupsInRoom(amount, room)--amt, room, pickupType, orbType) --orbType optional
+  return pickupTables.spawnPickups('trash', room)
+end
+  --[[local function make(i, orb)
     local x, y = self:pos(room.x, room.y)
     if room.buildShape == 'circle' then
       local dir = love.math.random() * math.pi * 2 - math.pi
       local dis = love.math.random() * (room.radius - 2)
       x = self:pos(room.x + room.width / 2) + self:pos(math.cos(dir) * dis)
       y = self:pos(room.y + room.height / 2) + self:pos(math.sin(dir) * dis)
-    else
-      x = x + self.cellSize / 2 + love.math.random() * ((room.width - 2) * self.cellSize)
-      y = y + self.cellSize / 2 + love.math.random() * ((room.height - 2) * self.cellSize)
+    elseif room.buildShape == 'diamond' then
+      local dimensionsRatio = (room.height / room.width)
+      x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
+      local tx = math.round(room.width / 2 + .5) * self.cellSize - math.abs(x - room.x * self.cellSize - math.round(room.width / 2 + .5) * self.cellSize)
+      tx = tx * .6
+      y = y + self.halfCell + self:pos(room.height / 2) - dimensionsRatio * tx + love.math.random() * tx * dimensionsRatio * 2
+    else --rectangle
+      x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
+      y = y + self.halfCell + love.math.random() * ((room.height - 2) * self.cellSize)
     end
-    return ovw.pickups:add(Pickup({x = x, y = y, itemType = i, room = room}))
+    if orbType then
+      return ovw.pickups:add(Orb({x = x, y = y, orbType = orb, room = room}))
+    else
+      return ovw.pickups:add(Pickup({x = x, y = y, itemType = i, room = room, amount = amt}))
+    end
   end
 
   local pickups = {}
 
   if pickupType then
-    for i = 1, amt do
-      table.insert(pickups, make(pickupType))
+    if orbType then
+      table.insert(pickups, make(pickupType, orbType))
+    else
+      for i = 1, amt do
+        table.insert(pickups, make(pickupType))
+      end
     end
   else
     if amt > 2 then
@@ -1016,4 +1097,4 @@ function House:spawnPickupsInRoom(amt, room, pickupType)
   end
 
   return pickups
-end
+end]]

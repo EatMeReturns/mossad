@@ -149,3 +149,9 @@ function Collision:arcTest(x, y, r, dir, theta, tag, all, first)
 
   return res, mindis
 end
+
+--- EXTEND hc
+
+function Collision:addDiamond(x,y,w,h)
+  return self.hc:addPolygon(x+math.round(w/2),y, x+w,y+math.round(h/2), x+math.round(w/2),y+h, x,y+math.round(h/2))
+end

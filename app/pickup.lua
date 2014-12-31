@@ -9,7 +9,7 @@ Pickup.collision = {
 function Pickup:init(data)
   self.x, self.y = 0, 0
   self.timers = {}
-  self.timers.pickup = 1.25 * (10 / (10 + (ovw.player and ovw.player.agility or 0)))
+  self.timers.pickup = 1.25 * (10 / (10 + (ovw.player and ovw.player:getStat('agility', true) or 0)))
   self.pickupSpeed = 1.25
   self.state = 'Not'
   self.item = nil
@@ -37,13 +37,26 @@ function Pickup:draw()
   local tx, ty = ovw.house:cell(self.x, self.y)
   local v = ovw.house.tiles[tx] and ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
   if self.state == 'Hot' then
-    local val = self.timers.pickup / (self.pickupSpeed * (10 / (10 + ovw.player.agility)))
+    local val = self.timers.pickup / (self.pickupSpeed * (10 / (10 + ovw.player:getStat('agility', true))))
     love.graphics.setColor(255, 255, 0, 255)
     love.graphics.rectangle('fill', self.x - self.radius, self.y + self.radius + 2, self.radius * 2 * val, 3)
   else
     love.graphics.setColor(255, 255, 255, v)
   end
   self.shape:draw('line')
+end
+
+function Pickup:update()
+  if math.distance(self.x, self.y, ovw.player.x, ovw.player.y) < 40 then
+    self.state = 'Hot'
+    if love.keyboard.isDown('e') then
+      self.timers.pickup = timer.rot(self.timers.pickup, function() self:activate() end)
+    else
+      self.timers.pickup = self.pickupSpeed * (10 / (10 + ovw.player:getStat('agility', true)))
+    end
+  else
+    self.state = 'Not'
+  end
 end
 
 function Pickup:setPosition(x, y)
@@ -53,7 +66,7 @@ end
 
 function Pickup:activate()
   if self.itemType == Ammo then
-    ovw.player.ammo = ovw.player.ammo + math.round(math.clamp(love.math.randomNormal(4, 5), 1, 12))
+    ovw.player.ammo = ovw.player.ammo + math.round(math.clamp(House.getDifficulty(true) * love.math.randomNormal(3, 2), 1, 5) * ovw.player.ammoMultiplier)
     return self:remove()
   end
 
@@ -70,26 +83,13 @@ function Pickup:activate()
   self.item = self.item or new(self.itemType)
   if ovw.player.hotbar:add(self.item) then
     ovw.hud.fader:add(self.item.pickupMessage)
-    self:remove()
+    return self:remove()
   elseif ovw.player.arsenal:add(self.item) then
     ovw.hud.fader:add(self.item.pickupMessage)
-    self:remove()
+    return self:remove()
   elseif ovw.player.inventory:add(self.item) then
     ovw.hud.fader:add(self.item.pickupMessage)
-    self:remove()
-  end
-end
-
-function Pickup:update()
-  if math.distance(self.x, self.y, ovw.player.x, ovw.player.y + 12) < 40 then
-    self.state = 'Hot'
-    if love.keyboard.isDown('f') then
-      self.timers.pickup = timer.rot(self.timers.pickup, function() self:activate() end)
-    else
-      self.timers.pickup = self.pickupSpeed * (10 / (10 + ovw.player.agility))
-    end
-  else
-    self.state = 'Not'
+    return self:remove()
   end
 end
 

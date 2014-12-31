@@ -19,6 +19,8 @@ function View:init()
 
   self.targetScale = self.scale
   self.targetFollowMargin = self.followMargin
+
+  self.scaleModifier = 0
 end
 
 function View:update()
@@ -27,14 +29,12 @@ function View:update()
   self.prevscale = self.scale
 
   if not devMode then
-    self.targetScale =  1.3
-    if love.keyboard.isDown('e') then self.targetScale = 3.25 end
-    if love.keyboard.isDown('tab') then self.targetScale = 3.25 end
+    self.targetScale = (love.keyboard.isDown('tab') and 3.25 or 1.3) + self.scaleModifier
   end
   
   local prevw, prevh = self.w, self.h
   local xf, yf = love.mouse.scaleX() / love.graphics.getWidth(), love.mouse.scaleY() / love.graphics.getHeight()
-  self.scale = math.round(math.lerp(self.scale, self.targetScale, 5 * tickRate) / .01) * .01
+  self.scale = math.max(.6, math.lerp(self.scale, self.targetScale, 5 * tickRate))
   self.w = 800 / self.scale
   self.h = 600 / self.scale
   self.x = self.x + (prevw - self.w) * xf
@@ -129,7 +129,7 @@ function View:follow()
   if not self.target then return end
 
   local dis, dir = math.vector(self.target.x, self.target.y, self:mouseX(), self:mouseY())
-  self.targetFollowMargin = ((love.keyboard.isDown('tab') or love.keyboard.isDown('e')) and 0.5) or 0.8
+  self.targetFollowMargin = love.keyboard.isDown('tab') and 0.5 or 0.8
   self.followMargin = math.lerp(self.followMargin, self.targetFollowMargin, 8 * tickRate)
 
   dis = dis / 5
@@ -158,5 +158,11 @@ function View:mouseY()
 end
 
 function View:playerPosOnScreen()
-  return {ovw.player.x - self.x, ovw.player.y - self.y}
+  local x, y = ovw.player.x - self.x + 85, 600 - (ovw.player.y - self.y) - 60
+  local weapon = ovw.player.arsenal.weapons[ovw.player.arsenal.selected]
+  if weapon then
+    x = x + weapon.tipOffset:getX()
+    y = y - weapon.tipOffset:getY()
+  end
+  return {x, y}
 end

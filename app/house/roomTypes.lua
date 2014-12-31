@@ -1,27 +1,31 @@
 require 'app/house/room'
-
-require 'app/npc'
-require 'app/shop'
-
-require 'app/enemy'
-require 'app/spiderling'
-require 'app/shade'
-require 'app/inkraven'
-require 'app/rubymoth'
-
-require 'app/boss'
-require 'app/avian'
-
 require 'app/house/event'
 require 'app/house/eventTypes'
 
+load 'app/npcs'
+load 'app/enemies'
+load 'app/bosses'
+
+
 enemyTables = {}
-enemyTables.allEnemies = {Spiderling, Shade, InkRaven, RubyMoth}
-enemyTables.extraBirds = {Spiderling, Shade, InkRaven, InkRaven, InkRaven, RubyMoth}
+enemyTables.allEnemies = {Spiderling, Shade, InkRaven, RubyMoth, Gloomrat}
+enemyTables.easy = {Spiderling, Spiderling, Shade, Shade, Shade, InkRaven, InkRaven, RubyMoth, RubyMoth, Gloomrat}
+enemyTables.medium = {Spiderling, Spiderling, Shade, Shade, InkRaven, RubyMoth, Gloomrat}
+enemyTables.hard = {Spiderling, Shade, InkRaven, InkRaven, RubyMoth, Gloomrat, Gloomrat}
+enemyTables.extraBirds = {Spiderling, Spiderling, Shade, InkRaven, InkRaven, InkRaven, InkRaven, RubyMoth, Gloomrat}
 enemyTables.onlyMoths = {RubyMoth}
 
 eventTables = {}
 eventTables.noEvent = WeightedRandom({{{Event, nil}, 1}}, 1)
+
+pickupTables = {}
+pickupTables.trash = {}
+pickupTables.common = {}
+pickupTables.uncommon = {}
+pickupTables.rare = {}
+pickupTables.epic = {}
+pickupTables.legendary = {}
+pickupTables.experience = {}
 
 --------------------------------------------------------------------------------------
 ---MAIN-------------------------------------------------------------------------------
@@ -78,6 +82,64 @@ function MainRectangle:carveRoom(tileMap)
       tileMap[x][y] = Tile(self.floorType, x, y, self)
     end
   end
+end
+
+--------------------------------------------------------------------------------------
+
+MainDiamond = extend(Room)
+MainDiamond.doorsToSpawn = 6
+MainDiamond.enemyTypes = enemyTables.medium
+MainDiamond.enemySpawnTable = WeightedRandom({{5, 0.5}, {6, 0.25}, {7, 0.25}, {8, 0.1}, {9, 0.01}}, 1.11)
+MainDiamond.pickupSpawnTable = WeightedRandom({{3, 0.5}, {4, 0.5}}, 1)
+MainDiamond.eventSpawnTable = eventTables.noEvent
+MainDiamond.floorType = 'Main'
+MainDiamond.biome = 'Main'
+
+MainDiamond.buildShape = 'diamond'
+
+function MainDiamond:init(dir, w, h)
+  Room.init(self)
+
+  self.width = w or love.math.randomNormal(2, 20)
+  self.width = w or math.round(math.clamp(self.width, 16, 24))
+  if self.width % 2 == 0 then self.width = w or self.width + 1 end
+  self.height = h or self.width
+
+  --mid point minus 2, mid point plus 1
+  local range = {math.floor(self.width / 2) - 2, math.floor(self.width / 2) + 2}
+  for i = range[1], range[2] do
+    self.walls.north[#self.walls.north + 1] = {x = i, y = -1, direction = 'north'}
+    self.walls.south[#self.walls.south + 1] = {x = i, y = self.height, direction = 'south'}
+  end
+
+  range = {math.floor(self.height / 2) - 2, math.floor(self.height / 2) + 2}
+  for i = range[1], range[2] do
+    self.walls.west[#self.walls.west + 1] = {x = -1, y = i, direction = 'west'}
+    self.walls.east[#self.walls.east + 1] = {x = self.width, y = i, direction = 'east'}
+  end
+end
+
+function MainDiamond:spawnDoors(dir)
+  for i = 1, self.doorsToSpawn do
+    local spawnDir = table.random(directions)
+    local spawnDoorMap = {}
+    spawnDoorMap[spawnDir] = self
+    local spawnDoor = Door(spawnDoorMap)
+    self:addDoor(spawnDoor, spawnDir)
+  end
+end
+
+function MainDiamond:carveRoom(tileMap)
+  House.carveDiamond(self.x, self.y, self.width, self.height, self, tileMap)
+
+  --spawn walls
+  --for _, dir in pairs({'north', 'south', 'east', 'west'}) do
+  --  for _, wall in pairs(self.walls[dir]) do
+  --    local x, y = self.x + wall.x, self.y + wall.y
+  --    tileMap[x] = tileMap[x] or {}
+  --    tileMap[x][y] = Tile(self.floorType, x, y, self)
+  --  end
+  --end
 end
 
 --------------------------------------------------------------------------------------
@@ -325,7 +387,7 @@ end
 --------------------------------------------------------------------------------------
 
 MainShopRectangle = extend(Room)
-MainShopRectangle.doorsToSpawn = 0
+MainShopRectangle.doorsToSpawn = 2
 MainCorridor.enemyTypes = enemyTables.onlyMoths
 MainShopRectangle.npcSpawnTable = WeightedRandom({{Shop, 1}}, 1)
 MainShopRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
@@ -376,6 +438,169 @@ function MainShopRectangle:carveRoom(tileMap)
   end
 end
 
+--------------------------------------------------------------------------------------
+
+MainCraftingStationRectangle = extend(Room)
+MainCraftingStationRectangle.doorsToSpawn = 1
+MainCorridor.enemyTypes = enemyTables.onlyMoths
+MainCraftingStationRectangle.npcSpawnTable = WeightedRandom({{CraftingStation, 1}}, 1)
+MainCraftingStationRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
+MainCraftingStationRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+MainCraftingStationRectangle.eventSpawnTable = eventTables.noEvent
+MainCraftingStationRectangle.floorType = 'Main'
+MainCraftingStationRectangle.biome = 'Main'
+
+MainCraftingStationRectangle.buildShape = 'rectangle'
+
+function MainCraftingStationRectangle:init(dir, w, h)
+  Room.init(self)
+
+  self.width = 7
+  self.height = 7
+
+  for i = -1, self.width do
+    self.walls.north[#self.walls.north + 1] = {x = i, y = -1, direction = 'north'}
+    self.walls.south[#self.walls.south + 1] = {x = i, y = self.height, direction = 'south'}
+  end
+
+  for i = -1, self.height do
+    self.walls.west[#self.walls.west + 1] = {x = -1, y = i, direction = 'west'}
+    self.walls.east[#self.walls.east + 1] = {x = self.width, y = i, direction = 'east'}
+  end
+end
+
+function MainCraftingStationRectangle:spawnDoors(dir)
+  MainRectangle.spawnDoors(self, dir)
+end
+
+function MainCraftingStationRectangle:carveRoom(tileMap)
+  --spawn tiles
+  for x = self.x, self.x + self.width do
+    for y = self.y, self.y + self.height do
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
+  end
+
+  --spawn walls
+  for _, dir in pairs({'north', 'south', 'east', 'west'}) do
+    for _, wall in pairs(self.walls[dir]) do
+      local x, y = self.x + wall.x, self.y + wall.y
+      tileMap[x] = tileMap[x] or {}
+      tileMap[x][y] = Tile(self.floorType, x, y, self)
+    end
+  end
+end
+
+
+--------------------------------------------------------------------------------------
+---THE-TOWER--------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+
+TowerDiamond = extend(MainDiamond)
+TowerDiamond.doorsToSpawn = 4
+TowerDiamond.enemyTypes = enemyTables.extraBirds
+TowerDiamond.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
+TowerDiamond.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+TowerDiamond.eventSpawnTable = WeightedRandom({{{TrapEvent, InkRaven}, .03}, {{Event, nil}, .97}}, 1)
+TowerDiamond.floorType = 'Tower'
+TowerDiamond.biome = 'Tower'
+TowerDiamond.hasFurniture = true
+
+function TowerDiamond:init(dir)
+  MainDiamond.init(self, dir, 21, 21)
+end
+
+function TowerDiamond:spawnDoors(dir)
+  MainDiamond.spawnDoors(self, dir)
+end
+
+function TowerDiamond:carveRoom(tileMap)
+  MainDiamond.carveRoom(self, tileMap)
+end
+
+function TowerDiamond:spawnFurniture()
+  self:createStaircase(self.x + math.round(self.width / 2), self.y + math.round(self.height / 2), 'up')
+end
+
+--------------------------------------------------------------------------------------
+
+TowerCorridor = extend(MainCorridor)
+TowerCorridor.doorsToSpawn = 1
+TowerCorridor.enemyTypes = enemyTables.medium
+TowerCorridor.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
+TowerCorridor.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
+TowerCorridor.eventSpawnTable = WeightedRandom({{{RejectEvent, 'horizontal'}, 0.03}, {{Event, nil}, 0.97}}, 1)
+TowerCorridor.floorType = 'Tower'
+TowerCorridor.biome = 'Tower'
+
+function TowerCorridor:init(dir)
+  MainCorridor.init(self, dir)
+end
+
+function TowerCorridor:spawnDoors(dir)
+  MainCorridor.spawnDoors(self, dir)
+end
+
+function TowerCorridor:carveRoom(tileMap)
+  MainCorridor.carveRoom(self, tileMap)
+end
+
+--------------------------------------------------------------------------------------
+
+TowerTreasureCircle = extend(MainCircle)
+TowerTreasureCircle.doorsToSpawn = 0
+TowerTreasureCircle.enemyTypes = enemyTables.onlyMoths
+TowerTreasureCircle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
+TowerTreasureCircle.pickupSpawnTable = WeightedRandom({{4, 0.5}, {5, 0.5}}, 1)
+TowerTreasureCircle.eventSpawnTable = eventTables.noEvent
+TowerTreasureCircle.floorType = 'Tower'
+TowerTreasureCircle.biome = 'Tower'
+
+function TowerTreasureCircle:init(dir)
+  MainCircle.init(self, dir, 3)
+end
+
+function TowerTreasureCircle:spawnDoors(dir)
+  MainCircle.spawnDoors(self, dir)
+end
+
+function TowerTreasureCircle:carveRoom(tileMap)
+  MainCircle.carveRoom(self, tileMap)
+end
+
+--------------------------------------------------------------------------------------
+
+TowerExitRectangle = extend(MainBossRectangle)
+TowerExitRectangle.doorsToSpawn = 6
+TowerExitRectangle.enemyTypes = enemyTables.onlyMoths
+TowerExitRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
+TowerExitRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+TowerExitRectangle.floorType = 'Tower'
+TowerExitRectangle.biome = 'Tower'
+
+function TowerExitRectangle:init(dir)
+  MainBossRectangle.init(self, dir, 15, 15, Avian)
+end
+
+function TowerExitRectangle:spawnDoors(dir)
+  MainBossRectangle.spawnDoors(self, dir)
+end
+
+function TowerExitRectangle:carveRoom(tileMap)
+  MainBossRectangle.carveRoom(self, tileMap)
+end
+
+--------------------------------------------------------------------------------------
+
+TowerIvoryCircle = extend(MainCircle)
+TowerIvoryCircle.doorsToSpawn = 0
+TowerIvoryCircle.enemyTypes = enemyTables.onlyMoths
+TowerIvoryCircle.enemySpawnTable = WeightedRandom({{3, 1}}, 1)
+TowerIvoryCircle.pickupSpawnTable = WeightedRandom({{5, 0.25}, {7, 0.5}, {9, 0.25}}, 1)
+TowerIvoryCircle.floorType = 'Tower'
+TowerIvoryCircle.biome = 'Tower'
+
 
 --------------------------------------------------------------------------------------
 ---GRAY-DUNGEON-----------------------------------------------------------------------
@@ -383,10 +608,10 @@ end
 
 GrayChallengeRectangle = extend(MainRectangle)
 GrayChallengeRectangle.doorsToSpawn = 6
-GrayChallengeRectangle.enemyTypes = enemyTables.extraBirds
+GrayChallengeRectangle.enemyTypes = enemyTables.hard
 GrayChallengeRectangle.enemySpawnTable = WeightedRandom({{5, 0.5}, {6, 0.25}, {7, 0.25}, {8, 0.1}, {9, 0.01}}, 1.11)
 GrayChallengeRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
-GrayChallengeRectangle.eventSpawnTable = WeightedRandom({{{TrapEvent, InkRaven}, .03}, {{Event, nil}, .97}}, 1)
+GrayChallengeRectangle.eventSpawnTable = eventTables.noEvent
 GrayChallengeRectangle.floorType = 'Gray'
 GrayChallengeRectangle.biome = 'Gray'
 
@@ -406,7 +631,7 @@ end
 
 GrayCorridor = extend(MainCorridor)
 GrayCorridor.doorsToSpawn = 1
-GrayCorridor.enemyTypes = enemyTables.extraBirds
+GrayCorridor.enemyTypes = enemyTables.hard
 GrayCorridor.enemySpawnTable = WeightedRandom({{2, 0.5}, {3, 0.25}, {4, 0.25}, {5, 0.1}, {6, 0.01}}, 1.11)
 GrayCorridor.pickupSpawnTable = WeightedRandom({{0, 0.25}, {1, 0.625}, {2, 0.125}}, 1)
 GrayCorridor.eventSpawnTable = eventTables.noEvent
@@ -512,14 +737,17 @@ roomSpawnTables =
 {
   Main = WeightedRandom(
     {
-      {MainCircle, 0.5},
-      {MainStairwell, 0.02},
-      {MainRectangle, 0.75},
+      {MainDiamond, 0.22},
+      {MainCircle, 0.4},
+      {MainStairwell, 0.2},
+      {MainRectangle, 0.6},
       {MainShopRectangle, 0.1},
-      {MainCorridor, 0.1},
-      {GrayCorridor, 0.02},
-      {GreatHallCircle, 0.01}
-    }, 1.50),
+      {MainCraftingStationRectangle, 0.1},
+      {MainCorridor, 0.3},
+      {TowerCorridor, 0.03},
+      {GrayCorridor, 0.03},
+      {GreatHallCircle, 0.02}
+    }, 2),
   Gray = WeightedRandom(
     {
       {GrayCorridor, 0.2},
@@ -530,5 +758,28 @@ roomSpawnTables =
   Great_Hall = WeightedRandom(
     {
       {MainRectangle, 1}
+    }, 1),
+  Tower = WeightedRandom(
+    {
+      {TowerDiamond, 0.4},
+      {TowerCorridor, 0.3},
+      {TowerTreasureCircle, 0.2},
+      {TowerExitRectangle, 0.1}
     }, 1)
+}
+
+biomeFaderMessages = 
+{
+  Main = {},
+  Gray = {enter = 'Fear is the mind killer...'},
+  Great_Hall = {enter = 'In this room, I am trivial.'},
+  Tower = {enter = '\"You plan a tower that will pierce the clouds? Lay first the foundation of humility.\"\n\nSaint Augustine'}
+}
+
+biomeStaircaseExitRooms = 
+{
+  Gray = GrayTreasureRectangle,
+  Great_Hall = MainRectangle,
+  Tower = TowerDiamond,
+  Main = MainRectangle
 }

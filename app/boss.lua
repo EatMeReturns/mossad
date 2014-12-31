@@ -29,12 +29,16 @@ Boss.name = {}
 Boss.name.singular = 'The Boss'
 Boss.name.pluralized = 'The Boss'
 
+Boss.spawnMessage = 'How\'d you do that? Congratulations, you\'ve found a bug!'
+
 function Boss:init()
   self.x = ovw.house:pos(ovw.player.room.x + ovw.player.room.width / 2)
   self.y = ovw.house:pos(ovw.player.room.y + ovw.player.room.height / 2) - 100
 
   self.exp = 50
-  self.lootSpawnTable = WeightedRandom({{3, 0.7}, {4, 0.25}, {5, 0.05}}, 1)
+  self.dropChance = 1
+
+  ovw.hud.fader:add(self.spawnMessage)
 
   ovw.view:register(self)
   ovw.collision:register(self)
@@ -58,14 +62,12 @@ end
 function Boss:hurt(amount)
   self.health = self.health - amount
   if self.health <= 0 then
-    local function make(i) ovw.pickups:add(Pickup({x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10, itemType = i, room = self.room})) end
-    ovw.player:learn(self.exp)
-    local i = self.lootSpawnTable:pick()[1]
-    while i > 0 do
-      table.each(makeLootTable('Common'), function(v, k) make(v) end)
-      i = i - 1
-    end
-    make(makeLootTable('Rare')[1])
+    pickupTables.makeOrb(self.room, {x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10}, 'health', math.floor(love.math.random() * self.maxHealth / 4 + self.maxHealth / 4))
+    pickupTables.makeOrb(self.room, {x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10}, 'stamina', math.floor(love.math.random() * self.maxHealth / 4 + self.maxHealth / 4))
+    pickupTables.makeOrb(self.room, {x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10}, 'experience', self.exp)
+    pickupTables.drop(self)
+    pickupTables.drop(self)
+    pickupTables.drop(self)
     self:remove()
   end
 end

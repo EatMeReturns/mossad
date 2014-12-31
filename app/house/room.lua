@@ -99,6 +99,10 @@ function Room:computeCollision()
     self.shape = ovw.collision.hc:addCircle(House.pos(nil, self.x + self.radius, self.y + self.radius, self.radius))
     ovw.collision.hc:setPassive(self.shape)
     self.shape.owner = self
+  elseif self.buildShape == 'diamond' then
+    self.shape = ovw.collision:addDiamond(House.pos(nil, self.x + 1, self.y + 1, self.width - 2, self.height - 2))
+    ovw.collision.hc:setPassive(self.shape)
+    self.shape.owner = self
   else
     self.shape = ovw.collision.hc:addRectangle(House.pos(nil, self.x, self.y, self.width, self.height))
     ovw.collision.hc:setPassive(self.shape)

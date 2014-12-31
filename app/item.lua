@@ -2,9 +2,11 @@ Item = class()
 
 Item.image = love.graphics.newImage('media/graphics/icons/icon.png')
 
+Item.name = 'Item' --stacked item names must be their class name (spaces allowed!)
+
 function Item:init()
   self.active = false
-  self.type = 'Passive' --Passive, Consumable, Active, Weapon
+  self.type = 'Passive' --Passive, Consumable, Active, Weapon, Base, Mod
 end
 
 function Item:destroy()
