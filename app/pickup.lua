@@ -3,11 +3,16 @@ Pickup = class()
 Pickup.tag = 'pickup'
 Pickup.collision = {
   shape = 'circle',
-  with = {}
+  with = {
+  wall = function(self, other, dx, dy)
+    self:setPosition(self.x + dx, self.y + dy)
+  end
+  }
 }
 
 function Pickup:init(data)
   self.x, self.y = 0, 0
+  self.angle = love.math.random() * math.pi * 2
   self.timers = {}
   self.timers.pickup = 1.25 * (10 / (10 + (ovw.player and ovw.player:getStat('agility', true) or 0)))
   self.pickupSpeed = 1.25
@@ -19,6 +24,7 @@ function Pickup:init(data)
   assert(self.room)
   self.room:addObject(self)
   self.radius = 8
+  self.depth = DrawDepths.sitters
   ovw.collision:register(self)
   ovw.view:register(self)
 end
@@ -43,7 +49,16 @@ function Pickup:draw()
   else
     love.graphics.setColor(255, 255, 255, v)
   end
-  self.shape:draw('line')
+
+  local image = self.item and self.item.image or self.itemType.image
+  local scaling = self.item and self.item.scaling or self.itemType.scaling
+  if image then
+    --draw the image
+    love.graphics.setColor(255, 255, 255, v)
+    love.graphics.draw(image, self.x, self.y, self.angle, scaling.x, scaling.y, image:getWidth() / 2, image:getHeight() / 2)
+  else
+    self.shape:draw('line')
+  end
 end
 
 function Pickup:update()
@@ -65,30 +80,9 @@ function Pickup:setPosition(x, y)
 end
 
 function Pickup:activate()
-  if self.itemType == Ammo then
-    ovw.player.ammo = ovw.player.ammo + math.round(math.clamp(House.getDifficulty(true) * love.math.randomNormal(3, 2), 1, 5) * ovw.player.ammoMultiplier)
-    return self:remove()
-  end
-
-  if self.itemType == FirstAidKit then
-    ovw.player.kits = ovw.player.kits + 1
-    return self:remove()
-  end
-
-  if self.itemType == Battery then
-    ovw.player.batteries = ovw.player.batteries + 1
-    return self:remove()
-  end
-
   self.item = self.item or new(self.itemType)
-  if ovw.player.hotbar:add(self.item) then
-    ovw.hud.fader:add(self.item.pickupMessage)
-    return self:remove()
-  elseif ovw.player.arsenal:add(self.item) then
-    ovw.hud.fader:add(self.item.pickupMessage)
-    return self:remove()
-  elseif ovw.player.inventory:add(self.item) then
-    ovw.hud.fader:add(self.item.pickupMessage)
+
+  if ovw.player:loot(self.item) then
     return self:remove()
   end
 end

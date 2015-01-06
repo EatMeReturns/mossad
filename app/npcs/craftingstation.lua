@@ -14,6 +14,7 @@ function CraftingStation:init(data)
 	self.name = 'Transmuter'
 	self.noteTag = 'Level '
 	self.items = {} --no higher than 2
+	self.depth = DrawDepths.furniture
 end
 
 function CraftingStation:update()

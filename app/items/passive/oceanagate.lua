@@ -8,9 +8,9 @@ function OceanAgate:init(level)
 
 	self.type = 'Passive'
 
-	self.amount = .2 * (level and (level > 1 and (level ^ (1 + level / 10)) or 1) or 1)
+	self.amount = calculateAgateAmount(level)
 end
 
 function OceanAgate:update()
-	ovw.player.healthRegen = ovw.player.healthRegen + self.amount
+	ovw.player.healthRegen = ovw.player.healthRegen + (.4 * self.amount - .2)
 end

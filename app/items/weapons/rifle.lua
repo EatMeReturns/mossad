@@ -3,7 +3,7 @@ Rifle = extend(Weapon)
 Rifle.name = 'Rifle'
 Rifle.pickupMessage = 'Ratta-tatta-tatta!'
 
-Rifle.damage = 8
+Rifle.damage = 10
 Rifle.fireMode = 'Automatic'
 Rifle.fireSpeed = .1
 Rifle.reloadSpeed = 2.5

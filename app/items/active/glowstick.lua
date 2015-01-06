@@ -2,11 +2,14 @@ Glowstick = extend(Item)
 
 Glowstick.name = 'Glowstick'
 
+Glowstick.image = love.graphics.newImage('media/graphics/icons/glowstick.png')
+Glowstick.scaling = {x = .75, y = .75}
+
 function Glowstick:init(amt)
   Item.init(self)
 
   self.type = 'Consumable'
-  if amt then self.stacks = amt end
+  self.stacks = amt and amt or nil
   self.stacks = self.stacks or math.round(math.clamp(love.math.randomNormal(1, .75), 1, 2))
 end
 

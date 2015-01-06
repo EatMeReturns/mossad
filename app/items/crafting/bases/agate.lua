@@ -22,5 +22,9 @@ Agate.mods = {{BloodElement, RageAgate},
 Agate.name = 'Agate'
 
 function Agate:init(level) --any agate with a 'materials' in the init REQUIRES the arg
-	Base.init(self, level and level or House.getDifficulty())
+	Base.init(self, level and level or House.getDifficulty(false, true))
+end
+
+function calculateAgateAmount(level)
+	return 1 * (level and (level > 1 and (level ^ (1 + level / 10)) ^ (1/3) or 1) or 1)
 end

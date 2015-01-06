@@ -82,7 +82,8 @@ function TrapEvent:endEvent(success)
 		Event.endEvent(self)
 		if success then
 			self.timer = 0
-			ovw.house:spawnPickupsInRoom(5, self.room)
+			pickupTables.drop(self.room, 1)
+			--ovw.house:spawnPickupsInRoom(5, self.room)
 		end
 		ovw.house:openRoom(self.room)
 	end
@@ -95,6 +96,7 @@ end
 RejectEvent = extend(Event)
 RejectEvent.direction = 'horizontal' --horizontal, vertical; up, down, left, right
 RejectEvent.dis, RejectEvent.dir, RejectEvent.maxDis, RejectEvent.source = 0, 0, 50, {x = 0, y = 0}
+RejectEvent.triggerPosition = {x = 0, y = 0}
 
 function RejectEvent:init(room, direction)
 	Event.init(self, room)
@@ -113,6 +115,7 @@ function RejectEvent:triggerEvent()
 			if ovw.player.y < House.cellSize * (self.room.y + self.room.height / 2) then self.direction = 'up'
 			else self.direction = 'down' end
 		end
+		self.triggerPosition = {x = ovw.player.x, y = ovw.player.y}
 		ovw.hud.fader:add('What is this wind...?')
 	end
 end
@@ -158,15 +161,14 @@ function RejectEvent:updateEvent()
 					self:endEvent()
 				end
 
-				self.maxDis = math.min(self.maxDis * 2, 500)
-				self.time = self.time ^ 2 * .8
+				self.maxDis = math.distance(self.source.x, self.source.y, self.triggerPosition.x, self.triggerPosition.y) * 1.25
+				self.time = self.time * .8
 				self.timer = self.time
-				ovw.house:computeTilesInRoom(self.room)
 			end
 
-			local newMax = self.maxDis * (1 + ovw.player.speed / ovw.player.maxSpeed)
+			local newMax = math.min(750, (self.maxDis + ovw.player.speed) ^ (2 - self.time))
 			self.dis = math.distance(self.source.x, self.source.y, ovw.player.x, ovw.player.y)
-			self.dis = math.max(newMax - self.dis, 0) / newMax
+			self.dis = math.clamp(1 - self.dis / newMax, 0, 1)
 			self.dir = math.direction(self.source.x, self.source.y, ovw.player.x, ovw.player.y)
 
 			local px, py = ovw.player.x, ovw.player.y
@@ -180,6 +182,8 @@ function RejectEvent:updateEvent()
 				if wall then py = ovw.player.y + math.dy(d * tickRate, self.dir) end
 			end
 			ovw.player:setPosition(px, py)
+
+			if outOfTime then ovw.house:computeTilesInRoom(self.room) end
 		end
 	end
 end

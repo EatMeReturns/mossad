@@ -8,9 +8,9 @@ function MossAgate:init(level)
 
 	self.type = 'Passive'
 
-	self.amount = .025 * (level and (level > 1 and (level ^ (1 + level / 10)) or 1) or 1)
+	self.amount = calculateAgateAmount(level)
 end
 
 function MossAgate:update()
-	ovw.player.staminaRegen = ovw.player.staminaRegen + self.amount
+	ovw.player.staminaRegen = ovw.player.staminaRegen + (.04 * self.amount - .02)
 end

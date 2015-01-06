@@ -6,6 +6,7 @@ Spell.x, Spell.y = 0, 0
 
 function Spell:init()
 	self.x, self.y = ovw.player.x, ovw.player.y
+	self.depth = DrawDepths.sitters
 	ovw.view:register(self)
 end
 

@@ -23,15 +23,18 @@ function House:init()
   self.drawRanges = {xMin = 0, xMax = 0, yMin = 0, yMin = 0}
 
   self.biome = 'Main'
+  self.biomeCounter = 0
 
-  self.algorithmTimer = .1
-  self.algorithmTimerMax = .1 --option to change this to reduce algorithm lag
+  self.algorithmTimer = .08
+  self.algorithmTimerMax = .08 --option to change this to reduce algorithm lag
   self.doorsToConnect = {}
   self.roomsToDestroy = {}
   self.roomsToCompute = {}
   self.roomsToShape = {}
   self.needShaping = false
   self.floorReady = false
+  self.miniBossCounter = 0
+  self.miniBossTrigger = 40
 
   self.staircaseTimer = 3
   self.staircaseReady = false
@@ -41,7 +44,7 @@ function House:init()
   
   self:generate()
 
-  self.depth = 5
+  self.depth = DrawDepths.house
   ovw.view:register(self)
 end
 
@@ -96,7 +99,7 @@ function House:update()
       table.remove(self.roomsToCompute, 1)
       self.needShaping = true
 
-    elseif self.needShaping then --print('start shaping')
+    elseif self.needShaping then --print('start shaping') This is somehow missing out on a recently-traversed room. Maybe the room isn't added to self.rooms yet?
       self.roomsToShape = {}
       table.each(self.rooms, function(room, key) table.insert(self.roomsToShape, room) end)
       self.needShaping = false
@@ -215,6 +218,7 @@ end
 function House:generate()
   local room = MainRectangle()
   room.event = Event()
+  room.npcSpawnTable = nil
   room.x, room.y = 100, 100
   self:addRoom(room, 0, 0)
   ovw.pickups:add(Pickup({x = (room.x + room.width / 2) * self.cellSize + love.math.random() * 300 - 150, y = (room.y + room.height / 2) * self.cellSize + love.math.random() * 300 - 150, itemType = Pistol, room = room}))
@@ -284,7 +288,22 @@ function House:createRoom(oldRoom, oldDirection)
   doorMap[oldDirection] = oldRoom
 
   -- Create a destination room
-  local newRoom = (roomSpawnTables[self.biome]:pick()[1])(oldDirection)
+  local newRoom = nil
+  if biomeBossTriggerCounts[self.biome] then
+    if self.biomeCounter >= biomeBossTriggerCounts[self.biome][2] then
+      --max
+      newRoom = (roomSpawnTables[self.biome .. 'BossOnly']:pick()[1])(oldDirection)
+    elseif self.biomeCounter >= biomeBossTriggerCounts[self.biome][1] then
+      --min
+      newRoom = (roomSpawnTables[self.biome .. 'Boss']:pick()[1])(oldDirection)
+    else
+      --not ready for boss yet
+      newRoom = (roomSpawnTables[self.biome]:pick()[1])(oldDirection)
+    end
+  else
+    --no boss
+    newRoom = (roomSpawnTables[self.biome]:pick()[1])(oldDirection)
+  end
 
   -- Generate unconnected doors on spawn
   newRoom:spawnDoors(oldDirection)
@@ -335,6 +354,7 @@ function House:addRoom(room, enemyCount, pickupCount)
   table.insert(self.rooms, self.idCounter, room)
   room.id = self.idCounter
   self.idCounter = self.idCounter + 1
+  self.miniBossCounter = self.miniBossCounter + 1
 
   --the room needs tiles
   room:carveRoom(self.tiles)
@@ -342,6 +362,10 @@ function House:addRoom(room, enemyCount, pickupCount)
   --spawn room contents
   if room.npcSpawnTable then self:spawnNPCsInRoom(room.npcSpawnTable:pick()[1], room) end
   self:spawnEnemiesInRoom(enemyCount, room)
+  if self.miniBossCounter >= self.miniBossTrigger then
+    self.miniBossCounter = 0
+    self:spawnEnemiesInRoom(1, room, randomFrom(enemyTables.miniBosses))
+  end
   self:spawnPickupsInRoom(pickupCount, room)
   room:spawnFurniture()
 
@@ -491,11 +515,14 @@ function House:changeFloor(staircase)
     end
 
     --place the followers
-    table.each(ovw.player.followers, function(follower, key) follower.x, follower.y = ovw.player.x, ovw.player.y ovw.enemies:add(follower) end)
+    table.each(ovw.player.followers, function(follower, key) follower.x, follower.y = ovw.player.x, ovw.player.y ovw.enemies:add(follower) ovw.view:register(follower) end)
 
     --build the floor
     self:computeTiles()
     self:forceComputeShapes()
+
+    --reset the sounds
+    ovw.sound:reset()
   end
 end
 
@@ -993,23 +1020,25 @@ function House:forceComputeShapes()
 end
 
 function House:spawnNPCsInRoom(npc, room)
-  local x, y = self:pos(room.x, room.y)
-  if room.buildShape == 'circle' then
-    local dir = love.math.random() * math.pi * 2 - math.pi
-    local dis = love.math.random() * (room.radius - 2)
-    x = self:pos(room.x + room.width / 2) + self:pos(math.cos(dir) * dis)
-    y = self:pos(room.y + room.height / 2) + self:pos(math.sin(dir) * dis)
-  elseif room.buildShape == 'diamond' then
-    local dimensionsRatio = (room.height / room.width)
-    x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
-    local tx = math.round(room.width / 2 + .5) * self.cellSize - math.abs(x - room.x * self.cellSize - math.round(room.width / 2 + .5) * self.cellSize)
-    tx = tx * .6
-    y = y + self.halfCell + self:pos(room.height / 2) - dimensionsRatio * tx + love.math.random() * tx * dimensionsRatio * 2
-  else
-    x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
-    y = y + self.halfCell + love.math.random() * ((room.height - 2) * self.cellSize)
+  if npc then
+    local x, y = self:pos(room.x, room.y)
+    if room.buildShape == 'circle' then
+      local dir = love.math.random() * math.pi * 2 - math.pi
+      local dis = love.math.random() * (room.radius - 2)
+      x = self:pos(room.x + room.width / 2) + self:pos(math.cos(dir) * dis)
+      y = self:pos(room.y + room.height / 2) + self:pos(math.sin(dir) * dis)
+    elseif room.buildShape == 'diamond' then
+      local dimensionsRatio = (room.height / room.width)
+      x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
+      local tx = math.round(room.width / 2 + .5) * self.cellSize - math.abs(x - room.x * self.cellSize - math.round(room.width / 2 + .5) * self.cellSize)
+      tx = tx * .6
+      y = y + self.halfCell + self:pos(room.height / 2) - dimensionsRatio * tx + love.math.random() * tx * dimensionsRatio * 2
+    else --rectangle
+      x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
+      y = y + self.halfCell + love.math.random() * ((room.height - 2) * self.cellSize)
+    end
+    ovw.npcs:add(npc({x = x, y = y, room = room}))
   end
-  ovw.npcs:add(npc({x = x, y = y, room = room}))
 end
 
 function House:spawnEnemiesInRoom(amt, room, enemyType)
@@ -1046,7 +1075,7 @@ function House:spawnEnemiesInRoom(amt, room, enemyType)
 end
 
 function House:spawnPickupsInRoom(amount, room)--amt, room, pickupType, orbType) --orbType optional
-  return pickupTables.spawnPickups('trash', room)
+  return pickupTables.drop(room)--pickupTables.spawnPickups('trash', room)
 end
   --[[local function make(i, orb)
     local x, y = self:pos(room.x, room.y)

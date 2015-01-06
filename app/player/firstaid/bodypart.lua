@@ -10,8 +10,9 @@ function BodyPart:init(name, index)
 	self.timers = {}
 	self.timers.heal = 3
 	self.timers.kill = 5
+	self.healSoundState = 0
 
-	self.killSpeed = 5
+	self.killSpeed = 15
 	self.healSpeed = 3
 	self.currentHealth = 15
 	self.maxHealth = 15
@@ -21,6 +22,12 @@ end
 
 function BodyPart:update()
 	if self.hasKit then --if healing then
+		local currentHealSound = math.ceil(self.timers.heal / ((10 / (10 + ovw.player:getStat('agility', true))) / (5 / 6)))
+		if currentHealSound ~= self.healSoundState then
+			self.healSoundState = currentHealSound
+			local healSound = ovw.sound:play('first_aid_' .. currentHealSound .. '.wav')
+			healSound:setVolume(ovw.sound.volumes.fx)
+		end
 		self.timers.heal = timer.rot(self.timers.heal, function()
 			self.hasKit = false
 			self.timers.heal = self.healSpeed * (10 / (10 + ovw.player:getStat('agility', true)))
@@ -43,11 +50,13 @@ end
 function BodyPart:startHeal()
 	self.hasKit = true
 	ovw.player.kits = ovw.player.kits - 1
+	self.healSoundState = 0
 end
 
 function BodyPart:cancelHeal()
 	self.hasKit = false
 	ovw.player.kits = ovw.player.kits + 1
+	self.healSoundState = 0
 end
 
 function BodyPart:damage(amt)
@@ -62,6 +71,8 @@ function BodyPart:damage(amt)
 			--cripple!
 			self:cripple()
 			ovw.hud.fader:add('I need healing...')
+			local crunch = ovw.sound:play('bone_cripple.wav')
+			crunch:setVolume(ovw.sound.volumes.fx)
 			--ovw.house.targetAmbient = {255, 160, 160}
 		else
 			--already wounded
@@ -109,7 +120,7 @@ function BodyPart:regen()
 end
 
 function BodyPart:val()
-  if ovw.player.firstAid.healPart == self.index and self.timers.heal > 0 then return self.timers.heal / (self.healSpeed * (10 / (10 + ovw.player:getStat('agility', true)))) end
+  if self.hasKit and self.timers.heal > 0 then return self.timers.heal / (self.healSpeed * (10 / (10 + ovw.player:getStat('agility', true)))) end
   if self.wounded and self.timers.kill > 0 then return self.timers.kill / self.killSpeed end
   return self.currentHealth / self.maxHealth
 end

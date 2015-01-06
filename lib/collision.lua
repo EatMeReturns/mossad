@@ -17,6 +17,7 @@ end
 
 function Collision:draw()
   if devMode then
+    self.depth = -100
     local rect = {
       ovw.view.x,
       ovw.view.y,
@@ -28,6 +29,20 @@ function Collision:draw()
       shape:draw('fill')
       love.graphics.setColor(255, 255, 255)
       shape:draw('line')
+    end
+  else
+    self.depth = -1
+    local rect = {
+      ovw.view.x,
+      ovw.view.y,
+      ovw.view.x + ovw.view.w,
+      ovw.view.y + ovw.view.h
+    }
+    for shape in pairs(self.hc:shapesInRange(unpack(rect))) do
+      if shape.owner and shape.owner.tag and shape.owner.tag == 'wall' then
+        love.graphics.setColor(0, 0, 0, 255)
+        shape:draw('fill')
+      end
     end
   end
 end

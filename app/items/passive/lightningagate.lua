@@ -8,7 +8,7 @@ function LightningAgate:init(level)
 
 	self.type = 'Passive'
 
-	self.amount = 30 * (level and (level > 1 and (level ^ (1 + level / 10)) or 1) or 1)
+	self.amount = 5 * (level and (level > 1 and ((level ^ (1 + level / 10)) ^ (1/3)) or 1) or 1)
 end
 
 function LightningAgate:update()

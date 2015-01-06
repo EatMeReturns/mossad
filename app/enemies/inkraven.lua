@@ -3,22 +3,37 @@ InkRaven = extend(Enemy)
 InkRaven.collision = setmetatable({}, {__index = Enemy.collision})
 InkRaven.collision.shape = 'circle'
 InkRaven.collision.with = {
+  room = Enemy.collision.with.room,
   wall = Enemy.collision.with.wall,
   enemy = Enemy.collision.with.enemy,
   player = function(self, player, dx, dy)
     if self.state == 'swoop' then
       player:hurt(self.damage)
       self.state = 'fatigue'
-      self.fatigueTimer = 2
+      self.fatigueTimer = .75
     end
-    return Enemy.collision.with.player(self, player, dx, dy)
+    --return Enemy.collision.with.player(self, player, dx, dy)
   end
 }
 InkRaven.radius = 16
 
+InkRaven.images = {
+                    flight = love.graphics.newImage('media/graphics/inkraven_flight.png'),
+                    stand = love.graphics.newImage('media/graphics/inkraven_stand.png')
+                  }
+
+InkRaven.caws = {
+                  'short_crow.wav',
+                  'long_crow.wav',
+                  'average_crow.wav'
+                }
+
 InkRaven.name = {}
 InkRaven.name.singular = 'Ink Raven'
 InkRaven.name.pluralized = 'Ink Ravens'
+
+InkRaven.footprint = 'inkraven'
+InkRaven.lastFootprintTime = .5
 
 -- States:
 --   lurk - waiting for the player to gets let in range
@@ -40,9 +55,11 @@ function InkRaven:init(...)
   self.swoopSpeed = 500
   self.glideSpeed = 100
 
+  self.target = nil
+
   self.damage = 6
   self.exp = 9 + math.ceil(love.math.random() * 5)
-  self.dropChance = .8
+  self.dropChance = .56
 
   self.scanTimer = 1
   self.glideTimer = 0
@@ -55,8 +72,12 @@ function InkRaven:init(...)
 end
 
 function InkRaven:update()
+  Enemy.update(self)
+  if math.abs(self.prevX - self.x) < 1 and math.abs(self.prevY - self.y) < 1 then self.moving = false else self.moving = true end
   self.prevX = self.x
   self.prevY = self.y
+
+  self.makeFootprints = not self.moving
 
   self[self.state](self)
 
@@ -69,17 +90,23 @@ function InkRaven:draw()
   local tx, ty = ovw.house:cell(self.x, self.y)
   local v = ovw.house.tiles[tx] and ovw.house.tiles[tx][ty] and ovw.house.tiles[tx][ty]:brightness() or 1
   if self.state == 'swoop' then
-    love.graphics.setColor(255, 0, 0, v)
+    --love.graphics.setColor(255, 0, 0, v)
   elseif self.state ~= 'lurk' then
-    love.graphics.setColor(255, 255, 0, v)
+    --love.graphics.setColor(255, 255, 0, v)
   else
-    love.graphics.setColor(255, 255, 255, v)
+    --love.graphics.setColor(255, 255, 255, v)
   end
-  local p23 = math.pi * 2 / 3
-  local x1, y1 = self.x + math.dx(self.radius, self.angle), self.y + math.dy(self.radius, self.angle)
-  local x2, y2 = self.x + math.dx(self.radius, self.angle - p23), self.y + math.dy(self.radius, self.angle - p23)
-  local x3, y3 = self.x + math.dx(self.radius, self.angle + p23), self.y + math.dy(self.radius, self.angle + p23)
-  love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+  love.graphics.setColor(155, 155, 155, v)
+  if not self.moving then
+    love.graphics.draw(InkRaven.images.stand, self.x, self.y, self.angle + math.pi / 2, 1, 1, InkRaven.images.stand:getWidth() / 2, InkRaven.images.stand:getHeight() / 2)
+    --local p23 = math.pi * 2 / 3
+    --local x1, y1 = self.x + math.dx(self.radius, self.angle), self.y + math.dy(self.radius, self.angle)
+    --local x2, y2 = self.x + math.dx(self.radius, self.angle - p23), self.y + math.dy(self.radius, self.angle - p23)
+    --local x3, y3 = self.x + math.dx(self.radius, self.angle + p23), self.y + math.dy(self.radius, self.angle + p23)
+    --love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+  else
+    love.graphics.draw(InkRaven.images.flight, self.x, self.y, self.angle + math.pi / 2, 1, 1, InkRaven.images.flight:getWidth() / 2, InkRaven.images.flight:getHeight() / 2)
+  end
 
   if v > 25.5 then
     Enemy.drawHealth(self)
@@ -87,20 +114,21 @@ function InkRaven:draw()
 end
 
 function InkRaven:scan()
+  self.target = nil
   local dis, dir = math.vector(self.x, self.y, ovw.player.x, ovw.player.y)
 
   self.scanTimer = .8
 
-  local target = nil
   if dis < self.sight and math.abs(math.anglediff(dir, self.angle)) < (math.pi * 1.6) then
-    target = ovw.player
-    self.targetAngle = math.direction(self.x, self.y, ovw.player.x, ovw.player.y)
+    self.target = ovw.player
+    self.targetAngle = dir
     self.swoopTargetX, self.swoopTargetY = ovw.player.x, ovw.player.y
     self.state = 'swoop'
     self.swoopTimer = .8
+    ovw.sound:play(table.random(self.caws))
   end
 
-  if not target then
+  if not self.target then
     self.state = 'lurk'
   end
 end
@@ -118,11 +146,12 @@ end
 
 function InkRaven:alert()
   if self.state == 'lurk' then
-    target = ovw.player
+    self.target = ovw.player
     self.targetAngle = math.direction(self.x, self.y, ovw.player.x, ovw.player.y)
     self.swoopTargetX, self.swoopTargetY = ovw.player.x, ovw.player.y
     self.state = 'swoop'
     self.swoopTimer = .8
+    ovw.sound:play(table.random(self.caws))
   end
 end
 
@@ -158,6 +187,7 @@ function InkRaven:glide()
     self.swoopTargetX, self.swoopTargetY = ovw.player.x, ovw.player.y
     self.state = 'swoop'
     self.swoopTimer = .5
+    ovw.sound:play(table.random(self.caws))
   end
 end
 
@@ -171,14 +201,15 @@ function InkRaven:swoop()
     self:startGlide()
   end)
 
-  -- Let it change its direction slightly while swooping
+  --Let it change its direction slightly while swooping
   self.targetAngle = math.anglerp(self.targetAngle, dir, 10 * tickRate)
 end
 
 function InkRaven:fatigue()
   self.fatigueTimer = self.fatigueTimer - tickRate
-  self.x = math.lerp(self.x, self.glideTargetX, 4 * tickRate)
-  self.y = math.lerp(self.y, self.glideTargetY, 4 * tickRate)
+  local speed = self.swoopSpeed * (self.fatigueTimer / .75) * tickRate
+  self.x = self.x + math.dx(speed, self.angle)
+  self.y = self.y + math.dy(speed, self.angle)
   if math.distance(self.x, self.y, self.glideTargetX, self.glideTargetY) < 10 or self.fatigueTimer <= 0 then
     self:startGlide()
   end

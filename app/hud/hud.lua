@@ -9,6 +9,7 @@ function Hud:init()
   self.subTitleFont = g.newFont('media/fonts/pixel.ttf', 16)
 
   self.fader = Fader()
+  self.notebook = Notebook()
   self.mouseText = 'Test!'
 
   self.grabbed = {}
@@ -149,6 +150,25 @@ function Hud:npc()
         g.print(npc.noteTag .. note, 520 + size + .5 + 4, 100 + (size + 2) * (i - 1) + size / 2 + .5 + 1)
         local val = item.val and item:val() or 0
         g.rectangle('fill', 520 + .5, 100 + (size + 2) * (i - 1) + .5 + size - 3, size * val, 3)
+      end
+    end
+
+  elseif npc.npcType == 'Chest' then
+    for i = 1, 3 do
+      for j = 1, 3 do
+        local item = npc.items[i] and npc.items[i][j] or nil
+        local alpha = ovw.player.npc.timers.fadeOut * (not item and 20 or (npc.items[i].focus and 255 or 200))
+        g.setColor(255, 255, 255, alpha)
+        if item then g.draw(item.image, 520 + (size + 2) * (i - 1), 100 + (size + 2) * (j - 1)) end
+        g.rectangle('line', 520 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5, size, size)
+        if item then
+          if item.stacks then
+            g.print(item.stacks, 520 + (size + 2) * (i - 1) + .5 + 4, 100 + (size + 2) * (j - 1) + .5 + 1)
+          end
+          --g.print(note .. npc.noteTag, 520 + (size + 2) * (j - 1) + size + .5 + 4, 100 + (size + 2) * (i - 1) + size / 2 + .5 + 1)
+          local val = item.val and item:val() or 0
+          g.rectangle('fill', 520 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5 + size - 3, size * val, 3)
+        end
       end
     end
   end
@@ -304,6 +324,8 @@ function Hud:arsenal()
           g.hotkeyTab(alpha, 'r', 2 + .5 + size + 2, 2 + (size + 2) * (i + 1) + .5, 10, size, 'right', nil, {'r', 'tab'})
         end
       end
+      --safety
+      g.hotkeyTab(alpha, 'v', 2 + .5 + (size + 2) * 5 + 2, 2 + .5, 10, size, 'right', nil, nil, true, ovw.player, 'safety')
     end
   end
 
@@ -367,37 +389,40 @@ function Hud:mouse()
   self.mouseText = ''
   ovw.player.mouseOverUI = false
 
-  --highlight hotbar slots
-  for i = 1, 5 do
-    local item = ovw.player.hotbar.items[i]
-    if self:mouseOverSlot(2 + (size + 2) * (i - 1) + .5, 2 + .5, size) then
-      g.setColor(255, 255, 255, 100)
-      self.mouseText = 'Empty'
-      if item then
-        --draw a yellow box
-        g.setColor(255, 255, 0, 255)
-        --set the mouseText
-        self.mouseText = item.name
-      end
-      g.rectangle('line', 2 + (size + 2) * (i - 1) + .5, 2 + .5, size, size)
-      ovw.player.mouseOverUI = true
-    end
-  end
+  if ovw.player.safety or love.keyboard.isDownPausing('tab') then
 
-  --highlight arsenal slots
-  for i = 1, 2 do
-    local weapon = ovw.player.arsenal.weapons[i]
-    if self:mouseOverSlot(2 + .5, 2 + (size + 2) * (i + 1) + .5, size) then
-      g.setColor(255, 255, 255, 100)
-      self.mouseText = 'Empty'
-      if weapon then
-        --draw a yellow box
-        g.setColor(255, 255, 0)
-        --set the mouseText
-        self.mouseText = weapon.name
+    --highlight hotbar slots
+    for i = 1, 5 do
+      local item = ovw.player.hotbar.items[i]
+      if self:mouseOverSlot(2 + (size + 2) * (i - 1) + .5, 2 + .5, size) then
+        g.setColor(255, 255, 255, 100)
+        self.mouseText = 'Empty'
+        if item then
+          --draw a yellow box
+          g.setColor(255, 255, 0, 255)
+          --set the mouseText
+          self.mouseText = item.name
+        end
+        g.rectangle('line', 2 + (size + 2) * (i - 1) + .5, 2 + .5, size, size)
+        ovw.player.mouseOverUI = true
       end
-      g.rectangle('line', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size, size)
-      ovw.player.mouseOverUI = true
+    end
+
+    --highlight arsenal slots
+    for i = 1, 2 do
+      local weapon = ovw.player.arsenal.weapons[i]
+      if self:mouseOverSlot(2 + .5, 2 + (size + 2) * (i + 1) + .5, size) then
+        g.setColor(255, 255, 255, 100)
+        self.mouseText = 'Empty'
+        if weapon then
+          --draw a yellow box
+          g.setColor(255, 255, 0)
+          --set the mouseText
+          self.mouseText = weapon.name
+        end
+        g.rectangle('line', 2 + .5, 2 + (size + 2) * (i + 1) + .5, size, size)
+        ovw.player.mouseOverUI = true
+      end
     end
   end
 
@@ -421,19 +446,6 @@ function Hud:mouse()
       end
     end
 
-    --draw the grabbed item
-    g.setColor(255, 255, 255, 255)
-    local item = self.grabbed.item
-    if item then
-      g.draw(item.image, love.mouse.scaleX() + 15, love.mouse.scaleY() + 15)
-      g.rectangle('line', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5, size, size)
-      if item.stacks then
-        g.print(item.stacks, love.mouse.scaleX() + 15 + .5 + 4, love.mouse.scaleY() + 15 + .5 + 1)
-      end
-      local val = item.val and item:val() or 0
-      g.rectangle('fill', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5 + size - 3, size * val, 3)
-    end
-
     --highlight firstaid slots
     for i = 1, 4 do
       local bodyPart = ovw.player.firstAid.bodyParts[i]
@@ -446,12 +458,26 @@ function Hud:mouse()
       end
     end
 
+    --highlight level slots
     for i = 1, 3 do
       if self:mouseOverSlot(400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5, size) then
         g.setColor(255, 255, 0)
         if ovw.player.levelPoints > 0 then g.rectangle('line', 400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5, size, size) end
         self.mouseText = i == 1 and 'Agility' or (i == 2 and 'Armor' or 'Stamina')
       end
+    end
+
+    --draw the grabbed item
+    g.setColor(255, 255, 255, 255)
+    local item = self.grabbed.item
+    if item then
+      g.draw(item.image, love.mouse.scaleX() + 15, love.mouse.scaleY() + 15)
+      g.rectangle('line', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5, size, size)
+      if item.stacks then
+        g.print(item.stacks, love.mouse.scaleX() + 15 + .5 + 4, love.mouse.scaleY() + 15 + .5 + 1)
+      end
+      local val = item.val and item:val() or 0
+      g.rectangle('fill', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5 + size - 3, size * val, 3)
     end
 
   elseif love.keyboard.isDownPausing('e') and ovw.player.npc then
@@ -479,20 +505,6 @@ function Hud:mouse()
       end
     end
 
-    --draw the grabbed item
-    g.setColor(255, 255, 255, 255)
-    local item = self.grabbed.item
-    if item then
-      g.draw(item.image, love.mouse.scaleX() + 15, love.mouse.scaleY() + 15)
-      g.rectangle('line', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5, size, size)
-      if item.stacks then
-        g.print(item.stacks, love.mouse.scaleX() + 15 + .5 + 4, love.mouse.scaleY() + 15 + .5 + 1)
-      end
-      local val = item.val and item:val() or 0
-      g.rectangle('fill', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5 + size - 3, size * val, 3)
-      ovw.player.mouseOverUI = true
-    end
-
     --highlight shop slots
     if npc.npcType == 'Shop' then
       for i = 1, 5 do
@@ -508,6 +520,26 @@ function Hud:mouse()
           end
           g.rectangle('line', 520 + .5, 100 + (size + 2) * (i - 1) + .5, size, size)
           ovw.player.mouseOverUI = true
+        end
+      end
+
+    --highlight chest slots
+    elseif npc.npcType == 'Chest' then
+      for i = 1, 3 do
+        for j = 1, 3 do
+          local item = npc.items[i] and npc.items[i][j] or nil
+          if self:mouseOverSlot(520 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5, size) then
+            g.setColor(255, 255, 255, 100)
+            self.mouseText = 'Empty'
+            if item then
+              --draw a yellow box
+              g.setColor(255, 255, 0)
+              --set the mouseText
+              self.mouseText = item.name
+            end
+            g.rectangle('line', 520 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5, size, size)
+            ovw.player.mouseOverUI = true
+          end
         end
       end
 
@@ -541,6 +573,20 @@ function Hud:mouse()
       end
     end
 
+    --draw the grabbed item
+    g.setColor(255, 255, 255, 255)
+    local item = self.grabbed.item
+    if item then
+      g.draw(item.image, love.mouse.scaleX() + 15, love.mouse.scaleY() + 15)
+      g.rectangle('line', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5, size, size)
+      if item.stacks then
+        g.print(item.stacks, love.mouse.scaleX() + 15 + .5 + 4, love.mouse.scaleY() + 15 + .5 + 1)
+      end
+      local val = item.val and item:val() or 0
+      g.rectangle('fill', love.mouse.scaleX() + 15 + .5, love.mouse.scaleY() + 15 + .5 + size - 3, size * val, 3)
+      ovw.player.mouseOverUI = true
+    end
+
   else
     if self.grabbed.item then self:returnGrabbedItem() end
   end
@@ -564,6 +610,7 @@ function Hud:mousepressed(x, y, button)
       for j = 1, 8 do
         local item = ovw.player.inventory.items[i][j]
         if self:mouseOverSlot(650 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5, size) then
+          ovw.sound:play('click.wav')
           if item then
             if self.grabbed.item then
               if self.grabbed.slotType == 'arsenal' and item.type ~= 'Weapon' then
@@ -621,6 +668,7 @@ function Hud:mousepressed(x, y, button)
     for i = 1, 5 do
       local item = ovw.player.hotbar.items[i]
       if self:mouseOverSlot(2 + (size + 2) * (i - 1) + .5, 2 + .5, size) then
+        ovw.sound:play('click.wav')
         if item then
           if self.grabbed.item then
             if self.grabbed.item.type ~= 'Consumable' and self.grabbed.item.type ~= 'Active' then
@@ -680,6 +728,7 @@ function Hud:mousepressed(x, y, button)
       for i = 1, 2 do
         local weapon = ovw.player.arsenal.weapons[i]
         if self:mouseOverSlot(2 + .5, 2 + (size + 2) * (i + 1) + .5, size) then
+          ovw.sound:play('click.wav')
           if weapon then
             if self.grabbed.item then
               if self.grabbed.item.type ~= 'Weapon' then
@@ -721,6 +770,7 @@ function Hud:mousepressed(x, y, button)
       for i = 1, 4 do
         local bodyPart = ovw.player.firstAid.bodyParts[i]
         if self:mouseOverSlot(300 + .5, 220 + (size + 2) * (i - 1) + .5, size) then
+          ovw.sound:play('click.wav')
           ovw.player.firstAid:setHeal(i)
         end
       end
@@ -728,6 +778,7 @@ function Hud:mousepressed(x, y, button)
       if ovw.player.levelPoints > 0 then
         for i = 1, 3 do
           if self:mouseOverSlot(400 - 70 + (size + 10) * (i - 1) + .5, 600 - 56 + .5, size) then
+            ovw.sound:play('click.wav')
             ovw.player.levelPoints = ovw.player.levelPoints - 1
             if i == 1 then
               ovw.player.agility = ovw.player.agility + 1
@@ -753,6 +804,7 @@ function Hud:mousepressed(x, y, button)
           for j = 1, 8 do
             local item = ovw.player.inventory.items[i][j]
             if self:mouseOverSlot(650 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5, size) then
+              ovw.sound:play('click.wav')
               if item then
                 if self.grabbed.item then
                   if self.grabbed.slotType == 'crafting' and (item.type ~= 'Mod' and item.type ~= 'Base') then
@@ -809,9 +861,26 @@ function Hud:mousepressed(x, y, button)
           for i = 1, 5 do
             local item = npc.items[i]
             if self:mouseOverSlot(520 + .5, 100 + (size + 2) * (i - 1) + .5, size) then
+              ovw.sound:play('click.wav')
               if item then
                 if not self.grabbed.item then
                   npc:activate(i)
+                end
+              end
+            end
+          end
+
+        --Interact with Chest
+        elseif npc.npcType == 'Chest' then
+          for i = 1, 3 do
+            for j = 1, 3 do
+              local item = npc.items[i] and npc.items[i][j] or nil
+              if self:mouseOverSlot(520 + (size + 2) * (i - 1) + .5, 100 + (size + 2) * (j - 1) + .5, size) then
+                ovw.sound:play('click.wav')
+                if item then
+                  if not self.grabbed.item then
+                    npc:activate(i, j)
+                  end
                 end
               end
             end
@@ -829,6 +898,7 @@ function Hud:mousepressed(x, y, button)
           for i = 1, 2 do
             local item = ovw.player.npc.items[i]
             if self:mouseOverSlot(520 + .5, 100 + (size + 2) * (i - 1) + .5, size) then
+              ovw.sound:play('click.wav')
               if item then
                 if self.grabbed.item then
                   if self.grabbed.item.type ~= 'Mod' and self.grabbed.item.type ~= 'Base' then
@@ -886,12 +956,13 @@ function Hud:mousepressed(x, y, button)
       end
     end
   
-  else
+  elseif ovw.player.safety then
 
     --activate hotbar items by clicking them
     for i = 1, 5 do
       local item = ovw.player.hotbar.items[i]
       if self:mouseOverSlot(2 + (size + 2) * (i - 1) + .5, 2 + .5, size) then
+        ovw.sound:play('click.wav')
         if item then
           if button == 'l' then
             --activate item
@@ -907,6 +978,7 @@ function Hud:mousepressed(x, y, button)
       for i = 1, 2 do
         local weapon = ovw.player.arsenal.weapons[i]
         if self:mouseOverSlot(2 + .5, 2 + (size + 2) * (i + 1) + .5, size) then
+          ovw.sound:play('click.wav')
           if weapon then
             --activate weapon
             ovw.player.arsenal:select(i)
@@ -1009,7 +1081,7 @@ function Hud:mouseOverSlot(x, y, size)
   return love.mouse.inBox(x * love.graphics.getWidth() / w, y * love.graphics.getHeight() / h, size * love.graphics.getWidth() / w, size * love.graphics.getHeight() / h)
 end
 
-function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMods)
+function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMods, toggle, toggleSource, toggleVariable)
   color = {175, 175, 175, alpha}
 
   local pkey = hkey
@@ -1037,14 +1109,27 @@ function love.graphics.hotkeyTab(alpha, hkey, tx, ty, tw, th, ts, keyMod, notMod
       if love.keyboard.isDownPausing(notMod) then testNotMod = true end
     end)
 
-  if love.keyboard.isDownPausing('' .. hkey) then
+  if not toggle then
+    if love.keyboard.isDownPausing('' .. hkey) then
+      if not testKeyMod or love.keyboard.isDownPausing(testKeyMod) then
+        if not testNotMod then
+          color[3] = 0
+          color[4] = math.min(255, alpha + 50)
+        end
+      end
+    end
+  else
     if not testKeyMod or love.keyboard.isDownPausing(testKeyMod) then
       if not testNotMod then
-        color[3] = 0
-        color[4] = math.min(255, alpha + 50)
+        if toggleSource[toggleVariable] then
+          color[3] = 0
+          color[4] = math.min(255, alpha + 50)
+        end
       end
     end
   end
+
+
   if keyMod then pkey = keyMod .. '+' .. pkey end
 
   if ts == 'top' then

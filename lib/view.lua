@@ -158,11 +158,11 @@ function View:mouseY()
 end
 
 function View:playerPosOnScreen()
-  local x, y = ovw.player.x - self.x + 85, 600 - (ovw.player.y - self.y) - 60
+  local x, y = ovw.player.x - self.x + 85 * self.scale, 600 - (ovw.player.y - self.y) - 60 * self.scale
   local weapon = ovw.player.arsenal.weapons[ovw.player.arsenal.selected]
   if weapon then
-    x = x + weapon.tipOffset:getX()
-    y = y - weapon.tipOffset:getY()
+    x = x + weapon.tipOffset:getX() * self.scale
+    y = y - weapon.tipOffset:getY() * self.scale
   end
   return {x, y}
 end

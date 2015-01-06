@@ -8,6 +8,9 @@ Gloomrat.name = {}
 Gloomrat.name.singular = 'Gloomrat'
 Gloomrat.name.pluralized = 'Gloomrats'
 
+Gloomrat.footprint = 'gloomrat'
+Gloomrat.lastFootprintTime = .075 --?
+
 function Gloomrat:init(...)
 	Enemy.init(self, ...)
 
@@ -23,7 +26,7 @@ function Gloomrat:init(...)
 
 	self.damage = 6 --hits OFTEN when aggressive
 	self.exp = 15 + math.ceil(love.math.random() * 15)
-	self.dropChance = 1
+	self.dropChance = .7
 
 	self.children = {} -- younglings need protectins!!!!!!1!!111!1
 
@@ -34,7 +37,7 @@ function Gloomrat:init(...)
 	self.startledTimer = 0
 	self.startledRange = 250
 
-	self.aggressiveTime = .4 -- Time spent between attacks
+	self.aggressiveTime = .5 -- Time spent between attacks
 	self.aggressiveTimer = 0
 	self.aggressiveRange = 100
 
@@ -50,13 +53,14 @@ function Gloomrat:init(...)
 end
 
 function Gloomrat:update()
-  self.prevX = self.x
-  self.prevY = self.y
+	Enemy.update(self)
+	self.prevX = self.x
+	self.prevY = self.y
 
-  self[self.state](self)
+	self[self.state](self)
 
-  self:setPosition(self.x, self.y)
-  self.angle = math.anglerp(self.angle, self.targetAngle, math.clamp(6 * tickRate, 0, 1))
+	self:setPosition(self.x, self.y)
+	self.angle = math.anglerp(self.angle, self.targetAngle, math.clamp(6 * tickRate, 0, 1))
 end
 
 function Gloomrat:draw()
@@ -93,6 +97,7 @@ function Gloomrat:scan()
 	    	for i = -3, 3 do
 	    		table.insert(angles, dir - math.pi + i * (math.pi * 2 / 3) / 7)
 	    	end
+	    	table.shuffle(angles)
 	    	local angry = true
 	    	local runAngle = 0
 	    	for k, v in pairs(angles) do

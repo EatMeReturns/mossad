@@ -14,13 +14,18 @@ RubyMoth.name = {}
 RubyMoth.name.singular = 'Ruby Moth'
 RubyMoth.name.pluralized = 'Ruby Moths'
 
+RubyMoth.deathCry = 'sad_moth_modified.wav'
+
+RubyMoth.makeFootprints = false
+
 function RubyMoth:init(...)
 	Enemy.init(self, ...)
+
+	self.anim = table.copy(RubyMoth.anim)
 
 	self.state = 'roam'
 
 	self.sight = 150
-	self.target = nil
 	self.scanTimer = 0
 
 	self.walkSpeed = 50
@@ -31,7 +36,7 @@ function RubyMoth:init(...)
 
 	self.damage = 0
 	self.exp = 0
-	self.dropChance = .5
+	self.dropChance = .35
 
 	self.light = {
 		minDis = 0,
@@ -47,7 +52,7 @@ function RubyMoth:init(...)
 	self.health = 1
 	self.maxHealth = self.health
 	self.targetAngle = love.math.random() * 2 * math.pi
-	self.target = nil
+	self.followTarget = nil
 end
 
 function RubyMoth:destroy() --for all followers!
@@ -56,6 +61,7 @@ function RubyMoth:destroy() --for all followers!
 end
 
 function RubyMoth:update()
+	Enemy.update(self)
 	self.prevX = self.x
 	self.prevY = self.y
 
@@ -93,13 +99,15 @@ function RubyMoth:scan()
 	if dis < self.sight then
 		local blocked = ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall')
     	if not blocked then
-			self.target = ovw.player
+			self.followTarget = ovw.player
 			self.state = 'follow'
 			ovw.player.followers[self] = self
+			local flap = ovw.sound:play('moth_flap.wav')
+			flap:setVolume(ovw.sound.volumes.fx)
 		end
 	end
 
-	if not self.target then
+	if not self.followTarget then
     	self.targetAngle = self.targetAngle + (love.math.random() * 360 - 180)
 		self.state = 'roam'
 	end
@@ -121,7 +129,7 @@ end
 
 function RubyMoth:follow() --required state for all followers!
 	local dis = 0
-	dis, self.targetAngle = math.vector(self.x, self.y, self.target.x, self.target.y)
+	dis, self.targetAngle = math.vector(self.x, self.y, self.followTarget.x, self.followTarget.y)
 	self.followSpeed = dis - 25 + self.circleSpeed
 	if dis > 75 then
 		self.x = self.x + math.dx(self.followSpeed * tickRate, self.angle)

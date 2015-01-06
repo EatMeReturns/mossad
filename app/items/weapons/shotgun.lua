@@ -3,7 +3,10 @@ Shotgun = extend(Weapon)
 Shotgun.name = 'Shotgun'
 Shotgun.pickupMessage = 'Pull!'
 
-Shotgun.damage = 2
+Shotgun.image = love.graphics.newImage('media/graphics/icons/shotgun.png')
+Shotgun.scaling = {x = 1.2, y = 1.2}
+
+Shotgun.damage = 3
 Shotgun.fireMode = 'Single'
 Shotgun.fireSpeed = 1
 Shotgun.reloadSpeed = 0.5

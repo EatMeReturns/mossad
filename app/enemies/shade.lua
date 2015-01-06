@@ -10,6 +10,8 @@ Shade.name = {}
 Shade.name.singular = 'Shade'
 Shade.name.pluralized = 'Shades'
 
+Shade.makeFootprints = false
+
 function Shade:init(...)
   Enemy.init(self, ...)
 
@@ -18,6 +20,9 @@ function Shade:init(...)
   self.sight = 350
   self.target = nil
   self.scanTimer = 0
+
+  self.shriekTimer = 0
+  self.shriekTime = 4
   
   self.chaseSpeed = 180
   self.runSpeed = 140
@@ -25,7 +30,7 @@ function Shade:init(...)
 
   self.damage = 5
   self.exp = 9 + math.ceil(love.math.random() * 10)
-  self.dropChance = .8
+  self.dropChance = .56
 
   self.windupTime = .2 -- Time it takes to deal damage
   self.windupTimer = 0
@@ -43,6 +48,7 @@ function Shade:init(...)
 end
 
 function Shade:update()
+  Enemy.update(self)
   self.prevX = self.x
   self.prevY = self.y
 
@@ -81,12 +87,18 @@ end
 
 function Shade:scan()
   self.target = nil
+  self.shriekTimer = self.shriekTimer - 1
   local dis, dir = math.vector(self.x, self.y, ovw.player.x, ovw.player.y)
   if dis < self.sight and math.abs(math.anglediff(dir, self.angle)) < math.pi / 2 then
     local blocked = ovw.collision:lineTest(self.x, self.y, ovw.player.x, ovw.player.y, 'wall')
     if not blocked then
       self.target = ovw.player
       self.state = 'chase'
+      if self.shriekTimer <= 0 then
+        local shriek = love.math.random() < .67 and ovw.sound:play('shade_shriek.wav') or ovw.sound:play('a_long_scream.wav')
+        shriek:setVolume(ovw.sound.volumes.fx)
+        self.shriekTimer = self.shriekTime + love.math.random() * self.shriekTime
+      end
     end
   end
 
@@ -103,6 +115,8 @@ function Shade:alert()
     self.target = ovw.player
     self.state = 'chase'
     self.scanTimer = 1
+    local shriek = ovw.sound:play('shade_shriek.wav')
+    shriek:setVolume(ovw.sound.volumes.fx)
   end
 end
 
@@ -151,6 +165,8 @@ function Shade:windup()
   if self.windupTimer <= 0 then
     self.state = 'attack'
     self.attackTimer = self.attackTime
+    local dash = ovw.sound:play('shade_dash_modified.wav')
+    dash:setVolume(ovw.sound.volumes.fx)
   end
 end
 

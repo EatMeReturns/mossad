@@ -8,9 +8,9 @@ function RageAgate:init(level)
 
 	self.type = 'Passive'
 
-	self.amount = .2 * (level and (level > 1 and (level ^ (1 + level / 10)) or 1) or 1)
+	self.amount = calculateAgateAmount(level)
 end
 
 function RageAgate:update()
-	ovw.player.damageMultiplier = ovw.player.damageMultiplier + self.amount
+	ovw.player.damageMultiplier = ovw.player.damageMultiplier + (.4 * self.amount - .2)
 end

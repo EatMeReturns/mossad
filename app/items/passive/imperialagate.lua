@@ -8,9 +8,9 @@ function ImperialAgate:init(level)
 
 	self.type = 'Passive'
 
-	self.amount = .025 * (level and (level > 1 and (level ^ (1 + level / 10)) or 1) or 1)
+	self.amount = calculateAgateAmount(level)
 end
 
 function ImperialAgate:update()
-	ovw.player.lifeStealMultiplier = ovw.player.lifeStealMultiplier + self.amount
+	ovw.player.lifeStealMultiplier = ovw.player.lifeStealMultiplier + (.1 * self.amount)
 end

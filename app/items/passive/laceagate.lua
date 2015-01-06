@@ -18,18 +18,18 @@ function LaceAgate:init(level, materials)
 	elseif mat == 'Pure Element Green Orange' then self.style = {'single', 'FreeRun'}
 	else self.style = {'single', 'ChargeMelee'} end --Purple Orange
 
-	self.amount = .25 * (level and (level > 1 and (level ^ (1 + level / 10)) or 1) or 1)
+	self.amount = calculateAgateAmount(level)
 end
 
 function LaceAgate:update()
-	ovw.player.ammoMultiplier = ovw.player.ammoMultiplier + self.amount
+	ovw.player.lightMaxRangeModifier = ovw.player.lightMaxRangeModifier + (13 * self.amount + 40)
 	if self.style[1] == 'double' then
 		_G[self.style[2]].update(self)
 		_G[self.style[2]].update(self)
 	else --hybridsteal or charging melee or free running
 		if self.style[2] == 'HybridSteal' then
-			ovw.player.lifeStealMultiplier = ovw.player.lifeStealMultiplier + self.amount / 10
-			ovw.player.energyStealMultiplier = ovw.player.energyStealMultiplier + self.amount
+			ovw.player.lifeStealMultiplier = ovw.player.lifeStealMultiplier + (.1 * self.amount)
+			ovw.player.energyStealMultiplier = ovw.player.energyStealMultiplier + (.033 * self.amount)
 		elseif self.style[2] == 'FreeRun' then
 			ovw.player.hasFreeRun = true
 		else

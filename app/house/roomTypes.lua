@@ -7,13 +7,16 @@ load 'app/enemies'
 load 'app/bosses'
 
 
-enemyTables = {}
+enemyTables = {} --all enemies excludes biome-specific enemies.
 enemyTables.allEnemies = {Spiderling, Shade, InkRaven, RubyMoth, Gloomrat}
 enemyTables.easy = {Spiderling, Spiderling, Shade, Shade, Shade, InkRaven, InkRaven, RubyMoth, RubyMoth, Gloomrat}
 enemyTables.medium = {Spiderling, Spiderling, Shade, Shade, InkRaven, RubyMoth, Gloomrat}
 enemyTables.hard = {Spiderling, Shade, InkRaven, InkRaven, RubyMoth, Gloomrat, Gloomrat}
 enemyTables.extraBirds = {Spiderling, Spiderling, Shade, InkRaven, InkRaven, InkRaven, InkRaven, RubyMoth, Gloomrat}
 enemyTables.onlyMoths = {RubyMoth}
+enemyTables.onlyWorms = {Worm}
+enemyTables.miniBosses = {Worm}
+enemyTables.cafe = {Zombie}
 
 eventTables = {}
 eventTables.noEvent = WeightedRandom({{{Event, nil}, 1}}, 1)
@@ -27,6 +30,9 @@ pickupTables.epic = {}
 pickupTables.legendary = {}
 pickupTables.experience = {}
 
+npcTables = {}
+npcTables.chest = WeightedRandom({{StorageChest, 0.05}, {nil, 0.95}}, 1)
+
 --------------------------------------------------------------------------------------
 ---MAIN-------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------
@@ -34,8 +40,9 @@ pickupTables.experience = {}
 MainRectangle = extend(Room)
 MainRectangle.doorsToSpawn = 3
 MainRectangle.enemyTypes = enemyTables.allEnemies
+MainRectangle.npcSpawnTable = npcTables.chest
 MainRectangle.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
-MainRectangle.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
+MainRectangle.dropChance = .3--pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
 MainRectangle.eventSpawnTable = WeightedRandom({{{TrapEvent, Spiderling}, .03}, {{Event, nil}, .97}}, 1)
 MainRectangle.floorType = 'Main'
 MainRectangle.biome = 'Main'
@@ -89,8 +96,9 @@ end
 MainDiamond = extend(Room)
 MainDiamond.doorsToSpawn = 6
 MainDiamond.enemyTypes = enemyTables.medium
+MainDiamond.npcSpawnTable = npcTables.chest
 MainDiamond.enemySpawnTable = WeightedRandom({{5, 0.5}, {6, 0.25}, {7, 0.25}, {8, 0.1}, {9, 0.01}}, 1.11)
-MainDiamond.pickupSpawnTable = WeightedRandom({{3, 0.5}, {4, 0.5}}, 1)
+MainDiamond.dropChance = .75--pickupSpawnTable = WeightedRandom({{3, 0.5}, {4, 0.5}}, 1)
 MainDiamond.eventSpawnTable = eventTables.noEvent
 MainDiamond.floorType = 'Main'
 MainDiamond.biome = 'Main'
@@ -147,8 +155,9 @@ end
 MainStairwell = extend(Room)
 MainStairwell.doorsToSpawn = 0
 MainStairwell.enemyTypes = enemyTables.onlyMoths
+MainStairwell.npcSpawnTable = nil
 MainStairwell.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
-MainStairwell.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+MainStairwell.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 MainStairwell.eventSpawnTable = eventTables.noEvent
 MainStairwell.hasFurniture = true
 MainStairwell.floorType = 'Main'
@@ -206,8 +215,9 @@ end
 MainCircle = extend(Room)
 MainCircle.doorsToSpawn = 3
 MainCircle.enemyTypes = enemyTables.allEnemies
+MainCircle.npcSpawnTable = npcTables.chest
 MainCircle.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
-MainCircle.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
+MainCircle.dropChance = .3--pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
 MainCircle.eventSpawnTable = WeightedRandom({{{TrapEvent, Spiderling}, .03}, {{Event, nil}, .97}}, 1)
 MainCircle.floorType = 'Main'
 MainCircle.biome = 'Main'
@@ -260,26 +270,35 @@ end
 MainCorridor = extend(Room)
 MainCorridor.doorsToSpawn = 1
 MainCorridor.enemyTypes = enemyTables.allEnemies
+MainCorridor.npcSpawnTable = npcTables.chest
 MainCorridor.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
-MainCorridor.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
+MainCorridor.dropChance = .5--pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
 MainCorridor.eventSpawnTable = WeightedRandom({{{RejectEvent, 'horizontal'}, 0.03}, {{Event, nil}, 0.97}}, 1)
 MainCorridor.floorType = 'Main'
 MainCorridor.biome = 'Main'
 
 MainCorridor.buildShape = 'rectangle'
 
-function MainCorridor:init(dir)
+function MainCorridor:init(dir, length)
   Room.init(self)
 
   if dir == 'east' or dir == 'west' then
-    self.width = love.math.randomNormal(3, 14)
-    self.width = math.round(math.clamp(self.width, 5, 50))
+    if length then
+      self.width = length
+    else
+      self.width = love.math.randomNormal(3, 14)
+      self.width = math.round(math.clamp(self.width, 5, 50))
+    end
     self.height = House.doorSize + 1
     self.event.direction = 'horizontal'
   elseif dir == 'north' or dir == 'south' then
     self.width = House.doorSize + 1
-    self.height = love.math.randomNormal(3, 14)
-    self.height = math.round(math.clamp(self.height, 5, 50))
+    if length then
+      self.height = length
+    else
+      self.height = love.math.randomNormal(3, 14)
+      self.height = math.round(math.clamp(self.height, 5, 50))
+    end
     self.event.direction = 'vertical'
   end
 
@@ -328,8 +347,9 @@ end
 MainBossRectangle = extend(Room)
 MainBossRectangle.doorsToSpawn = 6
 MainBossRectangle.enemyTypes = enemyTables.onlyMoths
+MainBossRectangle.npcSpawnTable = nil
 MainBossRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
-MainBossRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+MainBossRectangle.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 MainBossRectangle.eventSpawnTable = eventTables.noEvent
 MainBossRectangle.floorType = 'Main'
 MainBossRectangle.biome = 'Main'
@@ -388,10 +408,11 @@ end
 
 MainShopRectangle = extend(Room)
 MainShopRectangle.doorsToSpawn = 2
-MainCorridor.enemyTypes = enemyTables.onlyMoths
+MainShopRectangle.enemyTypes = enemyTables.onlyMoths
+MainShopRectangle.npcSpawnTable = nil
 MainShopRectangle.npcSpawnTable = WeightedRandom({{Shop, 1}}, 1)
 MainShopRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
-MainShopRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+MainShopRectangle.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 MainShopRectangle.eventSpawnTable = eventTables.noEvent
 MainShopRectangle.floorType = 'Main'
 MainShopRectangle.biome = 'Main'
@@ -442,10 +463,11 @@ end
 
 MainCraftingStationRectangle = extend(Room)
 MainCraftingStationRectangle.doorsToSpawn = 1
-MainCorridor.enemyTypes = enemyTables.onlyMoths
+MainCraftingStationRectangle.enemyTypes = enemyTables.onlyMoths
+MainCraftingStationRectangle.npcSpawnTable = npcTables.chest
 MainCraftingStationRectangle.npcSpawnTable = WeightedRandom({{CraftingStation, 1}}, 1)
 MainCraftingStationRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
-MainCraftingStationRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+MainCraftingStationRectangle.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 MainCraftingStationRectangle.eventSpawnTable = eventTables.noEvent
 MainCraftingStationRectangle.floorType = 'Main'
 MainCraftingStationRectangle.biome = 'Main'
@@ -501,7 +523,7 @@ TowerDiamond = extend(MainDiamond)
 TowerDiamond.doorsToSpawn = 4
 TowerDiamond.enemyTypes = enemyTables.extraBirds
 TowerDiamond.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
-TowerDiamond.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+TowerDiamond.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 TowerDiamond.eventSpawnTable = WeightedRandom({{{TrapEvent, InkRaven}, .03}, {{Event, nil}, .97}}, 1)
 TowerDiamond.floorType = 'Tower'
 TowerDiamond.biome = 'Tower'
@@ -529,7 +551,7 @@ TowerCorridor = extend(MainCorridor)
 TowerCorridor.doorsToSpawn = 1
 TowerCorridor.enemyTypes = enemyTables.medium
 TowerCorridor.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1}, {4, 0.01}}, 1.11)
-TowerCorridor.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
+TowerCorridor.dropChance = .5--pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
 TowerCorridor.eventSpawnTable = WeightedRandom({{{RejectEvent, 'horizontal'}, 0.03}, {{Event, nil}, 0.97}}, 1)
 TowerCorridor.floorType = 'Tower'
 TowerCorridor.biome = 'Tower'
@@ -552,7 +574,7 @@ TowerTreasureCircle = extend(MainCircle)
 TowerTreasureCircle.doorsToSpawn = 0
 TowerTreasureCircle.enemyTypes = enemyTables.onlyMoths
 TowerTreasureCircle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
-TowerTreasureCircle.pickupSpawnTable = WeightedRandom({{4, 0.5}, {5, 0.5}}, 1)
+TowerTreasureCircle.dropChance = 1--pickupSpawnTable = WeightedRandom({{4, 0.5}, {5, 0.5}}, 1)
 TowerTreasureCircle.eventSpawnTable = eventTables.noEvent
 TowerTreasureCircle.floorType = 'Tower'
 TowerTreasureCircle.biome = 'Tower'
@@ -575,7 +597,7 @@ TowerExitRectangle = extend(MainBossRectangle)
 TowerExitRectangle.doorsToSpawn = 6
 TowerExitRectangle.enemyTypes = enemyTables.onlyMoths
 TowerExitRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
-TowerExitRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+TowerExitRectangle.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 TowerExitRectangle.floorType = 'Tower'
 TowerExitRectangle.biome = 'Tower'
 
@@ -597,7 +619,7 @@ TowerIvoryCircle = extend(MainCircle)
 TowerIvoryCircle.doorsToSpawn = 0
 TowerIvoryCircle.enemyTypes = enemyTables.onlyMoths
 TowerIvoryCircle.enemySpawnTable = WeightedRandom({{3, 1}}, 1)
-TowerIvoryCircle.pickupSpawnTable = WeightedRandom({{5, 0.25}, {7, 0.5}, {9, 0.25}}, 1)
+TowerIvoryCircle.dropChance = 1--pickupSpawnTable = WeightedRandom({{5, 0.25}, {7, 0.5}, {9, 0.25}}, 1)
 TowerIvoryCircle.floorType = 'Tower'
 TowerIvoryCircle.biome = 'Tower'
 
@@ -610,7 +632,7 @@ GrayChallengeRectangle = extend(MainRectangle)
 GrayChallengeRectangle.doorsToSpawn = 6
 GrayChallengeRectangle.enemyTypes = enemyTables.hard
 GrayChallengeRectangle.enemySpawnTable = WeightedRandom({{5, 0.5}, {6, 0.25}, {7, 0.25}, {8, 0.1}, {9, 0.01}}, 1.11)
-GrayChallengeRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+GrayChallengeRectangle.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 GrayChallengeRectangle.eventSpawnTable = eventTables.noEvent
 GrayChallengeRectangle.floorType = 'Gray'
 GrayChallengeRectangle.biome = 'Gray'
@@ -633,7 +655,7 @@ GrayCorridor = extend(MainCorridor)
 GrayCorridor.doorsToSpawn = 1
 GrayCorridor.enemyTypes = enemyTables.hard
 GrayCorridor.enemySpawnTable = WeightedRandom({{2, 0.5}, {3, 0.25}, {4, 0.25}, {5, 0.1}, {6, 0.01}}, 1.11)
-GrayCorridor.pickupSpawnTable = WeightedRandom({{0, 0.25}, {1, 0.625}, {2, 0.125}}, 1)
+GrayCorridor.dropChance = .5--pickupSpawnTable = WeightedRandom({{0, 0.25}, {1, 0.625}, {2, 0.125}}, 1)
 GrayCorridor.eventSpawnTable = eventTables.noEvent
 GrayCorridor.floorType = 'Gray'
 GrayCorridor.biome = 'Gray'
@@ -656,7 +678,7 @@ GrayTreasureRectangle = extend(MainRectangle)
 GrayTreasureRectangle.doorsToSpawn = 0
 GrayTreasureRectangle.enemyTypes = enemyTables.onlyMoths
 GrayTreasureRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
-GrayTreasureRectangle.pickupSpawnTable = WeightedRandom({{3, 0.5}, {4, 0.5}}, 1)
+GrayTreasureRectangle.dropChance = 1--pickupSpawnTable = WeightedRandom({{3, 0.5}, {4, 0.5}}, 1)
 GrayTreasureRectangle.eventSpawnTable = eventTables.noEvent
 GrayTreasureRectangle.floorType = 'Gray'
 GrayTreasureRectangle.biome = 'Gray'
@@ -679,7 +701,7 @@ GrayExitRectangle = extend(MainBossRectangle)
 GrayExitRectangle.doorsToSpawn = 6
 GrayExitRectangle.enemyTypes = enemyTables.onlyMoths
 GrayExitRectangle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
-GrayExitRectangle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+GrayExitRectangle.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 GrayExitRectangle.floorType = 'Gray'
 GrayExitRectangle.biome = 'Gray'
 
@@ -701,9 +723,9 @@ end
 
 GreatHallCircle = extend(MainCircle)
 GreatHallCircle.doorsToSpawn = 12
-GreatHallCircle.enemyTypes = enemyTables.onlyMoths
-GreatHallCircle.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
-GreatHallCircle.pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+GreatHallCircle.enemyTypes = enemyTables.onlyWorms
+GreatHallCircle.enemySpawnTable = WeightedRandom({{0, .8}, {2, .2}}, 1)
+GreatHallCircle.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
 GreatHallCircle.eventSpawnTable = eventTables.noEvent
 GreatHallCircle.floorType = 'Main'
 GreatHallCircle.biome = 'Great_Hall'
@@ -732,12 +754,37 @@ function GreatHallCircle:spawnFurniture()
 end
 
 --------------------------------------------------------------------------------------
+---CONCOURSE-------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+
+ConcourseCorridor = extend(MainCorridor)
+ConcourseCorridor.doorsToSpawn = 12
+ConcourseCorridor.enemyTypes = enemyTables.onlyMoths
+ConcourseCorridor.enemySpawnTable = WeightedRandom({{0, 1}}, 1)
+ConcourseCorridor.dropChance = 0--pickupSpawnTable = WeightedRandom({{0, 1}}, 1)
+ConcourseCorridor.eventSpawnTable = eventTables.noEvent
+ConcourseCorridor.floorType = 'Main'
+ConcourseCorridor.biome = 'Concourse'
+
+function ConcourseCorridor:init(dir)
+  MainCorridor.init(self, dir, 120)
+end
+
+function ConcourseCorridor:spawnDoors(dir)
+  MainCorridor.spawnDoors(self, dir)
+end
+
+function ConcourseCorridor:carveRoom(tileMap)
+  MainCorridor.carveRoom(self, tileMap)
+end
+
+--------------------------------------------------------------------------------------
 
 roomSpawnTables =
 {
   Main = WeightedRandom(
     {
-      {MainDiamond, 0.22},
+      {MainDiamond, 0.2},
       {MainCircle, 0.4},
       {MainStairwell, 0.2},
       {MainRectangle, 0.6},
@@ -746,16 +793,31 @@ roomSpawnTables =
       {MainCorridor, 0.3},
       {TowerCorridor, 0.03},
       {GrayCorridor, 0.03},
-      {GreatHallCircle, 0.02}
+      {GreatHallCircle, 0.02},
+      {ConcourseCorridor, 0.02}
     }, 2),
   Gray = WeightedRandom(
+    {
+      {GrayCorridor, 0.2},
+      {GrayChallengeRectangle, 0.5},
+      {GrayTreasureRectangle, 0.3}
+    }, 1),
+  GrayBoss = WeightedRandom(
     {
       {GrayCorridor, 0.2},
       {GrayChallengeRectangle, 0.5},
       {GrayTreasureRectangle, 0.2},
       {GrayExitRectangle, 0.1}
     }, 1),
+  GrayBossOnly = WeightedRandom(
+    {
+      {GrayExitRectangle, 1}
+    }, 1),
   Great_Hall = WeightedRandom(
+    {
+      {MainRectangle, 1}
+    }, 1),
+  Concourse = WeightedRandom(
     {
       {MainRectangle, 1}
     }, 1),
@@ -763,9 +825,28 @@ roomSpawnTables =
     {
       {TowerDiamond, 0.4},
       {TowerCorridor, 0.3},
+      {TowerTreasureCircle, 0.3}
+    }, 1),
+  TowerBoss = WeightedRandom(
+    {
+      {TowerDiamond, 0.4},
+      {TowerCorridor, 0.3},
       {TowerTreasureCircle, 0.2},
       {TowerExitRectangle, 0.1}
+    }, 1),
+  TowerBossOnly = WeightedRandom(
+    {
+      {TowerExitRectangle, 1}
     }, 1)
+}
+
+biomeBossTriggerCounts = --nil if not triggered from room counter, {min, max} otherwise
+{
+  Main = nil,
+  Gray = {10, 20},
+  Great_Hall = nil,
+  Tower = {15, 30},
+  Concourse = nil
 }
 
 biomeFaderMessages = 
@@ -773,7 +854,8 @@ biomeFaderMessages =
   Main = {},
   Gray = {enter = 'Fear is the mind killer...'},
   Great_Hall = {enter = 'In this room, I am trivial.'},
-  Tower = {enter = '\"You plan a tower that will pierce the clouds? Lay first the foundation of humility.\"\n\nSaint Augustine'}
+  Tower = {enter = '\"You plan a tower that will pierce the clouds? Lay first the foundation of humility.\"\n\nSaint Augustine'},
+  Concourse = {enter = 'Five and a half minutes of gloom.'}
 }
 
 biomeStaircaseExitRooms = 
@@ -781,5 +863,6 @@ biomeStaircaseExitRooms =
   Gray = GrayTreasureRectangle,
   Great_Hall = MainRectangle,
   Tower = TowerDiamond,
-  Main = MainRectangle
+  Main = MainRectangle,
+  Concourse = MainRectangle
 }

@@ -13,6 +13,8 @@ Room.enemySpawnTable = WeightedRandom({{0, 0.5}, {1, 0.25}, {2, 0.25}, {3, 0.1},
 Room.pickupSpawnTable = WeightedRandom({{0, 0.625}, {1, 0.25}, {2, 0.125}}, 1)
 Room.floorType = 'main' --determines tileset data
 
+Room.dropChance = .3
+
 local function randomFrom(t)
   if #t == 0 then return end
   return t[love.math.random(1, #t)]
@@ -170,6 +172,8 @@ function Staircase:init(room, x, y, direction)
 
   self.width = 32
   self.height = 32
+
+  self.depth = DrawDepths.furniture
 
   self.room:addObject(self)
   ovw.collision:register(self)

@@ -34,7 +34,7 @@ function Avian:init()
   self.state = 'derp' --derp, gust, swoop?
   self.stateTable = WeightedRandom({{'derp', .5}, {'swoop', .1}, {'gust', .15}, {'summon', .25}}, 1)
 
-  self.health = 200
+  self.health = 220 * House.getDifficulty(true)
   self.maxHealth = self.health
 
   self.direction = love.math.random() * 2 * math.pi -- direction we're moving in

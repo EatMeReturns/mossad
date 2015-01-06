@@ -18,7 +18,7 @@ function Tutorial:init()
 	self.w = 320
 	self.h = 140
 
-	self.depth = -1
+	self.depth = -5
 
 	ovw.view:register(self)
 end
@@ -34,6 +34,10 @@ function Tutorial:gui()
 
 		g.printf(self.text, self.x + 3, self.y, self.w - 6)
 	end
+end
+
+function Tutorial:toggle()
+	--TODO: standardize the changing of tutorial save setting.
 end
 
 function Tutorial:Begin()

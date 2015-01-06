@@ -20,7 +20,7 @@ function NPC:init(data)
 	self.noteTag = ''
 	self.room:addObject(self)
 	self.angle = 0
-	self.depth = 0
+	self.depth = DrawDepths.movers
 	ovw.collision:register(self)
 	ovw.view:register(self)
 end

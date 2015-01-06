@@ -13,10 +13,10 @@ function IrisAgate:init(level, materials)
 	elseif materials[1] == 'Iridescent Element [Purple]' or materials[2] == 'Iridescent Element [Purple]' then self.style = 'ImperialAgate'
 	else self.style = 'TigerAgate' end
 
-	self.amount = .25 * (level and (level > 1 and (level ^ (1 + level / 10)) or 1) or 1)
+	self.amount = calculateAgateAmount(level)
 end
 
 function IrisAgate:update()
-	ovw.player.experienceMultiplier = ovw.player.experienceMultiplier + self.amount
+	ovw.player.experienceMultiplier = ovw.player.experienceMultiplier + (.4 * self.amount - .2)
 	_G[self.style].update(self)
 end

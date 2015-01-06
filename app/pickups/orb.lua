@@ -3,7 +3,9 @@ Orb = extend(Pickup)
 Orb.tag = 'pickup'
 Orb.collision = {
 	shape = 'circle',
-	with = {player = function(self, player, dx, dy) self:activate() end}
+	with = {player = function(self, player, dx, dy) self:activate() end,
+			wall = Pickup.collision.with.wall
+			}
 }
 
 Orb.images = {
@@ -26,6 +28,7 @@ function Orb:init(data)
 	self.image = Orb.images[self.orbType]
 	self.room:addObject(self)
 	self.radius = 4
+	self.depth = DrawDepths.air - math.min(.9999, self.amount / 1000)
 	ovw.collision:register(self)
 	ovw.view:register(self)
 	self.depth = -5 - self.amount / 50

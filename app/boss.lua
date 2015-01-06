@@ -38,6 +38,8 @@ function Boss:init()
   self.exp = 50
   self.dropChance = 1
 
+  self.depth = DrawDepths.movers
+
   ovw.hud.fader:add(self.spawnMessage)
 
   ovw.view:register(self)
@@ -67,7 +69,7 @@ function Boss:hurt(amount)
     pickupTables.makeOrb(self.room, {x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10}, 'experience', self.exp)
     pickupTables.drop(self)
     pickupTables.drop(self)
-    pickupTables.drop(self)
+    --drop unique item
     self:remove()
   end
 end

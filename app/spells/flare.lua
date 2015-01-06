@@ -27,6 +27,8 @@ function FlareSpell:init(dir, x, y, damage)
 	self.speed = 275
 	self.damage = damage
 
+	self.depth = DrawDepths.sitters
+
 	self.radius = 10
 	self.rotation = 0
 

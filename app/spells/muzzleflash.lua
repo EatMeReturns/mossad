@@ -36,7 +36,7 @@ function MuzzleFlash:init(dis, dir, pos, size)
   end
 
   self.health = .2
-  self.depth = -5
+  self.depth = DrawDepths.air
   ovw.view:register(self)
 end
 

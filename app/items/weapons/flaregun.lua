@@ -3,6 +3,9 @@ Flaregun = extend(Weapon)
 Flaregun.name = 'Flaregun'
 Flaregun.pickupMessage = '\"I love the smell of napalm in the morning.\"\n\nLieutenant Colonel Bill Kilgore'
 
+Flaregun.image = love.graphics.newImage('media/graphics/icons/flaregun.png')
+Flaregun.scaling = {x = .8, y = .8}
+
 Flaregun.damage = 10
 Flaregun.fireMode = 'Semiautomatic'
 Flaregun.fireSpeed = 0

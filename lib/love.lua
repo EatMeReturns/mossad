@@ -152,3 +152,5 @@ function love.mouse.scaleY() return love.graphics.scaleY(love.mouse.getY()) end
 function love.mouse.direction() return math.direction(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.mouse.getX(), love.mouse.getY()) end
 function love.mouse.scaleDirection() return math.direction(800 / 2, 600 / 2, love.mouse.scaleX(), love.mouse.scaleY()) end
 function love.mouse.distance() return math.distance(love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.mouse.getX(), love.mouse.getY()) end
+
+function table.duplicate(t) local duplicate = {} table.each(t, function(v, k) duplicate[k] = v end) return duplicate end

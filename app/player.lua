@@ -24,9 +24,18 @@ Player.collision = {
         self.lastRoom = self.room
         self.room = other
         self.room.event:triggerEvent()
-        if ovw.house.biome ~= self.room.biome then if biomeFaderMessages[self.room.biome].enter then ovw.hud.fader:add(biomeFaderMessages[self.room.biome].enter) end ovw.house.biome = self.room.biome end
+        if ovw.house.biome ~= self.room.biome then
+          ovw.house.biomeCounter = 1
+          if biomeFaderMessages[self.room.biome].enter then
+            ovw.hud.fader:add(biomeFaderMessages[self.room.biome].enter)
+          end
+          ovw.house.biome = self.room.biome
+        else
+          ovw.house.biomeCounter = ovw.house.biomeCounter + 1
+        end
         ovw.house:regenerate(self.room)
       end
+      print(ovw.house.biomeCounter)
     end,
 
     staircase = function(self, staircase)
@@ -51,9 +60,28 @@ function Player:init(agility, armor, stamina)
   self.speed = 0
   self.maxSpeed = 150
   self.runModifier = 100
+  self.lastStep = tick - (1 / tickRate)
 
   self.lastHit = tick - (1 / tickRate)
+
+  --Non-Stat-Related Flags
   self.mouseOverUI = false
+  self.backpackOpen = false
+  self.inCombat = false
+  self.combatants = {}
+  self.combatTimer = 0
+  self.combatTime = 8
+  self.heartbeatTimer = .67
+  self.heartbeatTime = .67
+  self.safety = true
+  self.footprintTimer = 0
+  self.footprintTime = 4
+  self.lastFootprintTimer = 0
+  self.lastFootprintTime = .45
+  self.footprintReverse = 1
+  self.footprintColor = {0, 0, 0}
+  self.footprint = 'player'
+  self.footprintAngle = 0
 
   --self.frontImage = love.graphics.newImage('media/graphics/anImage.png')
   --self.backImage = love.graphics.newImage('media/graphics/anImageBack.png')
@@ -64,7 +92,7 @@ function Player:init(agility, armor, stamina)
   self.prevX = self.x
   self.prevY = self.y
 
-  self.depth = -1
+  self.depth = DrawDepths.player
 
   self.inventory = Inventory()
 
@@ -158,11 +186,45 @@ function Player:init(agility, armor, stamina)
 end
 
 function Player:getStat(stat, useModifier)
-  assert(stat == 'stamina' or stat == 'armor' or stat == 'agility')
+  assert(stat == 'stamina' or stat == 'armor' or stat == 'agility', 'Not a valid stat. Must be stamina or armor or agility.')
   return self[stat] + (useModifier and self[stat .. 'Modifier'] or 0)
 end
 
 function Player:update()
+  --SOUND EFFECTS -----------------------
+  if self.backpackOpen then
+    if not --[[(love.keyboard.isDown('e') or ]]love.keyboard.isDown('tab') then
+      self.backpackOpen = false
+      local closeSound = ovw.sound:play('backpack_zipper_close.wav')
+      closeSound:setVolume(ovw.sound.volumes.fx)
+    end
+  end
+
+  if self.inCombat then
+    if table.count(self.combatants) <= 0 then
+      self.combatTimer = self.combatTimer - tickRate
+      if self.combatTimer <= 0 then
+        self.inCombat = false
+        self.combatTimer = 0
+      end
+    else
+      self.combatTimer = math.min(self.combatTime, self.combatTimer + tickRate * 4)
+    end
+  else
+    if table.count(self.combatants) > 0 then
+      self.inCombat = true
+      local violin = ovw.sound:play('violin_screech_modified.wav')
+      violin:setVolume(ovw.sound.volumes.ambience)
+    end
+  end
+
+  self.heartbeatTimer = self.heartbeatTimer - tickRate
+  if self.heartbeatTimer <= 0 then
+    local heartSound = ovw.sound:play('heartbeat_modified.wav')
+    self.heartbeatTimer = self.heartbeatTime + ((self.combatTime - self.combatTimer) / 16)
+    heartSound:setVolume((1 - (((self.combatTime - self.combatTimer) / 16) ^ .5)) * ovw.sound.volumes.ambience)
+  end
+
   --STAT RESETS -------------------------
   self.healthRegen = .05
   self.staminaRegen = 0.1
@@ -211,7 +273,7 @@ function Player:update()
   if self.rotation < -math.pi then self.rotation = self.rotation + math.pi * 2 end
 
   --CURSOR AND UI -----------------------
-  if self.mouseOverUI or paused or love.keyboard.isDown('tab') then
+  if (self.mouseOverUI and (self.safety or love.keyboard.isDown('e'))) or paused or love.keyboard.isDown('tab') then
     love.mouse.setCursor(cursors.pointer)
   else
     love.mouse.setCursor(cursors.target)
@@ -219,6 +281,7 @@ function Player:update()
 
   --LIGHTING ----------------------------
   self.light.x, self.light.y = self.x, self.y
+  self.light.maxDis = 100 + self.lightMaxRangeModifier
   ovw.house:applyLight(self.light, 'ambient')
 
   if self.flashlightOn then
@@ -226,6 +289,7 @@ function Player:update()
     local head = self.firstAid.bodyParts[1]
     if self.battery > 0 then
       self.battery = self.battery - tickRate
+      if self.battery < self.batteryMax / 30 and love.math.random() < .02 then local woosh = ovw.sound:play('electric_woosh.wav') woosh:setVolume(ovw.sound.volumes.fx) end
       if self.battery < self.batteryMax / 10 then self.flashlight.flicker = 0.75 * (self.battery / (self.batteryMax / 10)) else self.flashlight.flicker = 0.95 end
       ovw.house:applyLight(self.flashlight, 'dynamic')
     elseif self.batteries > 0 then
@@ -245,6 +309,17 @@ function Player:update()
 
   --GRAPHICS ---------------------------
   Player.damageShader:send('chroma', {ovw.view.shake, 0})
+
+  self.footprintTimer = self.footprintTimer - tickRate
+  if self.footprintTimer > 0 then
+    self.lastFootprintTimer = self.lastFootprintTimer - tickRate
+    if self.lastFootprintTimer <= 0 then
+      if self.footprint ~= 'playerRoll' then self.footprintAngle = self.angle end
+      ovw.particles:add(Footprint({x = self.x, y = self.y}, self.footprintAngle, self.footprintReverse, self.footprintColor, self.room, self.footprint))
+      self.footprintReverse = self.footprintReverse * -1
+      self.lastFootprintTimer = self.lastFootprintTime
+    end
+  end
 
   --FIRST AID -------------------------- [CAN'T END THE GAME IN THE MIDDLE OF AN UPDATE]
   self.firstAid:update()
@@ -266,7 +341,7 @@ function Player:draw()
   love.graphics.setShader()
 
   local weapon = self.arsenal.weapons[self.arsenal.selected]
-  if weapon and not self.hasLaserSight and not self.mouseOverUI and not love.keyboard.isDown('tab') then
+  if weapon and not self.hasLaserSight and not (self.mouseOverUI and (self.safety or love.keyboard.isDown('e'))) and not love.keyboard.isDown('tab') then
     local x, y = self.x + weapon.tipOffset.getX(), self.y + weapon.tipOffset.getY()
     local dis = math.distance(x, y, ovw.view:mouseX(), ovw.view:mouseY())
     local x2, y2 = x + math.dx(dis, self.angle), y + math.dy(dis, self.angle)
@@ -279,14 +354,27 @@ function Player:draw()
 end
 
 function Player:keypressed(key)
+  if --[[key == 'e' or]] key == 'tab' and not self.backpackOpen then
+    self.backpackOpen = true
+    local openSound = ovw.sound:play('backpack_zipper_open.wav')
+    openSound:setVolume(ovw.sound.volumes.fx)
+  end
   if key == 'u' then useShader = not useShader end --move to options menu
+  if key == 'v' then self.safety = not self.safety end --toggle weapon safety
+  if key == 'f' then --just f
+    self.flashlightOn = not self.flashlightOn
+    local lightSound = nil
+    if self.flashlightOn then
+      lightSound = ovw.sound:play('flashlight_on.wav')
+    else
+      lightSound = ovw.sound:play('flashlight_off.wav')
+    end
+    lightSound:setVolume(ovw.sound.volumes.fx)
+  end
   if not love.keyboard.isDown('tab') then --just tab
     local x = tonumber(key)
     if x and x >= 1 and x <= 5 then
       self.hotbar:activate(x, love.keyboard.isDown('lshift')) --shift uses?
-    end
-    if key == 'f' then --just f
-      self.flashlightOn = not self.flashlightOn
     end
     if key == 'q' then --not implemented yet
       self.hotbar:drop()
@@ -339,7 +427,9 @@ function Player:regen()
   table.with(self.firstAid.bodyParts, 'regen')
   if self.energy < self:getStat('stamina', true) then
     self.energy = self.energy + self:getStat('stamina', true) * self.staminaRegen * tickRate
-    if self.energy > self:getStat('stamina', true) then self.energy = self:getStat('stamina', true) end
+  end
+  if self.energy > self:getStat('stamina', true) then
+    self.energy = self:getStat('stamina', true)
   end
 end
 
@@ -360,7 +450,30 @@ function Player:move()
     end
   else self.speed = 0 end
     
-  if not (moving or self.rolling) then return end
+  if not (moving or self.rolling) then return
+  elseif self.rolling then
+    --roll sound
+    self.footprint = 'playerRoll'
+    self.lastFootprintTime = .001
+  elseif running then
+    --fast steps
+    self.footprint = 'player'
+    self.lastFootprintTime = .25
+    if tick - (1 / tickRate) - self.lastStep > 13 then--.35 then
+      local step = ovw.sound:play('wood_step.wav')
+      step:setVolume(ovw.sound.volumes.ambience / 2)
+      self.lastStep = tick - (1 / tickRate)
+    end
+  else
+    --slow steps
+    self.footprint = 'player'
+    self.lastFootprintTime = .45
+    if tick - (1 / tickRate) - self.lastStep > 25 then--.67 then
+      local step = ovw.sound:play('wood_step.wav')
+      step:setVolume(ovw.sound.volumes.ambience / 5)
+      self.lastStep = tick - (1 / tickRate)
+    end
+  end
   
   if a and not d then dx = left elseif d then dx = right end
   if w and not s then dy = up elseif s then dy = down end
@@ -380,6 +493,7 @@ function Player:move()
   if self.rolling then
     if self.rollTimer == self.rollTimerMax then
       self.rollDir = dir
+      self.footprintAngle = self.rollDir
     end
 
     self.speed = self.rollSpeed
@@ -426,13 +540,20 @@ end
 
 function Player:hurt(amount)
   ovw.view.shake = ovw.view.shake + math.sqrt(amount) ^ 3
+  ovw.particles:add(BloodParticle({x = self.x - 10 + love.math.random() * 20, y = self.y - 10 + love.math.random() * 20}, {50, 0, 0}))
+  ovw.particles:add(BloodSplat({x = self.x - 10 + love.math.random() * 20, y = self.y - 10 + love.math.random() * 20}, {50, 0, 0}, self.room))
+  ovw.particles:add(BloodSplat({x = self.x - 10 + love.math.random() * 20, y = self.y - 10 + love.math.random() * 20}, {50, 0, 0}, self.room))
+  ovw.particles:add(BloodSplat({x = self.x - 10 + love.math.random() * 20, y = self.y - 10 + love.math.random() * 20}, {50, 0, 0}, self.room))
   
+
   amount = amount * ovw.house.getDifficulty(true)
 
   --smack a random body part
   local x = love.math.random() * 4
   x = math.max(1, math.ceil(x))
   self.firstAid.bodyParts[x]:damage(amount)
+  local hit = ovw.sound:play('get_hit_scrub_modified.wav')
+  hit:setVolume(math.min(ovw.sound.volumes.fx, (amount / 15) * ovw.sound.volumes.fx))
 
   self.lastHit = tick
 end
@@ -448,5 +569,34 @@ function Player:learn(amount)
     reqExp = 50 + self.level * 20
     ovw.hud.fader:add('My efforts have improved my skills.')
     ovw.house:increaseDifficulty()
+    local levelSound = ovw.sound:play('level_up.wav')
+    levelSound:setVolume(ovw.sound.volumes.fx)
   end
+end
+
+function Player:loot(item)
+  if item.name == 'Ammo' then
+    self.ammo = self.ammo + math.round(math.clamp(House.getDifficulty(true) * love.math.randomNormal(3, 2), 1, 5) * self.ammoMultiplier)
+    return true
+  elseif item.name == 'Battery' then
+    ovw.player.batteries = ovw.player.batteries + 1
+    return true
+  elseif item.name == 'First Aid Kit' then
+    ovw.player.kits = ovw.player.kits + 1
+    return true
+  else
+    if ovw.player.hotbar:add(item) then
+      ovw.hud.fader:add(item.pickupMessage)
+      return true
+    elseif ovw.player.arsenal:add(item) then
+      ovw.hud.fader:add(item.pickupMessage)
+      return true
+    elseif ovw.player.inventory:add(item) then
+      ovw.hud.fader:add(item.pickupMessage)
+      return true
+    end
+  end
+
+  ovw.hud.fader:add('I am carrying too much...')
+  return false
 end

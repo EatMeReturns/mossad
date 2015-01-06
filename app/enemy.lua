@@ -32,6 +32,15 @@ Enemy.name = {}
 Enemy.name.singular = {'Enemy'}
 Enemy.name.pluralized = {'Enemies'}
 
+Enemy.footprintTimer = 0 --footprints require self.angle and self.room
+Enemy.footprintTime = 4
+Enemy.lastFootprintTimer = 0
+Enemy.lastFootprintTime = .2 --change for each type of enemy
+Enemy.footprintReverse = 1
+Enemy.footprintColor = {0, 0, 0}
+Enemy.footprint = 'player' --change for each type of enemy
+Enemy.makeFootprints = true --disable when flying or underground or whatever
+
 function Enemy:init(x, y, room)
   self.x = x
   self.y = y
@@ -48,12 +57,14 @@ function Enemy:init(x, y, room)
   self.speed = 0
   self.targetSpeed = 0
 
+  self.target = nil
+
   self.exp = 0
   self.dropChance = 1
 
   self.lootSpawnTable = WeightedRandom({{0, 0.7}, {1, 0.25}, {2, 0.05}}, 1)
 
-  self.depth = 0
+  self.depth = DrawDepths.movers
   ovw.collision:register(self)
   ovw.view:register(self)
 end
@@ -74,6 +85,7 @@ function Enemy:maxVal()
 end
 
 function Enemy:destroy()
+  ovw.player.combatants[self] = nil
   self.room:removeObject(self)
   ovw.collision:unregister(self)
   ovw.view:unregister(self)
@@ -83,7 +95,28 @@ function Enemy:remove()
   ovw.enemies:remove(self)
 end
 
-Enemy.update = f.empty --perform movement, etc. calculations
+function Enemy:update()
+  if self.target then
+    ovw.player.combatants[self] = self
+  else
+    ovw.player.combatants[self] = nil
+  end
+
+  if self.makeFootprints then
+    self.footprintTimer = self.footprintTimer - tickRate
+  else
+    self.footprintTimer = 0
+  end
+  if self.footprintTimer > 0 then
+    self.lastFootprintTimer = self.lastFootprintTimer - tickRate
+    if self.lastFootprintTimer <= 0 then
+      ovw.particles:add(Footprint({x = self.x, y = self.y}, self.angle, self.footprintReverse, self.footprintColor, self.room, self.footprint))
+      self.footprintReverse = self.footprintReverse * -1
+      self.lastFootprintTimer = self.lastFootprintTime
+    end
+  end
+end
+
 Enemy.draw = f.empty --hurr durr
 Enemy.alert = f.empty --don't poke the sleeping bear
 
@@ -93,26 +126,31 @@ function Enemy:hurt(amount)
   self.health = self.health - amount
   ovw.player.healthRegen = ovw.player.healthRegen + amount * ovw.player.lifeStealMultiplier
   ovw.player.staminaRegen = ovw.player.staminaRegen + amount * ovw.player.energyStealMultiplier
+
+  ovw.particles:add(BloodParticle({x = self.x - 10 + love.math.random() * 20, y = self.y - 10 + love.math.random() * 20}, {10, 10, 10}))
+  ovw.particles:add(BloodSplat({x = self.x - 10 + love.math.random() * 20, y = self.y - 10 + love.math.random() * 20}, {10, 10, 10}, self.room))
+  ovw.particles:add(BloodSplat({x = self.x - 10 + love.math.random() * 20, y = self.y - 10 + love.math.random() * 20}, {10, 10, 10}, self.room))
+  ovw.particles:add(BloodSplat({x = self.x - 10 + love.math.random() * 20, y = self.y - 10 + love.math.random() * 20}, {10, 10, 10}, self.room))
+
   if self.health <= 0 then
-    --local function make(i, orb, amt)
-    --  if i == 'Orb' then
-    --    ovw.pickups:add(Orb({x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10, orbType = orb, room = self.room, amount = amt}))
-    --  else
-    --    ovw.pickups:add(Pickup({x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10, itemType = i, room = self.room}))
-    --  end
-    --end
     if love.math.random() < .1 then pickupTables.makeOrb(self.room, {x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10}, 'health', math.floor(love.math.random() * self.maxHealth / 4 + self.maxHealth / 4)) end
-    --make('Orb', 'health', math.floor(love.math.random() * self.maxHealth / 4 + self.maxHealth / 4)) end
     if love.math.random() < .1 then pickupTables.makeOrb(self.room, {x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10}, 'stamina', math.floor(love.math.random() * self.maxHealth / 4 + self.maxHealth / 4)) end
-    --make('Orb', 'stamina', math.floor(love.math.random() * self.maxHealth / 4 + self.maxHealth / 4)) end
     pickupTables.makeOrb(self.room, {x = self.x + love.math.random() * 20 - 10, y = self.y + love.math.random() * 20 - 10}, 'experience', self.exp)
-    --make('Orb', 'experience', self.exp)
-    --local i = self.lootSpawnTable:pick()[1]
-    --while i > 0 do
-    --  table.each(makeLootTable('Common'), function(v, k) make(v) end)
-    --  i = i - 1
-    --end
     pickupTables.drop(self)
+    if self.deathCry then
+      cry = ovw.sound:play(self.deathCry)
+      cry:setVolume(ovw.sound.volumes.fx)
+    end
+    if self.deathMessage then
+      ovw.hud.fader:add(self.deathMessage)
+    end
+
+    ovw.particles:add(BloodSplat({x = self.x - 50 + love.math.random() * 100, y = self.y - 50 + love.math.random() * 100}, {10, 10, 10}, self.room))
+    ovw.particles:add(BloodSplat({x = self.x - 50 + love.math.random() * 100, y = self.y - 50 + love.math.random() * 100}, {10, 10, 10}, self.room))
+    ovw.particles:add(BloodSplat({x = self.x - 50 + love.math.random() * 100, y = self.y - 50 + love.math.random() * 100}, {10, 10, 10}, self.room))
+    ovw.particles:add(BloodSplat({x = self.x - 50 + love.math.random() * 100, y = self.y - 50 + love.math.random() * 100}, {10, 10, 10}, self.room))
+    ovw.particles:add(BloodSplat({x = self.x - 50 + love.math.random() * 100, y = self.y - 50 + love.math.random() * 100}, {10, 10, 10}, self.room))
+
     self:remove()
   else
     self:alert()

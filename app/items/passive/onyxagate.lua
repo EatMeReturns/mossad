@@ -13,10 +13,10 @@ function OnyxAgate:init(level, materials)
 	elseif materials[1] == 'Void Element [Purple]' or materials[2] == 'Void Element [Purple]' then self.style = 'ImperialAgate'
 	else self.style = 'TigerAgate' end
 
-	self.amount = .25 * (level and (level > 1 and (level ^ (1 + level / 10)) or 1) or 1)
+	self.amount = calculateAgateAmount(level)
 end
 
 function OnyxAgate:update()
-	ovw.player.ammoMultiplier = ovw.player.ammoMultiplier + self.amount
+	ovw.player.ammoMultiplier = ovw.player.ammoMultiplier + (.4 * self.amount - .2)
 	_G[self.style].update(self)
 end

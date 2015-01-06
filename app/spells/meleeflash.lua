@@ -6,7 +6,7 @@ function MeleeFlash:init(dis, dir, pos, theta)
 	self.angles = {dir - theta / 2, dir + theta / 2}
 
 	self.health = .2
-	self.depth = -5
+	self.depth = DrawDepths.air
 	ovw.view:register(self)
 end
 

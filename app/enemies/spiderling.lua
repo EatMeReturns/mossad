@@ -34,6 +34,8 @@ Spiderling.name = {}
 Spiderling.name.singular = 'Spiderling'
 Spiderling.name.pluralized = 'Spiderlings'
 
+Spiderling.makeFootprints = false
+
 -- States:
 --   lurk - scanning for the player
 --   skitter - roaming, waiting to attack
@@ -49,12 +51,14 @@ function Spiderling:init(...)
 
 	self.sight = 300
 
+	self.target = nil
+
 	self.biteSpeed = 400
 	self.skitterSpeed = 225
 
 	self.damage = 1
 	self.exp = math.ceil(love.math.random() * 1.5)
-	self.dropChance = .15
+	self.dropChance = .1
 
 	self.scanTimer = 1
 	self.skitterTimer = 0
@@ -66,6 +70,7 @@ function Spiderling:init(...)
 end
 
 function Spiderling:update()
+	Enemy.update(self)
 	self.prevX = self.x
 	self.prevY = self.y
 
@@ -98,17 +103,17 @@ function Spiderling:draw()
 end
 
 function Spiderling:scan()
+	self.target = nil
 	local dis, dir = math.vector(self.x, self.y, ovw.player.x, ovw.player.y)
 
 	self.scanTimer = .8
 
-	local target = nil
 	if dis < self.sight then
-		target = ovw.player
+		self.target = ovw.player
 		self:startSkitter()
 	end
 
-	if not target then
+	if not self.target then
 		self.state = 'lurk'
 	end
 end
@@ -122,6 +127,8 @@ function Spiderling:startSkitter()
 	self.targetAngle = self.targetAngle + 180 + (love.math.random() * 60 - 30)
 	self.skitterTargetX = ovw.player.x + math.dx(100, self.targetAngle)
 	self.skitterTargetY = ovw.player.y + math.dy(100, self.targetAngle)
+	local scuttle = ovw.sound:play('spider_scuttle.wav')
+	scuttle:setVolume(ovw.sound.volumes.ambience)
 end
 
 ----------------
@@ -156,6 +163,8 @@ function Spiderling:skitter()
 			self.targetAngle = math.direction(self.x, self.y, ovw.player.x, ovw.player.y)
 			self.state = 'bite'
 			self.biteTimer = .8
+			local scuttle = ovw.sound:play('spider_scuttle.wav')
+			scuttle:setVolume(ovw.sound.volumes.ambience)
 		else
 			self.state = 'fatigue'
 		end
