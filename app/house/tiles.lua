@@ -125,6 +125,7 @@ House.tilemap.Main.diamond.none = t(0, 7)
 House.tilemap.Gray.rectangle.none = t(0, 7)
 House.tilemap.Tower.diamond.none = t(0, 7)
 House.tilemap.Tower.rectangle.none = t(0, 7)
+House.tilemap.Tower.circle.none = t(0, 7)
 
 House.ambientColor = {255, 255, 255}
 House.targetAmbient = {255, 255, 255}
@@ -145,6 +146,8 @@ Tile.lightingShader = love.graphics.newShader(
   }]])
 
 Tile.lightingShader:send('windowScale', {love.window.getWidth() / 800, love.window.getHeight() / 600})
+
+Tile.font = love.graphics.newFont('media/fonts/pixel.ttf', 6)
 
 function Tile:init(type, x, y, room)
   self.type = type
@@ -213,6 +216,12 @@ function Tile:draw()
     local quad = House.tilemap[self.type][self.buildShape][self.tile]
     love.graphics.draw(House.tileImage, quad, self.posX, self.posY, 0, self.sc, self.sc)
     love.graphics.setShader()
+  end
+
+  if devMode then
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.setFont(self.font)
+    love.graphics.print(self.tile .. '\n' .. self.x .. ',' .. self.y, self.posX + 2, self.posY + 2)
   end
 end
 

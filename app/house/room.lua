@@ -57,9 +57,10 @@ function Room:destroy()
   table.with(self.objects, 'remove')
   table.each(self.doors, function(door, side)
     door.rooms[side] = nil
-    door:disconnect()
+    --door:disconnect()
+    table.insert(ovw.house.doorsToDisconnect, door)
   end)
-  table.with(self.tiles, 'destroy')
+  --table.with(self.tiles, 'destroy')
   table.insert(ovw.house.roomsToCompute, self)
 end
 
@@ -114,6 +115,7 @@ end
 
 function Room:addDoor(door, side)
   self.doors[side] = door
+  door.newestDirection = side
 end
 
 function Room:createStaircase(x, y, direction)

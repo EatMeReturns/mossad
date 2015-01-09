@@ -17,6 +17,7 @@ function Game:load()
   DrawDepths.sitters = 0 --pickups, flares, default spell
   DrawDepths.furniture = 1 --staircases, chests
   DrawDepths.ground = 2 --blood splats
+  DrawDepths.doodads = 4 --floor sprites
   DrawDepths.house = 5 --tiles
 
 

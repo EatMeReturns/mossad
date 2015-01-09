@@ -35,7 +35,6 @@ Player.collision = {
         end
         ovw.house:regenerate(self.room)
       end
-      print(ovw.house.biomeCounter)
     end,
 
     staircase = function(self, staircase)

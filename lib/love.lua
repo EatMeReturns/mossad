@@ -33,7 +33,7 @@ function love.run()
 	love.draw()
 	love.graphics.present()
     
-    love.timer.sleep(.001)
+    love.timer.sleep(.001) --option to unlimit the cpu
   end
 end
 

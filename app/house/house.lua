@@ -25,10 +25,14 @@ function House:init()
   self.biome = 'Main'
   self.biomeCounter = 0
 
-  self.algorithmTimer = .08
-  self.algorithmTimerMax = .08 --option to change this to reduce algorithm lag
+  self.algorithmTimer = .001
+  self.algorithmTimerMax = .001 --option to change this to reduce algorithm lag
   self.doorsToConnect = {}
+  self.roomsToFill = {}
   self.roomsToDestroy = {}
+  self.doorsToDisconnect = {}
+  self.doorsToCarve = {}
+  self.doorsToCompute = {}
   self.roomsToCompute = {}
   self.roomsToShape = {}
   self.needShaping = false
@@ -54,80 +58,8 @@ function House:destroy()
   ovw.view:unregister(self)
 end
 
-function House:update()
-  local x1, x2, y1, y2 = self:cell(ovw.view.x, ovw.view.x + ovw.view.w, ovw.view.y, ovw.view.y + ovw.view.h)
-  self.drawRanges = {xMin = x1, xMax = x2, yMin = y1, yMax = y2}
-
-  for x = x1, x2 do
-    for y = y1, y2 do
-      if self.tiles[x] and self.tiles[x][y] then
-        self.tiles[x][y]:update()
-        self.tiles[x][y]:updateLight()
-      end
-    end
-  end
-
-  if not self.staircaseReady then
-    self.staircaseTimer = self.staircaseTimer - tickRate
-    if self.staircaseTimer <= 0 then
-      self.staircaseReady = true
-      self.staircaseTimer = 3
-    end
-  end
-
-  self.algorithmTimer = self.algorithmTimer - tickRate
-  if self.algorithmTimer <= 0 then
-    self.floorReady = false
-    if #self.doorsToConnect > 0 then --print('connecting')
-      local room = self.doorsToConnect[1]:connect()
-      table.remove(self.doorsToConnect, 1)
-      if room then
-        table.insert(self.roomsToCompute, room)
-      end
-      self.needShaping = true
-
-    elseif #self.roomsToDestroy > 0 then --print('destroying')
-      self.roomsToDestroy[1]:destroy()
-      table.remove(self.roomsToDestroy, 1)
-      self.needShaping = true
-
-    elseif #self.roomsToCompute > 0 then --print('computing')
-      local room = self.roomsToCompute[1]
-      if self.roomsToCompute[1] then
-        self:computeTilesInRoom(room)
-      end
-      table.remove(self.roomsToCompute, 1)
-      self.needShaping = true
-
-    elseif self.needShaping then --print('start shaping') This is somehow missing out on a recently-traversed room. Maybe the room isn't added to self.rooms yet?
-      self.roomsToShape = {}
-      table.each(self.rooms, function(room, key) table.insert(self.roomsToShape, room) end)
-      self.needShaping = false
-
-    elseif #self.roomsToShape > 0 then --print('shaping')
-      self:computeShapesInRoom(self.roomsToShape[1])
-      table.remove(self.roomsToShape, 1)
-      if #self.roomsToShape == 0 then --print('done')
-        self:computeShapes()
-      end
-
-    else
-      self.floorReady = true
-
-    end
-    self.algorithmTimer = self.algorithmTimerMax
-  end
-
-  local crippled = false
-  local wounded = false
-  local bodyPart = ovw.player.firstAid.bodyParts[1]
-  if bodyPart.wounded then wounded = true
-  elseif bodyPart.crippled then crippled = true end
-  if wounded then self.targetAmbient = {100, 0, 0} elseif crippled then self.targetAmbient = {255, 100, 100} else self.targetAmbient = {255, 255, 255} end
-
-  self.ambientColor[1] = math.lerp(self.ambientColor[1], self.targetAmbient[1], .5 * tickRate)
-  self.ambientColor[2] = math.lerp(self.ambientColor[2], self.targetAmbient[2], .5 * tickRate)
-  self.ambientColor[3] = math.lerp(self.ambientColor[3], self.targetAmbient[3], .5 * tickRate)
+function House:removeRoom(room)
+  self.rooms[room.id] = nil
 end
 
 function House:draw()
@@ -141,6 +73,10 @@ function House:draw()
     end
   end
 end
+
+--================================================================================--
+--UTILITIES ------------------------------------------------------------------------
+--================================================================================--
 
 function House:snap(x, ...)
   if not x then return end
@@ -215,6 +151,128 @@ function House:openRoom(room)
   if room.sealShapes then table.each(room.sealShapes, function(shape, key) ovw.collision.hc:remove(shape) end) room.sealShapes = nil end
 end
 
+function House:collisionTest(room)
+  local padding = 0 --self.roomSpacing - 1
+  --if getmetatable(room).__index == BossRoom then padding = padding + 3 end
+  for x = room.x - padding, room.x + room.width + padding do
+    for y = room.y - padding, room.y + room.height + padding do
+      if self.tiles[x] and self.tiles[x][y] then return false end
+    end
+  end
+
+  return true --no other room colliding with room!
+end
+
+--================================================================================--
+--ALGORITHM ------------------------------------------------------------------------
+--================================================================================--
+
+function House:update()
+
+  --Lighting
+
+  local x1, x2, y1, y2 = self:cell(ovw.view.x, ovw.view.x + ovw.view.w, ovw.view.y, ovw.view.y + ovw.view.h)
+  self.drawRanges = {xMin = x1, xMax = x2, yMin = y1, yMax = y2}
+
+  for x = x1, x2 do
+    for y = y1, y2 do
+      if self.tiles[x] and self.tiles[x][y] then
+        self.tiles[x][y]:update()
+        self.tiles[x][y]:updateLight()
+      end
+    end
+  end
+
+  --Staircase Timer
+
+  if not self.staircaseReady then
+    self.staircaseTimer = self.staircaseTimer - tickRate
+    if self.staircaseTimer <= 0 then
+      self.staircaseReady = true
+      self.staircaseTimer = 3
+    end
+  end
+
+  --Ambience
+
+  local crippled = false
+  local wounded = false
+  local bodyPart = ovw.player.firstAid.bodyParts[1]
+  if bodyPart.wounded then wounded = true
+  elseif bodyPart.crippled then crippled = true end
+  if wounded then self.targetAmbient = {100, 0, 0} elseif crippled then self.targetAmbient = {255, 100, 100} else self.targetAmbient = {255, 255, 255} end
+
+  self.ambientColor[1] = math.lerp(self.ambientColor[1], self.targetAmbient[1], .5 * tickRate)
+  self.ambientColor[2] = math.lerp(self.ambientColor[2], self.targetAmbient[2], .5 * tickRate)
+  self.ambientColor[3] = math.lerp(self.ambientColor[3], self.targetAmbient[3], .5 * tickRate)
+
+  --Algorithm
+
+  self.algorithmTimer = self.algorithmTimer - tickRate
+  if self.algorithmTimer <= 0 then
+    self.floorReady = false
+    if #self.doorsToConnect > 0 then --print('connecting')
+      local room = self.doorsToConnect[1]:connect()
+      table.remove(self.doorsToConnect, 1)
+      if room then
+        table.insert(self.roomsToCompute, room)
+      end
+      self.needShaping = true
+
+    elseif #self.roomsToFill > 0 then --print('filling')
+      local room = self.roomsToFill[1]
+      self:fillRoom(room, room.enemySpawnTable:pick()[1], room.pickupSpawnTable:pick()[1])
+      table.remove(self.roomsToFill, 1)
+      self.needShaping = true
+
+    elseif #self.roomsToDestroy > 0 then --print('destroying')
+      self.roomsToDestroy[1]:destroy()
+      table.remove(self.roomsToDestroy, 1)
+      self.needShaping = true
+
+    elseif #self.doorsToDisconnect > 0 then --print('disconnecting')
+      self.doorsToDisconnect[1]:disconnect()
+      table.remove(self.doorsToDisconnect, 1)
+      self.needShaping = true
+
+    elseif #self.doorsToCarve > 0 then --print('carving doors')
+      self:carveDoor(self.doorsToCarve[1])
+      table.remove(self.doorsToCarve, 1)
+      self.needShaping = true
+
+    elseif #self.doorsToCompute > 0 then --print('computing doors')
+      self:computeTilesInDoor(self.doorsToCompute[1])
+      table.remove(self.doorsToCompute, 1)
+      self.needShaping = true
+
+    elseif #self.roomsToCompute > 0 then --print('computing rooms')
+      local room = self.roomsToCompute[1]
+      if self.roomsToCompute[1] then
+        self:computeTilesInRoom(room)
+      end
+      table.remove(self.roomsToCompute, 1)
+      self.needShaping = true
+
+    elseif self.needShaping then --print('start shaping') --This is somehow missing out on a recently-traversed room. Maybe the room isn't added to self.rooms yet?
+      self.roomsToShape = {}
+      table.each(self.rooms, function(room, key) table.insert(self.roomsToShape, room) end)
+      self.needShaping = false
+
+    elseif #self.roomsToShape > 0 then --print('shaping')
+      self:computeShapesInRoom(self.roomsToShape[1])
+      table.remove(self.roomsToShape, 1)
+      if #self.roomsToShape == 0 then --print('done')
+        self:computeShapes()
+      end
+
+    else
+      self.floorReady = true
+
+    end
+    self.algorithmTimer = self.algorithmTimerMax
+  end
+end
+
 function House:generate()
   local room = MainRectangle()
   room.event = Event()
@@ -284,8 +342,9 @@ function House:createRoom(oldRoom, oldDirection)
   oldDirection = oldDirection or oldWall.direction
 
   -- Create the door between the rooms
-  local doorMap = {}
-  doorMap[oldDirection] = oldRoom
+  --local doorMap = {}
+  --doorMap[oldDirection] = oldRoom
+  local oldDoor = oldRoom.doors[oldDirection]
 
   -- Create a destination room
   local newRoom = nil
@@ -316,28 +375,36 @@ function House:createRoom(oldRoom, oldDirection)
   newRoom:move(unpack(directionOffsets[oldWall.direction]))
 
   -- Add the door to the associated wall.
-  doorMap[newWall.direction] = newRoom
-  local door = Door(doorMap)
+  --doorMap[newWall.direction] = newRoom
+  --local door = Door(doorMap)
+  oldDoor.rooms[newWall.direction] = newRoom
 
   -- If it doesn't overlap with another room, add it.
   if self:collisionTest(newRoom) then
-    oldRoom:addDoor(door, oldWall.direction)
-    newRoom:addDoor(door, newWall.direction)
+    --oldRoom:addDoor(door, oldWall.direction)
+    newRoom:addDoor(oldDoor, newWall.direction)
 
-    self:addRoom(newRoom, newRoom.enemySpawnTable:pick()[1], newRoom.pickupSpawnTable:pick()[1])
+    self:addRoom(newRoom)
     local dx, dy = math.sign(oldRoom.x - newRoom.x), math.sign(oldRoom.y - newRoom.y)
     if oldWall.direction == 'north' or oldWall.direction == 'south' then
       dx = 0
     else
       dy = 0
     end
-    self:carveDoor(
-      oldRoom.x + math.round(oldRoom.width / 2) * dx + oldWall.x,
-      oldRoom.y + math.round(oldRoom.height / 2) * dy + oldWall.y,
-      newRoom.x - math.round(newRoom.width / 2) * dx + newWall.x,
-      newRoom.y - math.round(newRoom.height / 2) * dy + newWall.y,
-      newRoom, door
-    )
+
+    oldDoor.cx1 = oldRoom.x + math.round(oldRoom.width / 2) * dx + oldWall.x
+    oldDoor.cy1 = oldRoom.y + math.round(oldRoom.height / 2) * dy + oldWall.y
+    oldDoor.cx2 = newRoom.x - math.round(newRoom.width / 2) * dx + newWall.x
+    oldDoor.cy2 = newRoom.y - math.round(newRoom.height / 2) * dy + newWall.y
+    table.insert(self.doorsToCarve, oldDoor)
+
+    --self:carveDoor(
+    --  oldRoom.x + math.round(oldRoom.width / 2) * dx + oldWall.x,
+    --  oldRoom.y + math.round(oldRoom.height / 2) * dy + oldWall.y,
+    --  newRoom.x - math.round(newRoom.width / 2) * dx + newWall.x,
+    --  newRoom.y - math.round(newRoom.height / 2) * dy + newWall.y,
+    --  newRoom, door
+    --)
 
     return true, newRoom
   else
@@ -345,11 +412,7 @@ function House:createRoom(oldRoom, oldDirection)
   end
 end
 
-function House:removeRoom(room)
-  self.rooms[room.id] = nil
-end
-
-function House:addRoom(room, enemyCount, pickupCount)
+function House:addRoom(room)
   --init room id
   table.insert(self.rooms, self.idCounter, room)
   room.id = self.idCounter
@@ -359,6 +422,13 @@ function House:addRoom(room, enemyCount, pickupCount)
   --the room needs tiles
   room:carveRoom(self.tiles)
 
+  --map collision pieces
+  room:computeCollision()
+
+  table.insert(self.roomsToFill, room)
+end
+
+function House:fillRoom(room, enemyCount, pickupCount)
   --spawn room contents
   if room.npcSpawnTable then self:spawnNPCsInRoom(room.npcSpawnTable:pick()[1], room) end
   self:spawnEnemiesInRoom(enemyCount, room)
@@ -368,165 +438,11 @@ function House:addRoom(room, enemyCount, pickupCount)
   end
   self:spawnPickupsInRoom(pickupCount, room)
   room:spawnFurniture()
-
-  --map collision pieces
-  room:computeCollision()
 end
 
-function House:refreshRoom(room, id)
-  self.rooms[id] = room
-  room:carveRoom(self.tiles)
-  room:computeCollision()
-
-  table.each(room.doors, function(door, side) self:refreshDoor(room, door) end)
-end
-
-function House:refreshDoor(room, door)
-  if #door.tiles > 0 then
-    local x, y = door.tiles[1].x, door.tiles[1].y
-    local x1, y1, x2, y2 = x, y, x, y
-    for i = 2, #door.tiles do
-      x, y = door.tiles[i].x, door.tiles[i].y
-      x1 = math.min(x1, x)
-      y1 = math.min(y1, y)
-      x2 = math.max(x2, x)
-      y2 = math.max(y2, y)
-    end
-    House.carveRect(x1, y1, x2, y2, room, self.tiles)
-    self:computeTilesInDoor(x1, y1, x2, y2)
-    self:computeTilesInRoom(room)
-  end
-end
-
-function House:createFloor(i, override)
-  if not override and i == self.currentFloor then
-    --you're already on this floor?
-  else
-    self.floors[i] = {rooms = {}, spells = {}, particles = {}, enemies = {}, npcs = {}, pickups = {}, furniture = {}}
-  end
-end
-
-function House:setFloor(i)
-  if i == self.currentFloor then
-    --you're already on this floor?
-    print('already on this floor, how did you do that?')
-  else
-    --does the new floor exist yet?
-    if not self.floors[i] then
-      self:createFloor(i)
-    end
-
-    --store the currentFloor rooms
-    self:createFloor(self.currentFloor, true)
-    local currentFloorData = self.floors[self.currentFloor]
-    table.each(self.rooms, function(room, id) ovw.collision.hc:remove(room.shape) currentFloorData.rooms[id] = room end)
-    self:saveFloorDataBlock(self.currentFloor, 'spells')
-    self:saveFloorDataBlock(self.currentFloor, 'particles', true) --PARTICLES DON'T COLLIDE
-    self:saveFloorDataBlock(self.currentFloor, 'enemies')
-    self:saveFloorDataBlock(self.currentFloor, 'npcs')
-    self:saveFloorDataBlock(self.currentFloor, 'pickups')
-    self:saveFloorDataBlock(self.currentFloor, 'furniture')
-
-    --clear the floor structure
-    self.rooms = {}
-    self.tiles = {}
-    self:forceComputeShapes()
-    self:computeTiles()
-
-    --load the newFloor rooms
-    self.currentFloor = i
-    local newFloorData = self.floors[self.currentFloor]
-    table.each(newFloorData.rooms, function(room, id) self:refreshRoom(room, id) end)
-    self:loadFloorDataBlock(self.currentFloor, 'spells')
-    self:loadFloorDataBlock(self.currentFloor, 'particles', true) --PARTICLES DON'T COLLIDE
-    self:loadFloorDataBlock(self.currentFloor, 'enemies')
-    self:loadFloorDataBlock(self.currentFloor, 'npcs')
-    self:loadFloorDataBlock(self.currentFloor, 'pickups')
-    self:loadFloorDataBlock(self.currentFloor, 'furniture')
-
-    --build the floor, don't cross the streams!
-    ovw:clearStreams()
-    self:computeTiles()
-    self:forceComputeShapes()
-  end
-end
-
-function House:saveFloorDataBlock(floor, block, noCollision, noDrawing)
-  table.each(ovw[block].objects, function(object, id)
-    if not noCollision then ovw.collision:unregister(object) end
-    if not noDrawing then ovw.view:unregister(object) end
-    self.floors[floor][block][id] = object
-    ovw[block].objects[id] = nil
-  end)
-end
-
-function House:loadFloorDataBlock(floor, block, noCollision, noDrawing)
-  table.each(self.floors[floor][block], function(object, id)
-    if not noCollision then ovw.collision:register(object) end
-    if not noDrawing then ovw.view:register(object) end
-    ovw[block].objects[id] = object
-    self.floors[floor][block][id] = nil
-  end)
-end
-
-function House:changeFloor(staircase)
-  if self.floorReady and self.staircaseReady then
-    self.staircaseReady = false
-    local targetFloor = 0
-    local newDirection
-    if staircase.direction == 'up' then
-      targetFloor = self.currentFloor + 1
-      newDirection = 'down'
-    elseif staircase.direction == 'down' then
-      targetFloor = self.currentFloor - 1
-      newDirection = 'up'
-    else
-      --staircase.direction is the exact floor to change to, from like an elevator or something
-      targetFloor = staircase.direction
-      newDirection = self.currentFloor
-    end
-
-    staircase:remove()
-
-    local spawnX, spawnY = self:cell(ovw.player.x, ovw.player.y)
-    local needRoom = true
-    self:setFloor(targetFloor)
-    for id, room in pairs(self.rooms) do
-      if room:hasTile(spawnX, spawnY) then
-        needRoom = false
-        room:createStaircase(spawnX, spawnY, newDirection)
-      end
-
-      --self:computeTilesInRoom(room)
-      --self:computeShapesInRoom(room)
-    end
-
-    if needRoom then
-      local newRoom = biomeStaircaseExitRooms[self.biome]()
-      newRoom.event = Event()
-      newRoom.x, newRoom.y = spawnX - math.round(newRoom.width / 2), spawnY - math.round(newRoom.height / 2)
-      self:addRoom(newRoom, 0, 0)
-
-      newRoom:createStaircase(spawnX, spawnY, newDirection)
-
-      newRoom:spawnDoors(newRoom:randomWall())
-      self:computeTilesInRoom(newRoom)
-      self:regenerate(newRoom)
-    end
-
-    --place the followers
-    table.each(ovw.player.followers, function(follower, key) follower.x, follower.y = ovw.player.x, ovw.player.y ovw.enemies:add(follower) ovw.view:register(follower) end)
-
-    --build the floor
-    self:computeTiles()
-    self:forceComputeShapes()
-
-    --reset the sounds
-    ovw.sound:reset()
-  end
-end
-
-function House:carveDoor(x1, y1, x2, y2, room, door)
+function House:carveDoor(door)
+  local room = door.rooms[door.newestDirection]
+  local x1, y1, x2, y2 = door.cx1, door.cy1, door.cx2, door.cy2
   local dx = math.sign(x2 - x1)
   local dy = math.sign(y2 - y1)
 
@@ -587,18 +503,6 @@ function House.carveDiamond(rx, ry, rw, rh, room, tileMap)
   end
 end
 
-function House:collisionTest(room)
-  local padding = 0 --self.roomSpacing - 1
-  --if getmetatable(room).__index == BossRoom then padding = padding + 3 end
-  for x = room.x - padding, room.x + room.width + padding do
-    for y = room.y - padding, room.y + room.height + padding do
-      if self.tiles[x] and self.tiles[x][y] then return false end
-    end
-  end
-
-  return true --no other room colliding with room!
-end
-
 function House:computeTiles()
   local function get(x, y)
     return self.tiles[x] and self.tiles[x][y]
@@ -654,6 +558,86 @@ function House:computeTiles()
 end
 
 function House:computeTilesInRoom(room)
+  local function get(x, y) if self.tiles[x] and self.tiles[x][y] then return true else return false end end
+
+  for x = room.x - 5, room.x + room.width + 5 do
+    if table.count(self.tiles[x]) == 0 then self.tiles[x] = nil else
+      for y = room.y - 5, room.y + room.height + 5 do
+        local tile = self.tiles[x][y]
+        if tile then
+          if self.rooms[tile.roomID] then
+            local n, s, e, w = get(x, y - 1), get(x, y + 1), get(x + 1, y), get(x - 1, y)
+            local nw, ne = get(x - 1, y - 1), get(x + 1, y - 1)
+            local sw, se = get(x - 1, y + 1), get(x + 1, y + 1)
+            local left = w and nw and sw
+            local right = e and ne and se
+            local top = n and nw and ne
+            local bottom = s and sw and se
+            local horizontal = w and e
+            local vertical = n and s
+            local slash = sw and ne
+            local notslash = not (sw or ne)
+            local backslash = nw and se
+            local notbackslash = not (nw or se)
+            local sides = horizontal and vertical
+            local corners = slash and backslash
+            local box = sides and corners
+            local topleft = n and w and nw
+            local nottopleft = not (n or w or nw)
+            local topright = n and e and ne
+            local nottopright = not (n or e or ne)
+            local bottomleft = s and w and sw
+            local notbottomleft = not (s or w or sw)
+            local bottomright = s and e and se
+            local notbottomright = not (s or e or se)
+
+            if box then --center
+              tile.tile = 'c'
+            elseif sides and ne and nw and se then --i southwest
+              tile.tile = 'isw'
+            elseif sides and ne and nw and sw then --i southeast
+              tile.tile = 'ise'
+            elseif sides and se and nw and sw then --i northeast
+              tile.tile = 'ine'
+            elseif sides and ne and sw and se then --i northwest
+              tile.tile = 'inw'
+            elseif topleft and not bottomright and not (sw and s) and not (ne and e) then --southeast
+              tile.tile = 'se'
+            elseif topright and not bottomleft and not (se and s) and not (nw and w) then --southwest
+              tile.tile = 'sw'
+            elseif bottomleft and not topright and not (nw and n) and not (se and e) then --northeast
+              tile.tile = 'ne'
+            elseif bottomright and not topleft and not (ne and n) and not (sw and w) then --northwest
+              tile.tile = 'nw'
+            elseif topleft and bottomright and notslash then --double i /
+              tile.tile = 'c' --TILE DNE
+            elseif topright and bottomleft and notbackslash then --double i \
+              tile.tile = 'c' --TILE DNE
+            elseif left and vertical then --east
+              tile.tile = 'e'
+            elseif right and vertical then --west
+              tile.tile = 'w'
+            elseif top and horizontal then --south
+              tile.tile = 's'
+            elseif bottom and horizontal then --north
+              tile.tile = 'n'
+            else --none
+              tile.tile = 'none'
+              tile:destroy()
+            end
+          else
+            --tile's room doesn't exist.
+            tile:destroy()
+          end
+        else
+          --no tile at this position.
+        end
+      end
+    end
+  end
+end
+
+function House:computeTilesInRoom2(room)
   local function get(x, y)
     return self.tiles[x] and self.tiles[x][y]
   end
@@ -762,6 +746,270 @@ function House:computeTilesInDoor(x1, y1, x2, y2)
 end
 
 function House:computeShapesInRoom(room)
+  local tiles = {}
+  for x in pairs(self.tiles) do
+    tiles[x] = tiles[x] or {}
+    for y in pairs(self.tiles[x]) do
+      local tile = self.tiles[x][y]
+      tiles[x][y] = {tile = tile.tile, traverseTable = {}}
+    end
+  end
+  local function get(x, y) return tiles[x] and tiles[x][y] end --does the tile exist?
+
+  local opposites = {
+          north_left = 'south_left',
+          north_right = 'south_right',
+          south_left = 'north_left',
+          south_right = 'north_right',
+          west_bottom = 'east_bottom',
+          west_top = 'east_top',
+          east_bottom = 'west_bottom',
+          east_top = 'west_top'
+        }
+
+  local algorithmBlocks = { --direction is direction to traverse in
+
+      c = {traverseMax = 0, pos = {},
+            direction = {}, size = 0},
+
+      none = {traverseMax = 0, pos = {},
+            direction = {}, size = 0},
+
+      ---
+
+      w = {traverseMax = 1, pos = {},
+            direction = {'north_left', 'south_left'}, size = 1},
+
+      e = {traverseMax = 1, pos = {},
+            direction = {'north_right', 'south_right'}, size = 1},
+
+      n = {traverseMax = 1, pos = {},
+            direction = {'west_top', 'east_top'}, size = 1},
+
+      s = {traverseMax = 1, pos = {},
+            direction = {'west_bottom', 'east_bottom'}, size = 1},
+
+      ---                                pos should be the far corner and the lesser corner
+      
+      nw = {traverseMax = 2, pos = {south_left = {x = 0, y = 0}, east_top = {x = 0, y = 0}},
+            direction = {'south_left', 'east_top'}, size = 1},
+
+      ne = {traverseMax = 2, pos = {south_right = {x = .5, y = 0}, west_top = {x = 1, y = 0}},
+            direction = {'south_right', 'west_top'}, size = 1},
+
+      se = {traverseMax = 2, pos = {north_right = {x = .5, y = 1}, west_bottom = {x = 1, y = .5}},
+            direction = {'north_right', 'west_bottom'}, size = 1},
+
+      sw = {traverseMax = 2, pos = {north_left = {x = 0, y = 1}, east_bottom = {x = 0, y = .5}},
+            direction = {'north_left', 'east_bottom'}, size = 1},
+
+      ---
+
+      inw = {traverseMax = 2, pos = {north_left = {x = 0, y = .5}, west_top = {x = .5, y = 0}},
+            direction = {'north_left', 'west_top'}, size = .5},
+
+      ine = {traverseMax = 2, pos = {north_right = {x = .5, y = .5}, east_top = {x = .5, y = 0}},
+            direction = {'north_right', 'east_top'}, size = .5},
+
+      ise = {traverseMax = 2, pos = {south_right = {x = .5, y = .5}, east_bottom = {x = .5, y = .5}},
+            direction = {'south_right', 'east_bottom'}, size = .5},
+
+      isw = {traverseMax = 2, pos = {south_left = {x = 0, y = .5}, west_bottom = {x = .5, y = .5}},
+            direction = {'south_left', 'west_bottom'}, size = .5}
+
+    }
+
+  for x = room.x - 5, room.x + room.width + 5 do --for tiles in and around room, do
+    for y = room.y - 5, room.y + room.height + 5 do
+      local tile = get(x, y)
+      if tile then --if tile exists, then
+        local block = algorithmBlocks[tile.tile]
+        if block.traverseMax > 1 then --if corner piece, then
+          while table.count(tile.traverseTable) < block.traverseMax do --while not done crafting, do
+            local direction = 1
+            while true do --get direction
+              if not table.has(tile.traverseTable, block.direction[direction]) then
+                direction = block.direction[direction]
+                table.insert(tile.traverseTable, direction)
+                break
+              else
+                direction = direction + 1
+              end
+            end
+
+            local length = block.size
+            local currentX, currentY = x, y
+            local shapeCoords = {x1 = 0, y1 = 0, x2 = 0, y2 = 0}
+
+            if direction == 'west_top' or direction == 'west_bottom' then --shoot west
+
+              while true do
+                local nextTile = get(currentX - 1, currentY)
+                if not nextTile then
+                  --no tile, we're done here. also, an error has occurred.
+                  break
+                else
+                  local nextBlock = algorithmBlocks[nextTile.tile]
+                  local sourceDirection = opposites[direction]
+                  if table.has(nextBlock.direction, sourceDirection) then
+                    --the tiles synchronize!
+                    if not table.has(nextTile.traverseTable, sourceDirection) then
+                      --the next tile hasn't already been traversed in this direction!
+                      table.insert(nextTile.traverseTable, sourceDirection)
+                      length = length + nextBlock.size
+                      if table.has(nextBlock.direction, direction) then
+                        --keep traveling in this direction!
+                        currentX = currentX - 1
+                      else
+                        --we've hit the end.
+                        break
+                      end
+                    else
+                      --the tile we're shooting from should already have been traversed
+                      --in this direction. an error has occurred. (how'd you do that?)
+                      break
+                    end
+                  else
+                    --we've run in to a non-syncing tile. an error has occurred.
+                    break
+                  end
+                end
+              end --get the shape's vertices
+              shapeCoords = {x1 = x + block.pos[direction].x, y1 = y + block.pos[direction].y,
+                             x2 = -length, y2 = .5}
+
+            elseif direction == 'east_top' or direction == 'east_bottom' then --shoot east
+
+              while true do
+                local nextTile = get(currentX + 1, currentY)
+                if not nextTile then
+                  --no tile, we're done here. also, an error has occurred.
+                  break
+                else
+                  local nextBlock = algorithmBlocks[nextTile.tile]
+                  local sourceDirection = opposites[direction]
+                  if table.has(nextBlock.direction, sourceDirection) then
+                    --the tiles synchronize!
+                    if not table.has(nextTile.traverseTable, sourceDirection) then
+                      --the next tile hasn't already been traversed in this direction!
+                      table.insert(nextTile.traverseTable, sourceDirection)
+                      length = length + nextBlock.size
+                      if table.has(nextBlock.direction, direction) then
+                        --keep traveling in this direction!
+                        currentX = currentX + 1
+                      else
+                        --we've hit the end.
+                        break
+                      end
+                    else
+                      --the tile we're shooting from should already have been traversed
+                      --in this direction. an error has occurred. (how'd you do that?)
+                      break
+                    end
+                  else
+                    --we've run in to a non-syncing tile. an error has occurred.
+                    break
+                  end
+                end
+              end --get the shape's vertices
+              shapeCoords = {x1 = x + block.pos[direction].x, y1 = y + block.pos[direction].y,
+                             x2 = length, y2 = .5}
+
+            elseif direction == 'north_left' or direction == 'north_right' then --shoot north
+
+              while true do
+                local nextTile = get(currentX, currentY - 1)
+                if not nextTile then
+                  --no tile, we're done here. also, an error has occurred.
+                  break
+                else
+                  local nextBlock = algorithmBlocks[nextTile.tile]
+                  local sourceDirection = opposites[direction]
+                  if table.has(nextBlock.direction, sourceDirection) then
+                    --the tiles synchronize!
+                    if not table.has(nextTile.traverseTable, sourceDirection) then
+                      --the next tile hasn't already been traversed in this direction!
+                      table.insert(nextTile.traverseTable, sourceDirection)
+                      length = length + nextBlock.size
+                      if table.has(nextBlock.direction, direction) then
+                        --keep traveling in this direction!
+                        currentY = currentY - 1
+                      else
+                        --we've hit the end.
+                        break
+                      end
+                    else
+                      --the tile we're shooting from should already have been traversed
+                      --in this direction. an error has occurred. (how'd you do that?)
+                      break
+                    end
+                  else
+                    --we've run in to a non-syncing tile. an error has occurred.
+                    break
+                  end
+                end
+              end --get the shape's vertices
+              shapeCoords = {x1 = x + block.pos[direction].x, y1 = y + block.pos[direction].y,
+                             x2 = .5, y2 = -length}
+
+            elseif direction == 'south_left' or direction == 'south_right' then --shoot south
+
+              while true do
+                local nextTile = get(currentX, currentY + 1)
+                if not nextTile then
+                  --no tile, we're done here. also, an error has occurred.
+                  break
+                else
+                  local nextBlock = algorithmBlocks[nextTile.tile]
+                  local sourceDirection = opposites[direction]
+                  if table.has(nextBlock.direction, sourceDirection) then
+                    --the tiles synchronize!
+                    if not table.has(nextTile.traverseTable, sourceDirection) then
+                      --the next tile hasn't already been traversed in this direction!
+                      table.insert(nextTile.traverseTable, sourceDirection)
+                      length = length + nextBlock.size
+                      if table.has(nextBlock.direction, direction) then
+                        --keep traveling in this direction!
+                        currentY = currentY + 1
+                      else
+                        --we've hit the end.
+                        break
+                      end
+                    else
+                      --the tile we're shooting from should already have been traversed
+                      --in this direction. an error has occurred. (how'd you do that?)
+                      break
+                    end
+                  else
+                    --we've run in to a non-syncing tile. an error has occurred.
+                    break
+                  end
+                end
+              end --get the shape's vertices
+              shapeCoords = {x1 = x + block.pos[direction].x, y1 = y + block.pos[direction].y,
+                             x2 = .5, y2 = length}
+
+            else
+              --how'd you do that?
+            end
+
+            --build the shape
+            if shapeCoords.x1 ~= shapeCoords.x2 and shapeCoords.y1 ~= shapeCoords.y2 then
+              local shape = ovw.collision.hc:addRectangle(self:pos(shapeCoords.x1, shapeCoords.y1, shapeCoords.x2, shapeCoords.y2))
+              ovw.collision.hc:setPassive(shape)
+              shape.owner = self
+              table.insert(self.newShapes, shape)
+            else
+              --there isn't a shape.
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+function House:computeShapesInRoom2(room)
   local function coords(x, y, w, d)
     if d == 'n' then
       return ovw.collision.hc:addRectangle(self:pos(x, y, w, .5))
@@ -1019,6 +1267,10 @@ function House:forceComputeShapes()
   end
 end
 
+--================================================================================--
+--ROOM CONTENTS --------------------------------------------------------------------
+--================================================================================--
+
 function House:spawnNPCsInRoom(npc, room)
   if npc then
     local x, y = self:pos(room.x, room.y)
@@ -1077,53 +1329,160 @@ end
 function House:spawnPickupsInRoom(amount, room)--amt, room, pickupType, orbType) --orbType optional
   return pickupTables.drop(room)--pickupTables.spawnPickups('trash', room)
 end
-  --[[local function make(i, orb)
-    local x, y = self:pos(room.x, room.y)
-    if room.buildShape == 'circle' then
-      local dir = love.math.random() * math.pi * 2 - math.pi
-      local dis = love.math.random() * (room.radius - 2)
-      x = self:pos(room.x + room.width / 2) + self:pos(math.cos(dir) * dis)
-      y = self:pos(room.y + room.height / 2) + self:pos(math.sin(dir) * dis)
-    elseif room.buildShape == 'diamond' then
-      local dimensionsRatio = (room.height / room.width)
-      x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
-      local tx = math.round(room.width / 2 + .5) * self.cellSize - math.abs(x - room.x * self.cellSize - math.round(room.width / 2 + .5) * self.cellSize)
-      tx = tx * .6
-      y = y + self.halfCell + self:pos(room.height / 2) - dimensionsRatio * tx + love.math.random() * tx * dimensionsRatio * 2
-    else --rectangle
-      x = x + self.halfCell + love.math.random() * ((room.width - 2) * self.cellSize)
-      y = y + self.halfCell + love.math.random() * ((room.height - 2) * self.cellSize)
+
+--================================================================================--
+--STAIRCASES -----------------------------------------------------------------------
+--================================================================================--
+
+function House:refreshRoom(room, id)
+  self.rooms[id] = room
+  room:carveRoom(self.tiles)
+  room:computeCollision()
+
+  table.each(room.doors, function(door, side) self:refreshDoor(room, door) end)
+end
+
+function House:refreshDoor(room, door)
+  if #door.tiles > 0 then
+    local x, y = door.tiles[1].x, door.tiles[1].y
+    local x1, y1, x2, y2 = x, y, x, y
+    for i = 2, #door.tiles do
+      x, y = door.tiles[i].x, door.tiles[i].y
+      x1 = math.min(x1, x)
+      y1 = math.min(y1, y)
+      x2 = math.max(x2, x)
+      y2 = math.max(y2, y)
     end
-    if orbType then
-      return ovw.pickups:add(Orb({x = x, y = y, orbType = orb, room = room}))
-    else
-      return ovw.pickups:add(Pickup({x = x, y = y, itemType = i, room = room, amount = amt}))
-    end
+    House.carveRect(x1, y1, x2, y2, room, self.tiles)
+    self:computeTilesInDoor(x1, y1, x2, y2)
+    self:computeTilesInRoom(room)
   end
+end
 
-  local pickups = {}
-
-  if pickupType then
-    if orbType then
-      table.insert(pickups, make(pickupType, orbType))
-    else
-      for i = 1, amt do
-        table.insert(pickups, make(pickupType))
-      end
-    end
+function House:createFloor(i, override)
+  if not override and i == self.currentFloor then
+    --you're already on this floor?
   else
-    if amt > 2 then
-      amt = amt - 2
-      table.insert(pickups, make((makeLootTable('Rare'))[1]))
-    end
-
-    for i = 1, amt do
-      local lootTable = makeLootTable('Common')
-      for j = 1, #lootTable do
-        table.insert(pickups, make(lootTable[j]))
-      end
-    end
+    self.floors[i] = {rooms = {}, spells = {}, particles = {}, enemies = {}, npcs = {}, pickups = {}, furniture = {}}
   end
+end
 
-  return pickups
-end]]
+function House:setFloor(i)
+  if i == self.currentFloor then
+    --you're already on this floor?
+    print('already on this floor, how did you do that?')
+  else
+    --does the new floor exist yet?
+    if not self.floors[i] then
+      self:createFloor(i)
+    end
+
+    --store the currentFloor rooms
+    self:createFloor(self.currentFloor, true)
+    local currentFloorData = self.floors[self.currentFloor]
+    table.each(self.rooms, function(room, id) ovw.collision.hc:remove(room.shape) currentFloorData.rooms[id] = room end)
+    self:saveFloorDataBlock(self.currentFloor, 'spells')
+    self:saveFloorDataBlock(self.currentFloor, 'particles', true) --PARTICLES DON'T COLLIDE
+    self:saveFloorDataBlock(self.currentFloor, 'enemies')
+    self:saveFloorDataBlock(self.currentFloor, 'npcs')
+    self:saveFloorDataBlock(self.currentFloor, 'pickups')
+    self:saveFloorDataBlock(self.currentFloor, 'furniture')
+
+    --clear the floor structure
+    self.rooms = {}
+    self.tiles = {}
+    self:forceComputeShapes()
+    self:computeTiles()
+
+    --load the newFloor rooms
+    self.currentFloor = i
+    local newFloorData = self.floors[self.currentFloor]
+    table.each(newFloorData.rooms, function(room, id) self:refreshRoom(room, id) end)
+    self:loadFloorDataBlock(self.currentFloor, 'spells')
+    self:loadFloorDataBlock(self.currentFloor, 'particles', true) --PARTICLES DON'T COLLIDE
+    self:loadFloorDataBlock(self.currentFloor, 'enemies')
+    self:loadFloorDataBlock(self.currentFloor, 'npcs')
+    self:loadFloorDataBlock(self.currentFloor, 'pickups')
+    self:loadFloorDataBlock(self.currentFloor, 'furniture')
+
+    --build the floor, don't cross the streams!
+    ovw:clearStreams()
+    self:computeTiles()
+    self:forceComputeShapes()
+  end
+end
+
+function House:saveFloorDataBlock(floor, block, noCollision, noDrawing)
+  table.each(ovw[block].objects, function(object, id)
+    if not noCollision then ovw.collision:unregister(object) end
+    if not noDrawing then ovw.view:unregister(object) end
+    self.floors[floor][block][id] = object
+    ovw[block].objects[id] = nil
+  end)
+end
+
+function House:loadFloorDataBlock(floor, block, noCollision, noDrawing)
+  table.each(self.floors[floor][block], function(object, id)
+    if not noCollision then ovw.collision:register(object) end
+    if not noDrawing then ovw.view:register(object) end
+    ovw[block].objects[id] = object
+    self.floors[floor][block][id] = nil
+  end)
+end
+
+function House:changeFloor(staircase)
+  if self.floorReady and self.staircaseReady then
+    self.staircaseReady = false
+    local targetFloor = 0
+    local newDirection
+    if staircase.direction == 'up' then
+      targetFloor = self.currentFloor + 1
+      newDirection = 'down'
+    elseif staircase.direction == 'down' then
+      targetFloor = self.currentFloor - 1
+      newDirection = 'up'
+    else
+      --staircase.direction is the exact floor to change to, from like an elevator or something
+      targetFloor = staircase.direction
+      newDirection = self.currentFloor
+    end
+
+    staircase:remove()
+
+    local spawnX, spawnY = self:cell(ovw.player.x, ovw.player.y)
+    local needRoom = true
+    self:setFloor(targetFloor)
+    for id, room in pairs(self.rooms) do
+      if room:hasTile(spawnX, spawnY) then
+        needRoom = false
+        room:createStaircase(spawnX, spawnY, newDirection)
+      end
+
+      --self:computeTilesInRoom(room)
+      --self:computeShapesInRoom(room)
+    end
+
+    if needRoom then
+      local newRoom = biomeStaircaseExitRooms[self.biome]()
+      newRoom.event = Event()
+      newRoom.x, newRoom.y = spawnX - math.round(newRoom.width / 2), spawnY - math.round(newRoom.height / 2)
+      self:addRoom(newRoom, 0, 0)
+
+      newRoom:createStaircase(spawnX, spawnY, newDirection)
+
+      newRoom:spawnDoors(newRoom:randomWall())
+      self:computeTilesInRoom(newRoom)
+      self:regenerate(newRoom)
+    end
+
+    --place the followers
+    table.each(ovw.player.followers, function(follower, key) follower.x, follower.y = ovw.player.x, ovw.player.y ovw.enemies:add(follower) ovw.view:register(follower) end)
+
+    --build the floor
+    self:computeTiles()
+    self:forceComputeShapes()
+
+    --reset the sounds
+    ovw.sound:reset()
+  end
+end

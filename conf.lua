@@ -3,6 +3,7 @@ function love.conf(t)
 	t.window.width = 800
 	t.window.height = 600
 	t.window.fullscreen = true
+	t.window.vsync = false --option to toggle this
 	t.window.fullscreentype = 'desktop'
 	t.console = true
 
